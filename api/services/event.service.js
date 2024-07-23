@@ -11,22 +11,13 @@ async function createEvent(req, res) {
     const eventData = req.body;
     eventData.num_ref = generateReferenceNumber();
 
-    // Handle document upload
-    if (req.files && req.files.length > 0) {
-      const documentUrls = [];
-      for (const file of req.files) {
-        const documentUrl = await UploadService(file.originalname, file.buffer);
-        documentUrls.push(documentUrl);
-      }
-      eventData.details.document = documentUrls;
-    }
-
     const newEvent = new Event(eventData);
     await newEvent.save();
+
     return ResponseService.created(res, { message: 'Event created successfully', event: newEvent });
   } catch (error) {
-    console.error('Error creating event:', error);
-    return ResponseService.internalServerError(res, { error: 'Error creating event' });
+    logger.error('Error creating event:', error);
+    return ResponseService.internalServerError(res, { error: error.message });
   }
 }
 
@@ -49,24 +40,16 @@ async function updateEvent(req, res) {
     const eventId = req.params.id;
     const updatedData = req.body;
 
-    // Handle document upload
-    if (req.files && req.files.length > 0) {
-      const documentUrls = [];
-      for (const file of req.files) {
-        const documentUrl = await UploadService(file.originalname, file.buffer);
-        documentUrls.push(documentUrl);
-      }
-      updatedData.details.document = documentUrls;
-    }
-
     const event = await Event.findByIdAndUpdate(eventId, updatedData, { new: true });
+
     if (!event) {
       return ResponseService.notFound(res, { message: 'Event not found' });
     }
+
     return ResponseService.success(res, { message: 'Event updated successfully', event });
   } catch (error) {
-    console.error('Error updating event:', error);
-    return ResponseService.internalServerError(res, { error: 'Error updating event' });
+    logger.error('Error updating event:', error);
+    return ResponseService.internalServerError(res, { error: error.message });
   }
 }
 

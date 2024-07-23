@@ -11,7 +11,7 @@ const eventRoutes = app => {
 
 //Get a list of all predict
 router.post('/create', upload.array('document'), eventController.createEvent);
-router.put('/update/:id', eventController.updateEvent);
+router.put('/update/:id', upload.array('document'), eventController.updateEvent);
 router.delete('/delete/:id', eventController.deleteEvent);
 router.get('/one/:id', eventController.getEventById);
 router.get('/all', eventController.getAllEvents);
