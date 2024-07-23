@@ -2,23 +2,30 @@ const Event = require('../models/event.model');
 const ResponseService = require('./response.service');
 const UploadService = require('./uploadFile.service');
 
+function generateReferenceNumber() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 async function createEvent(req, res) {
   try {
     const eventData = req.body;
-    const files = req.files;
+    eventData.num_ref = generateReferenceNumber();
 
-    let documentUrls = [];
-    if (files && files.length > 0) {
-      documentUrls = await UploadService.uploadMultipleFiles(files);
-      eventData.document = documentUrls;
+    // Handle document upload
+    if (req.files && req.files.length > 0) {
+      const documentUrls = [];
+      for (const file of req.files) {
+        const documentUrl = await UploadService(file.originalname, file.buffer);
+        documentUrls.push(documentUrl);
+      }
+      eventData.details.document = documentUrls;
     }
 
     const newEvent = new Event(eventData);
     await newEvent.save();
-
     return ResponseService.created(res, { message: 'Event created successfully', event: newEvent });
   } catch (error) {
-    console.log('Error creating event:', error);
+    console.error('Error creating event:', error);
     return ResponseService.internalServerError(res, { error: 'Error creating event' });
   }
 }
@@ -33,22 +40,33 @@ async function getEventById(req, res) {
     return ResponseService.success(res, { event });
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'événement:', error);
-    return ResponseService.internalServerError(res, { error: error.message }); 
-  } 
+    return ResponseService.internalServerError(res, { error: error.message });
+  }
 }
 
 async function updateEvent(req, res) {
   try {
     const eventId = req.params.id;
-    const updates = req.body;
-    const event = await Event.findByIdAndUpdate(eventId, updates, { new: true });
-    if (!event) {
-      return ResponseService.notFound(res, { message: 'Événement non trouvé' });
+    const updatedData = req.body;
+
+    // Handle document upload
+    if (req.files && req.files.length > 0) {
+      const documentUrls = [];
+      for (const file of req.files) {
+        const documentUrl = await UploadService(file.originalname, file.buffer);
+        documentUrls.push(documentUrl);
+      }
+      updatedData.details.document = documentUrls;
     }
-    return ResponseService.success(res, { message: 'Événement mis à jour avec succès', event });
+
+    const event = await Event.findByIdAndUpdate(eventId, updatedData, { new: true });
+    if (!event) {
+      return ResponseService.notFound(res, { message: 'Event not found' });
+    }
+    return ResponseService.success(res, { message: 'Event updated successfully', event });
   } catch (error) {
-    console.error('Erreur lors de la mise à jour de l\'événement:', error);
-    return ResponseService.internalServerError(res, { error: error.message });
+    console.error('Error updating event:', error);
+    return ResponseService.internalServerError(res, { error: 'Error updating event' });
   }
 }
 
