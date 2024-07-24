@@ -51,7 +51,15 @@ const eventSchema = new Schema({
         comment: String
     },
     financials: [financialsSchema],
-    additionnalInfo: [additionnalInfoSchema]
+    additionnalInfo: [additionnalInfoSchema],
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    approved: {
+        type: Boolean,
+        default: false
+    }
 });
 
 module.exports = mongoose.model('Event', eventSchema);
