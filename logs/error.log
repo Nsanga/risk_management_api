@@ -1,0 +1,22 @@
+2024-08-03 11:22:30 error: Error creating event: Cannot read properties of undefined (reading 'notify')
+2024-08-03 11:24:09 error: Error sending email: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-36bbd01e0a7sm3972447f8f.43 - gsmtp
+2024-08-03 11:25:48 error: Error sending email: Invalid login: 534-5.7.9 Application-specific password required. For more information, go to
+534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor ffacd0b85a97d-36bbd075100sm3962436f8f.105 - gsmtp
+2024-08-03 11:26:53 error: Error sending email: Invalid login: 534-5.7.9 Application-specific password required. For more information, go to
+534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor 5b1f17b1804b1-4282bba283fsm123748335e9.46 - gsmtp
+2024-08-03 11:29:25 error: Error sending email: Invalid login: 534-5.7.9 Application-specific password required. For more information, go to
+534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor ffacd0b85a97d-36bbd059e18sm3982943f8f.68 - gsmtp
+2024-08-03 11:38:38 error: Error sending email: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-42824af6e8csm89327695e9.1 - gsmtp
+2024-08-03 11:43:19 error: Error sending email: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-36bbd0597cfsm4027067f8f.74 - gsmtp
+2024-08-03 11:50:30 error: Error sending email: Missing credentials for "PLAIN"
+2024-08-03 11:59:20 error: Error sending email: Invalid login: 535 Incorrect authentication data
+2024-08-03 12:01:22 error: Error sending email: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-428e6e9cd4esm62039065e9.44 - gsmtp
+2024-08-03 12:02:58 error: Error sending email: connect ECONNREFUSED 127.0.0.1:587
+2024-08-03 12:03:31 error: Error sending email: connect ECONNREFUSED 127.0.0.1:587
+2024-08-03 12:12:16 error: Error creating event: Invalid login: 535 Authentication failed
+2024-08-03 12:23:20 error: Error sending email: Invalid login: 534-5.7.9 Application-specific password required. For more information, go to
+534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor ffacd0b85a97d-36bbd06dfb4sm4137495f8f.103 - gsmtp

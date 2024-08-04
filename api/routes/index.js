@@ -2,6 +2,8 @@ const express = require('express');
 const eventRoutes = require('./event.route');
 const setupUpload = require('./upload.route');
 const {setupUserRoutes} = require('./user.route');
+const entityRoutes = require('./entity.route');
+const profileRoutes = require('./userprofile.route');
 
 const router = express.Router();
 
@@ -14,6 +16,8 @@ const appRoutes = () => {
   eventRoutes(app);
   setupUpload(app);
   setupUserRoutes(app);
+  entityRoutes(app)
+  profileRoutes(app)
   return app;
 };
 

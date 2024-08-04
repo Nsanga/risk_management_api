@@ -1,38 +1,27 @@
-const winston = require('winston');
-const { format } = winston;
-const fs = require('fs');
-const path = require('path');
-const { sendMessageToNumber } = require("../helpers/whatsApp/whatsappMessaging");
+const { createLogger, format, transports } = require('winston');
+const { combine, timestamp, printf, colorize } = format;
 
-const logDirectory = './api/logging';
+// Custom log format
+const logFormat = printf(({ level, message, timestamp }) => {
+  return `${timestamp} ${level}: ${message}`;
+});
 
-if (!fs.existsSync(logDirectory)) {
-  fs.mkdirSync(logDirectory);
-}
-
-// Configuration du logger avec le transport personnalisé
-const logger = (client) => winston.createLogger({
-  level: 'info',
-  format: format.combine(
-    format.timestamp(),
-    format.json()
+// Create a Winston logger instance
+const logger = createLogger({
+  level: 'info', // Default log level
+  format: combine(
+    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    logFormat
   ),
   transports: [
-    // Transport pour écrire dans un fichier
-    new winston.transports.File({ 
-      filename: path.join(logDirectory, 'logger.log'),
-      maxsize: 5242880, 
-      maxFiles: 5,
-    }),
-    // Transport pour afficher les logs dans la console
-    new winston.transports.Console({
-      format: format.combine(
-        format.colorize(),
-        format.simple()
+    new transports.Console({
+      format: combine(
+        colorize(),
+        logFormat
       )
     }),
-    // Transport personnalisé pour envoyer des messages WhatsApp
-    new WhatsAppTransport({ client }),
+    new transports.File({ filename: 'logs/error.log', level: 'error' }),
+    new transports.File({ filename: 'logs/combined.log' })
   ]
 });
 
