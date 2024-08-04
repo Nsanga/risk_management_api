@@ -41,7 +41,7 @@ const entitySchema = new Schema({
   businessLine: { 
     type: String, 
     required: true
-  }
+  } 
 }, { timestamps: true });
 
 const Entity = mongoose.model('Entity', entitySchema);
