@@ -8,12 +8,28 @@ function generateReferenceNumber() {
 
 async function createEntity(req, res) {
   try {
-    const entityData = req.body;
-    // entityData.num_ref = generateReferenceNumber();
+    // Obtenir le dernier entity enregistré pour calculer le prochain referenceId
+    const lastEntity = await Entity.findOne().sort({ referenceId: -1 }).exec();
 
+    // Calculer le prochain numéro de référence
+    let nextReferenceId = '001';
+    if (lastEntity && lastEntity.referenceId) {
+      const lastReferenceId = parseInt(lastEntity.referenceId, 10);
+      const newReferenceId = lastReferenceId + 1;
+      nextReferenceId = String(newReferenceId).padStart(3, '0');
+    }
+
+    // Ajouter le referenceId à l'objet entityData
+    const entityData = {
+      ...req.body,
+      referenceId: nextReferenceId
+    };
+
+    // Créer et sauvegarder la nouvelle entité
     const newEntity = new Entity(entityData);
     await newEntity.save();
 
+    // Retourner la réponse avec succès
     return ResponseService.created(res, newEntity);
   } catch (error) {
     console.error('Error creating entity:', error);

@@ -9,7 +9,7 @@ async function createProfile(req, res) {
     const newUserProfile = new UserProfile(profileData);
     await newUserProfile.save();
 
-    return ResponseService.created(res, newUserProfile);
+    return ResponseService.created(res, { message: 'Profile created successfully', newUserProfile });
   } catch (error) {
     console.error('Error creating Profile:', error);
     return ResponseService.internalServerError(res, { error: error.message });

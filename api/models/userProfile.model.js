@@ -4,57 +4,74 @@ const Schema = mongoose.Schema;
 const userProfileSchema = new Schema({
   userId: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   name: {
     type: String,
     required: true
   },
+  dateOfBirth: {
+    type: Date,
+    required: false
+  },
   jobTitle: {
     type: String,
-    required: true
   },
   location: {
     type: String,
-    required: true
   },
   telephone: {
     type: String,
-    required: true
   },
   email: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   userGroup: {
     type: String,
-    required: true
+    required: false
   },
   language: {
     type: String,
-    required: true
+    required: false
   },
   ccEmailTo: {
     type: String,
-    required: true
+    required: false
   },
   nominee: {
     type: String,
-    required: true
+    required: false
+  },
+  status: {
+    type: String,
+    required: false,
+    default: 'Pending'
   },
   activeUser: {
     type: Boolean,
-    default: true
+    default: false 
+  },
+  administrator: {
+    type: Boolean,
+    default: false
   },
   passwordExpiryDate: {
     type: Date,
-    required: true
+    required: false
   },
   lockedOutReason: {
     type: String,
     required: false
-  }
+  },
+  surname: {
+    type: String,
+  },
+  role: {
+    type: String,
+    default: 'user'
+  },
 }, { timestamps: true });
 
 const UserProfile = mongoose.model('UserProfile', userProfileSchema);

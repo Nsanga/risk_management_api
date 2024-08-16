@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const entitySchema = new Schema({
+  referenceId: {
+    type: String,
+    unique: true,
+  },
   description: {
     type: String,
     required: true
@@ -36,12 +40,16 @@ const entitySchema = new Schema({
   },
   location: {
     type: String,
-    required: true
+    required: false
   },
   businessLine: { 
     type: String, 
+    required: false
+  },
+  reviewDate: { 
+    type: Date, 
     required: true
-  } 
+  }  
 }, { timestamps: true });
 
 const Entity = mongoose.model('Entity', entitySchema);

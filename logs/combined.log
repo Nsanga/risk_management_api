@@ -21,3 +21,5 @@
 2024-08-03 12:23:20 error: Error sending email: Invalid login: 534-5.7.9 Application-specific password required. For more information, go to
 534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor ffacd0b85a97d-36bbd06dfb4sm4137495f8f.103 - gsmtp
 2024-08-03 12:40:10 info: Email sent:
+2024-08-05 11:30:14 error: Error sending email: No recipients defined
+2024-08-05 11:32:16 info: Email sent:
