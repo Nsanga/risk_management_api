@@ -10,4 +10,4 @@ const setupUpload = (app) => {
   router.post('/files', upload.array('files'), uploadHandler.uploadFiles);
 };
 
-module.exports = setupUpload;
+module.exports = setupUpload; 

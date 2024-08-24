@@ -4,6 +4,7 @@ const setupUpload = require('./upload.route');
 const {setupUserRoutes} = require('./user.route');
 const entityRoutes = require('./entity.route');
 const profileRoutes = require('./userprofile.route');
+const userGroupRoutes = require('./userGroup.route');
 
 const router = express.Router();
 
@@ -18,6 +19,7 @@ const appRoutes = () => {
   setupUserRoutes(app);
   entityRoutes(app)
   profileRoutes(app)
+  userGroupRoutes(app);
   return app;
 };
 
