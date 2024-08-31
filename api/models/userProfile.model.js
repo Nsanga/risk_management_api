@@ -11,10 +11,6 @@ const userProfileSchema = new Schema({
     type: String,
     required: true
   },
-  dateOfBirth: {
-    type: Date,
-    required: false
-  },
   jobTitle: {
     type: String,
   },
@@ -28,8 +24,13 @@ const userProfileSchema = new Schema({
     type: String,
     required: true
   },
+  lockedUser: {
+    type: Boolean,
+    default: false
+  },
   userGroup: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: 'UserGroup',
     required: false
   },
   language: {
@@ -57,6 +58,10 @@ const userProfileSchema = new Schema({
     type: Boolean,
     default: false
   },
+  canAuthorize: {
+    type: Boolean,
+    default: false
+  },
   passwordExpiryDate: {
     type: Date,
     required: false
@@ -72,6 +77,12 @@ const userProfileSchema = new Schema({
     type: String,
     default: 'user'
   },
+  // Association avec Entity
+  entity: {
+    type: Schema.Types.ObjectId,
+    ref: 'Entity',
+    required: false
+  }
 }, { timestamps: true });
 
 const UserProfile = mongoose.model('UserProfile', userProfileSchema);

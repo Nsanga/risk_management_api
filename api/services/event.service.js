@@ -1,3 +1,5 @@
+const UserProfile = require('../models/userProfile.model');
+const Entity = require('../models/entity.model');
 const Event = require('../models/event.model');
 const ResponseService = require('./response.service');
 const nodemailer = require('nodemailer');
@@ -11,8 +13,17 @@ const transporter = nodemailer.createTransport({
   }
 }); 
 
+let currentNumber = 1; // Point de départ à 00001
+
 function generateReferenceNumber() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  if (currentNumber > 99999) {
+    // Réinitialiser à 1 si la limite de 99999 est atteinte
+    currentNumber = 1;
+  }
+  
+  const referenceNumber = currentNumber.toString().padStart(5, '0');
+  currentNumber++; // Incrémenter pour le prochain numéro
+  return referenceNumber;
 }
 
 async function createEvent(req, res) {
@@ -20,17 +31,31 @@ async function createEvent(req, res) {
     const eventData = req.body;
     eventData.num_ref = generateReferenceNumber();
 
+    // Convertir les emails en ObjectId
+    const ownerProfile = await UserProfile.findOne({ email: eventData.details.owner });
+    const nomineeProfile = await UserProfile.findOne({ email: eventData.details.nominee });
+    const reviewerProfile = await UserProfile.findOne({ email: eventData.details.reviewer });
+    const entityOfDetection = await Entity.findById(eventData.details.entityOfDetection);
+    const entityOfOrigin = await Entity.findById(eventData.details.entityOfOrigin);
+
+    // Vérifiez si les profils et entités existent avant d'assigner leurs ObjectIds
+    if (ownerProfile) eventData.details.owner = ownerProfile._id;
+    if (nomineeProfile) eventData.details.nominee = nomineeProfile._id;
+    if (reviewerProfile) eventData.details.reviewer = reviewerProfile._id;
+    if (entityOfDetection) eventData.details.entityOfDetection = entityOfDetection._id;
+    if (entityOfOrigin) eventData.details.entityOfOrigin = entityOfOrigin._id;
+
     const newEvent = new Event(eventData);
     await newEvent.save();
 
     if (eventData.details.notify) {
-      const emails = [eventData.details.owner, eventData.details.nominee];
+      const emails = [ownerProfile.email, nomineeProfile.email];
 
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: emails.join(', '),
         subject: 'Notification de Création d\'Événement',
-        text: `Un nouvel événement a été créé.\n\nDétails de l'événement:\nRéférence: ${eventData.num_ref}\nTitre: ${eventData.details.title}\nDate: ${eventData.details.event_date}`
+        text: `Un nouvel événement a été créé.\n\nDétails de l'événement:\nRéférence: ${eventData.num_ref}\nTitre: ${eventData.details.description}\nDate: ${eventData.details.event_date}`
       };
 
       transporter.sendMail(mailOptions, (error, info) => {

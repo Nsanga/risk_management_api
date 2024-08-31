@@ -20,19 +20,24 @@ const entitySchema = new Schema({
   },
   entityActive: {
     type: Boolean,
-    default: false
+    default: true
   },
   owner: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: 'UserProfile',
     required: true
   },
   nominee: {
-    type: String,
-    required: true
+    type: Schema.Types.ObjectId,
+    ref: 'UserProfile',
+    required: false,
+    default: null
   },
   reviewer: {
-    type: String,
-    required: false
+    type: Schema.Types.ObjectId,
+    ref: 'UserProfile',
+    required: false,
+    default: null
   },
   reviewDate: {
     type: Date,
@@ -40,16 +45,12 @@ const entitySchema = new Schema({
   },
   location: {
     type: String,
-    required: false
+    required: true
   },
   businessLine: { 
-    type: String, 
-    required: false
-  },
-  reviewDate: { 
-    type: Date, 
-    required: true
-  }  
+    type: String,
+    required: false 
+  }, 
 }, { timestamps: true });
 
 const Entity = mongoose.model('Entity', entitySchema);

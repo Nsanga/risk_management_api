@@ -76,5 +76,5 @@ module.exports = {
   getUserGroupById,
   updateUserGroup,
   deleteUserGroup,
-  getAllUserGroups,
+  getAllUserGroups, 
 };

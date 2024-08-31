@@ -85,7 +85,23 @@ async function deleteEntity(req, res) {
 
 async function getAllEntities(req, res) {
   try {
-    const entities = await Entity.find();
+    // Recherche des entités et peuplement du champ 'owner' avec les données de UserProfile
+    const entities = await Entity.find()
+      .populate({
+        path: 'owner',  // Le champ que vous voulez peupler
+        select: 'name surname'  // Les champs à inclure dans la réponse
+      })
+
+      .populate({
+        path: 'nominee',  // Le champ que vous voulez peupler
+        select: 'name surname'  // Les champs à inclure dans la réponse
+      })
+
+      .populate({
+        path: 'reviewer',  // Le champ que vous voulez peupler
+        select: 'name surname'  // Les champs à inclure dans la réponse
+      });
+      
     return ResponseService.success(res, { entities });
   } catch (error) {
     console.error('Erreur lors de la récupération des entités:', error);

@@ -34,20 +34,41 @@ const eventSchema = new Schema({
         description: String,
         descriptionDetailled: String,
         cause: String,
-        owner: String,
-        reviewer: String,
-        reviewer_date: Date, 
+        owner: {
+            type: Schema.Types.ObjectId,
+            ref: 'UserProfile',
+            required: true
+        },
+        nominee: {
+            type: Schema.Types.ObjectId,
+            ref: 'UserProfile',
+            required: true,
+        },
+        reviewer: {  
+            type: Schema.Types.ObjectId,
+            ref: 'UserProfile',
+            required: false,
+            default: null
+        },
+        reviewer_date: Date,
         title: String,
         activeEvent: Boolean,
         excludeFundLosses: Boolean,
         notify: Boolean,
         externalEvent: Boolean,
         externalRef: String,
-        entityOfDetection: String,
+        entityOfDetection: {
+            type: Schema.Types.ObjectId, 
+            ref: 'Entity',
+            required: true
+        },
         subentityOfDetection: String,
-        entityOfOrigin: String,
+        entityOfOrigin: {
+            type: Schema.Types.ObjectId,
+            ref: 'Entity',
+            required: true
+        },
         subentityOfOrigin: String,
-        nominee: String,
         RAG: String,
         targetClosureDate: String,
         document: [String] // To handle both single URL and array of URLs
