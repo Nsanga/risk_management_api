@@ -122,13 +122,40 @@ async function deleteEvent(req, res) {
 
 async function getAllEvents(req, res) {
   try {
-    const events = await Event.find();
+    const events = await Event.find()
+    .populate({
+      path: 'details.entityOfDetection',
+      select: 'referenceId description',
+      strictPopulate: true
+    })
+    .populate({
+      path: 'details.entityOfOrigin',
+      select: 'referenceId description',
+      strictPopulate: true
+    })
+      .populate({
+        path: 'details.owner',
+        select: 'name surname',
+        strictPopulate: true
+      })
+      .populate({
+        path: 'details.nominee',
+        select: 'name surname',
+        strictPopulate: true
+      })
+      .populate({
+        path: 'details.reviewer',
+        select: 'name surname',
+        strictPopulate: true
+      });
+
     return ResponseService.success(res, { events });
   } catch (error) {
     console.error('Erreur lors de la récupération des événements:', error);
     return ResponseService.internalServerError(res, { error: error.message });
   }
 }
+
 
 module.exports = {
   createEvent,
