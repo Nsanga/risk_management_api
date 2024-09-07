@@ -12,11 +12,11 @@ async function createEntity(req, res) {
     const lastEntity = await Entity.findOne().sort({ referenceId: -1 }).exec();
 
     // Calculer le prochain numéro de référence
-    let nextReferenceId = '001';
+    let nextReferenceId = '00001';
     if (lastEntity && lastEntity.referenceId) {
       const lastReferenceId = parseInt(lastEntity.referenceId, 10);
       const newReferenceId = lastReferenceId + 1;
-      nextReferenceId = String(newReferenceId).padStart(3, '0');
+      nextReferenceId = String(newReferenceId).padStart(5, '0');
     }
 
     // Ajouter le referenceId à l'objet entityData
