@@ -55,7 +55,7 @@ async function createEvent(req, res) {
         from: process.env.EMAIL_USER,
         to: emails.join(', '),
         subject: 'Notification de Création d\'Événement',
-        text: `Un nouvel événement a été créé.\n\nDétails de l'événement:\nRéférence: ${eventData.num_ref}\nTitre: ${eventData.details.description}\nDate: ${eventData.details.event_date}`
+        text: `Un nouvel événement a été créé.\n\nDétails de l'événement:\nRéférence: EVT${eventData.num_ref}\nTitre: ${eventData.details.description}\nDate: ${eventData.details.event_date}`
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
