@@ -10,7 +10,7 @@ const cookieParser = require("cookie-parser");
 const dbConnect = require('../api/config/dbConnect');
 
 // Connection à MongoDB
-dbConnect(); 
+dbConnect();
 
 // Initialisation de l'application
 const app = express();
@@ -24,60 +24,61 @@ app.use(bodyParser.json());
 
 // Middleware pour gérer les requêtes CORS
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  next();
-}); 
+    res.header('Access-Control-Allow-Origin', '*'); // Autorise tous les domaines
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+});
+
 
 // Routes de l'application
-app.use('/.netlify/functions/api/v1', appRoutes());   
+app.use('/.netlify/functions/api/v1', appRoutes());
 
 // Gestion des erreurs
 app.use((req, res, next) => {
-  next(createError(404, 'Route not found'));
+    next(createError(404, 'Route not found'));
 });
 
 app.use((err, req, res, next) => {
-  res.status(err.status || 500).json({
-    error: {
-      status: err.status || 500,
-      message: err.message || 'Internal Server Error',
-    },
-  });
+    res.status(err.status || 500).json({
+        error: {
+            status: err.status || 500,
+            message: err.message || 'Internal Server Error',
+        },
+    });
 });
 
 // Exporter la fonction handler pour Netlify
 exports.handler = async (event, context) => {
-  return new Promise((resolve, reject) => {
-    const req = Object.assign({}, event, { headers: event.headers });
-    const res = {
-      setHeader: (key, value) => {
-        res.headers[key] = value;
-      },
-      headers: {},
-      status: (code) => {
-        res.statusCode = code;
-        return res;
-      },
-      json: (data) => {
-        res.body = JSON.stringify(data);
-        resolve({
-          statusCode: res.statusCode || 200,
-          body: res.body,
-          headers: res.headers,
-        });
-      },
-      send: (data) => {
-        res.body = data;
-        resolve({
-          statusCode: res.statusCode || 200,
-          body: res.body,
-          headers: res.headers,
-        });
-      },
-    };
+    return new Promise((resolve, reject) => {
+        const req = Object.assign({}, event, { headers: event.headers });
+        const res = {
+            setHeader: (key, value) => {
+                res.headers[key] = value;
+            },
+            headers: {},
+            status: (code) => {
+                res.statusCode = code;
+                return res;
+            },
+            json: (data) => {
+                res.body = JSON.stringify(data);
+                resolve({
+                    statusCode: res.statusCode || 200,
+                    body: res.body,
+                    headers: res.headers,
+                });
+            },
+            send: (data) => {
+                res.body = data;
+                resolve({
+                    statusCode: res.statusCode || 200,
+                    body: res.body,
+                    headers: res.headers,
+                });
+            },
+        };
 
-    app(req, res);
-  });
+        app(req, res);
+    });
 };
