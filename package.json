@@ -5,7 +5,9 @@
   "main": "app.js",
   "scripts": {
     "test": "node",
-    "start": "nodemon server.js"
+    "start": "node functions/api.js",
+    "dev": "netlify dev",
+    "build": "netlify deploy --prod"
   },
   "author": "Mercure Mekinda",
   "license": "ISC",
@@ -22,9 +24,11 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.2.2",
     "multer": "^1.4.5-lts.1",
+    "netlify-cli": "^17.36.2",
+    "netlify-lambda": "^2.0.16",
     "nodemailer": "^6.9.14",
     "nodemon": "^2.0.22",
-    "vercel": "^37.5.3",
+    "serverless-http": "^3.2.0",
     "winston": "^3.13.1"
   }
 }
