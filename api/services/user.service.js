@@ -2,6 +2,7 @@ require("dotenv").config();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require("../models/user.model");
+const UserProfile = require("../models/userProfile.model");
 
 async function save(fullname, email, role) {
   try {
@@ -40,22 +41,34 @@ async function save(fullname, email, role) {
   }
 }
 
-async function login(email, password) {
+async function login(userId, password) {
   try {
-    const user = await User.findOne({ email });
+    // Rechercher l'utilisateur dans UserProfile
+    const user = await UserProfile.findOne({ userId });
+
+    // Vérifier si l'utilisateur existe
     if (!user) {
       return { success: false, error: 'User not found' };
     }
-    if (user.role !== 'admin') {
-      return { success: false, error: 'Access denied' };
+
+    // Vérifier si l'utilisateur est actif
+    if (!user.activeUser) {
+      return { success: false, error: 'User is not active' };
     }
 
+    // Comparer le mot de passe
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return { success: false, error: 'Invalid credentials' };
     }
 
-    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    // Générer un token JWT
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
     return { success: true, token, user };
   } catch (error) {
     return { success: false, error: error.message };

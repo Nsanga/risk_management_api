@@ -1,13 +1,42 @@
 const UserProfile = require('../models/userProfile.model');
 const ResponseService = require('./response.service');
-const UploadService = require('./uploadFile.service');
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail', // Utilisez le service de messagerie de votre choix
+  auth: {
+    user: process.env.EMAIL_USER, // Votre adresse email
+    pass: process.env.EMAIL_PASS  // Votre mot de passe email ou un mot de passe d'application
+  }
+});
 
 async function createProfile(req, res) {
   try {
     const profileData = req.body;
 
+    profileData.password = process.env.DEFAULT_PASSWORD;
+
     const newUserProfile = new UserProfile(profileData);
     await newUserProfile.save();
+
+    if (profileData.activeUser) {
+      const emails = [profileData.email];
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: emails.join(', '),
+        subject: 'Activation du compte',
+        text: `Votre compte à été activé avec succès.\n\nVos informations de connexion sont les suivante::\n-> User id: ${profileData.userId}\n🔐: ${process.env.DEFAULT_PASSWORD}`
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          logger.error('Error sending email:', error);
+        } else {
+          logger.info('Email sent:', info.response);
+        }
+      });
+    }
 
     return ResponseService.created(res, { message: 'Profile created successfully', newUserProfile });
   } catch (error) {
@@ -35,10 +64,38 @@ async function updateProfile(req, res) {
     const profileId = req.params.id;
     const updatedData = req.body;
 
+    // Récupérer le profil avant mise à jour pour comparer le champ `activeUser`
+    const currentProfile = await UserProfile.findById(profileId);
+
+    if (!currentProfile) {
+      return ResponseService.notFound(res, { message: 'Profile not found' });
+    }
+
+    // Mettre à jour le profil
     const profile = await UserProfile.findByIdAndUpdate(profileId, updatedData, { new: true });
 
     if (!profile) {
       return ResponseService.notFound(res, { message: 'Profile not found' });
+    }
+
+    // Vérifier si `activeUser` passe de false à true
+    if (!currentProfile.activeUser && updatedData.activeUser) {
+      const emails = [updatedData.email];
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: emails.join(', '),
+        subject: 'Activation du compte',
+        text: `Votre compte à été activé avec succès.\n\nVos informations de connexion sont les suivante:\n-> User id: ${updatedData.userId}\n🔐: ${process.env.DEFAULT_PASSWORD}`
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          logger.error('Error sending email:', error);
+        } else {
+          logger.info('Email sent:', info.response);
+        }
+      });
     }
 
     return ResponseService.success(res, { message: 'Profile updated successfully', profile });
