@@ -1,7 +1,0 @@
-[build]
-  functions = "functions"
-
-[dev]
-  command = "npm run start"  # Si vous avez un script start dans package.json
-  port = 4500  # Indiquez ici le port sur lequel votre application tourne
-  targetPort = 8888  # Le port cible pour Netlify (si différent)

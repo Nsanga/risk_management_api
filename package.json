@@ -5,13 +5,12 @@
   "main": "app.js",
   "scripts": {
     "test": "node",
-    "start": "node functions/api.js",
-    "dev": "netlify dev",
-    "build": "netlify deploy --prod"
+    "start": "nodemon server.js"
   },
   "author": "Mercure Mekinda",
   "license": "ISC",
   "dependencies": {
+    "@ngrok/ngrok": "^1.4.1",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "cloudinary": "^2.3.0",
@@ -24,11 +23,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.2.2",
     "multer": "^1.4.5-lts.1",
-    "netlify-cli": "^17.36.2",
-    "netlify-lambda": "^2.0.16",
     "nodemailer": "^6.9.14",
     "nodemon": "^2.0.22",
-    "serverless-http": "^3.2.0",
     "winston": "^3.13.1"
   }
 }
