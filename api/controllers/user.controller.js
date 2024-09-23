@@ -24,8 +24,8 @@ const updateUser = async (req, res) => {
 }
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
-  const response = await userService.login(email, password);
+  const { userId, password } = req.body;
+  const response = await userService.login(userId, password);
   if (response.success) {
     return ResponseService.success(res, { token: response.token , user:response.user });
   } else {
