@@ -5,6 +5,7 @@ const {setupUserRoutes} = require('./user.route');
 const entityRoutes = require('./entity.route');
 const profileRoutes = require('./userprofile.route');
 const userGroupRoutes = require('./userGroup.route');
+const riskControlRoutes = require('./riskControl.route');
 
 const router = express.Router();
 
@@ -20,7 +21,8 @@ const appRoutes = () => {
   entityRoutes(app)
   profileRoutes(app)
   userGroupRoutes(app);
-  return app;
+  riskControlRoutes(app);
+  return app; 
 };
 
 module.exports = appRoutes;

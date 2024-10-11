@@ -1,10 +1,5 @@
 const Entity = require('../models/entity.model');
 const ResponseService = require('./response.service');
-const UploadService = require('./uploadFile.service');
-
-function generateReferenceNumber() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
 
 async function createEntity(req, res) {
   try {

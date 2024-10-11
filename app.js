@@ -49,7 +49,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Create webserver
+// Create the HTTP server using the Express app
 const server = http.createServer(app);
 
 // Start the server on port 4500
