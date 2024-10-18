@@ -1,12 +1,27 @@
 const EntityRiskControl = require('../models/entityRiskControlSchema.model'); // Importation du modèle RiskControl
 const ResponseService = require('../services/response.service'); // Un service pour gérer les réponses
 
+let currentNumber = 1; // Point de départ à 00001
+
+function generateReferenceNumber() {
+  if (currentNumber > 99999) {
+    // Réinitialiser à 1 si la limite de 99999 est atteinte
+    currentNumber = 1;
+  }
+  
+  const referenceNumber = currentNumber.toString().padStart(5, '0');
+  currentNumber++; // Incrémenter pour le prochain numéro
+  return referenceNumber;
+}
+
 async function createEntityRiskControl(req, res) {
   try {
-    const EntityRiskControlData = req.body;
+    const entityRiskControlData = req.body;
+    entityRiskControlData.riskRef = generateReferenceNumber();
+    entityRiskControlData.controlRef = generateReferenceNumber();
 
     // Créer et sauvegarder un nouveau RiskControl
-    const newEntityRiskControl = new EntityRiskControl(EntityRiskControlData);
+    const newEntityRiskControl = new EntityRiskControl(entityRiskControlData);
     await newEntityRiskControl.save();
 
     return ResponseService.created(res, { message: 'RiskControl créé avec succès', newEntityRiskControl });

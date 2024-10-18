@@ -61,18 +61,23 @@ const controlSchema = new Schema({
   },
   frequency: {
     type: String,
-    default: 'N/A'
+  },
+  frequencyAssessment: {
+    type: String,
   },
   keyControl: {
     type: Boolean,
     default: false
   },
-  lastOperator: {
-    type: Schema.Types.ObjectId,
-    ref: 'UserProfile',
-    default: null
+  lastOperation: {
+    type: Date,
+    required: false
   },
   nextOperation: {
+    type: Date,
+    required: false
+  },
+  nextAssessment: {
     type: Date,
     required: false
   },
