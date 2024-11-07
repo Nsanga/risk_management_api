@@ -1,26 +1,41 @@
-const EntityRiskControl = require('../models/entityRiskControlSchema.model'); // Importation du modèle RiskControl
+const EntityRiskControl = require('../models/entityRiskControl.model'); // Importation du modèle RiskControl
 const ResponseService = require('../services/response.service'); // Un service pour gérer les réponses
 
-let currentNumber = 1; // Point de départ à 00001
+let currentRiskNumber = 1; // Point de départ pour riskRef
+let currentControlNumber = 1; // Point de départ pour controlRef
+let currentRefNumber = 1; // Point de départ pour le champ ref
 
-function generateReferenceNumber() {
+function generateReferenceNumber(currentNumber) {
   if (currentNumber > 99999) {
     // Réinitialiser à 1 si la limite de 99999 est atteinte
     currentNumber = 1;
   }
-  
+
   const referenceNumber = currentNumber.toString().padStart(5, '0');
-  currentNumber++; // Incrémenter pour le prochain numéro
   return referenceNumber;
 }
 
 async function createEntityRiskControl(req, res) {
   try {
     const entityRiskControlData = req.body;
-    entityRiskControlData.riskRef = generateReferenceNumber();
-    entityRiskControlData.controlRef = generateReferenceNumber();
+    const { entity } = entityRiskControlData; // Extraire l'entité des données
 
-    // Créer et sauvegarder un nouveau RiskControl
+    // Générer les numéros de référence pour riskRef, controlRef et ref unique
+    const riskRef = generateReferenceNumber(currentRiskNumber);
+    const controlRef = generateReferenceNumber(currentControlNumber);
+    const ref = generateReferenceNumber(currentRefNumber);
+
+    // Incrémenter les numéros de référence pour les prochaines créations
+    currentRiskNumber++;
+    currentControlNumber++;
+    currentRefNumber++;
+
+    // Ajouter les références générées aux données
+    entityRiskControlData.riskRef = riskRef;
+    entityRiskControlData.controlRef = controlRef;
+    entityRiskControlData.ref = ref; // Ajout du champ ref unique pour ce contrôle
+
+    // Créer et sauvegarder un nouveau RiskControl même si un contrôle pour la même entité existe
     const newEntityRiskControl = new EntityRiskControl(entityRiskControlData);
     await newEntityRiskControl.save();
 
@@ -30,6 +45,7 @@ async function createEntityRiskControl(req, res) {
     return ResponseService.internalServerError(res, { error: error.message });
   }
 }
+
 
 async function getEntityRiskControlById(req, res) {
   try {
@@ -51,9 +67,28 @@ async function getEntityRiskControlById(req, res) {
 async function updateEntityRiskControl(req, res) {
   try {
     const entityRiskControlId = req.params.id;
-    const updatedData = req.body;
+    let updatedData = req.body;
 
-    // Mettre à jour le RiskControl
+    // Convertir les champs `owner`, `nominee`, `reviewer` à `null` si la valeur est une chaîne vide
+    const convertEmptyStringToNull = (obj, fields) => {
+      fields.forEach(field => {
+        if (obj[field] === "") {
+          obj[field] = null;
+        }
+      });
+    };
+
+    // Vérifier et convertir les champs pour les risques
+    if (updatedData.risks) {
+      convertEmptyStringToNull(updatedData.risks, ['owner', 'nominee', 'reviewer']);
+    }
+
+    // Vérifier et convertir les champs pour les contrôles
+    if (updatedData.controls) {
+      convertEmptyStringToNull(updatedData.controls, ['owner', 'nominee', 'reviewer']);
+    }
+
+    // Mettre à jour l'EntityRiskControl avec les nouvelles données
     const entityRiskControl = await EntityRiskControl.findByIdAndUpdate(entityRiskControlId, updatedData, { new: true });
 
     if (!entityRiskControl) {
@@ -66,6 +101,7 @@ async function updateEntityRiskControl(req, res) {
     return ResponseService.internalServerError(res, { error: error.message });
   }
 }
+
 
 async function deleteEntityRiskControl(req, res) {
   try {
