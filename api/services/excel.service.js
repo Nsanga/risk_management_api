@@ -45,6 +45,10 @@ class ExcelService {
 
           console.log('Données extraites du fichier Excel :', data);
 
+          // Supprimez toutes les données existantes de la collection EntityRiskControl
+          await EntityRiskControl.deleteMany({});
+          console.log("Anciennes données supprimées avec succès.");
+
           // Trouver le début et la fin du tableau `TOP Risks`
           const riskTableStartIndex = data.findIndex(row => row[0] === 'TOP Risks') + 2;
           const riskTableEndIndex = data.findIndex((row, index) => index > riskTableStartIndex && row.length === 0);
@@ -55,14 +59,13 @@ class ExcelService {
 
           // Parcourir chaque ligne de `riskData`
           for (const row of riskData) {
-              const entityDescription = row[1]; // Nom de l'entité dans le fichier Excel
-              console.log(`row[2] : ${row[2]}`);
+              const businessFunction = row[2]; // Champ businessFunction dans le fichier Excel
 
               // Recherchez l'entité correspondante dans la base de données par description
-              const entity = await Entity.findOne({ description: entityDescription });
+              const entity = await Entity.findOne({ description: businessFunction });
 
               if (!entity) {
-                  console.log(`Entité non trouvée pour la description : ${entityDescription}`);
+                  console.log(`Entité non trouvée pour la description (businessFunction) : ${businessFunction}`);
                   continue; // Passez à la ligne suivante si l'entité n'est pas trouvée
               }
 
@@ -104,7 +107,7 @@ class ExcelService {
 
               // Initialisez le groupe pour chaque entité si nécessaire
               if (!groupedData[entityId]) {
-                  groupedData[entityId] = { risks: [], controls: [] };
+                  groupedData[entityId] = { entity: entityId, risks: [], controls: [] };
               }
 
               // Ajouter le risque et le contrôle dans les groupes correspondants
@@ -114,12 +117,12 @@ class ExcelService {
 
           // Conversion en tableau pour faciliter l'affichage et l'insertion dans MongoDB
           const result = Object.entries(groupedData).map(([entityReference, data]) => ({
-              entityReference,
+              entity: data.entity, // Ajoutez l'ID de l'entité ici
               risks: data.risks,
               controls: data.controls,
           }));
 
-          // Sauvegarder dans la base de données
+          // Sauvegarder les nouvelles données dans la base de données
           await EntityRiskControl.insertMany(result);
           console.log('Données sauvegardées dans la base de données avec succès.');
           return result;
