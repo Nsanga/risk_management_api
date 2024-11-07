@@ -13,7 +13,7 @@ const excelRoutes = app => {
   router.post('/upload', upload.single('file'), excelController.extractDataFromExcel);
   
   // Récupérer les données pour une entité spécifique
-  router.get('/entity/:entityRefId', excelController.getEntityRiskControlById);
+  router.get('/entity/show', excelController.getEntityRiskControlById);
   
   // Copier un risque ou un contrôle vers une autre entité
   router.post('/copy/:entityRefId/:referenceNumber/:type', excelController.copyRiskOrControl);

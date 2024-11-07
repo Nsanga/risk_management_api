@@ -2,153 +2,137 @@ const XLSX = require('xlsx');
 const Entity = require('../models/entity.model');
 const EntityRiskControl = require('../models/entityRiskControl.model');
 
-const riskKeyMapping = {
-    "S/N": "serialNumber",
-    "Business/ Function": "businessFunction",
-    "Produits/Processus/Description du système ": "productProcessDescription",
-    "Processus Sous traités": "outsourcedProcess",
-    "Catégorie du Risque": "riskCategory",
-    "\r\nCatégorie de l'évenement du risque": "riskEventCategory",
-    "Catégorie causale": "causalCategory",
-    "Résumé Sommaire du Risque clé": "keyRiskSummary",
-    "Description du risque clé": "keyRiskDescription",
-    "\r\nProbabilité d'Occurrence du risque": "riskProbability",
-    "Impact du risque": "riskImpact",
-    "Total": "total",
-    "Niveau du Risque": "riskLevel",
-    "Utilisateurs": "user"
-};
-const controlKeyMapping = {
-    "Résumé du contrôle de clé": "keyControlSummary",
-    "Description du contrôle de clé": "keyControlDescription",
-    "Description de la méthodologie de surveillance du contrôle (plan de test)": "controlMonitoringMethodology",
-    "Note du Contrôle": "controlRating",
-    "\r\nNiveau du risque résiduel": "residualRiskLevel",
-    "Control Preventife/Detectif": "preventiveDetective",
-    "Cycle du suivi": "monitoringCycle",
-    "Source de documents  consultés": "documentSource",
-    "Existing/New/Obsolete": "controlStatus",
-    "Utilisateurs": "user"
-};
-
 class ExcelService {
-    constructor(file) {
-        this.file = file; // Assurez-vous que le fichier est passé ici
-    }
-
-    async readExcelFile() {
-      try {
-          const workbook = XLSX.read(this.file.buffer, { type: 'buffer' });
-          const sheetName = workbook.SheetNames[0];
-          const sheet = workbook.Sheets[sheetName];
-          const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-          console.log('Données extraites du fichier Excel :', data);
-
-          // Supprimez toutes les données existantes de la collection EntityRiskControl
-          await EntityRiskControl.deleteMany({});
-          console.log("Anciennes données supprimées avec succès.");
-
-          // Trouver le début et la fin du tableau `TOP Risks`
-          const riskTableStartIndex = data.findIndex(row => row[0] === 'TOP Risks') + 2;
-          const riskTableEndIndex = data.findIndex((row, index) => index > riskTableStartIndex && row.length === 0);
-          const riskData = data.slice(riskTableStartIndex, riskTableEndIndex > 0 ? riskTableEndIndex : undefined);
-
-          // Initialiser l'objet de regroupement
-          const groupedData = {};
-
-          // Parcourir chaque ligne de `riskData`
-          for (const row of riskData) {
-              const businessFunction = row[2]; // Champ businessFunction dans le fichier Excel
-
-              // Recherchez l'entité correspondante dans la base de données par description
-              const entity = await Entity.findOne({ description: businessFunction });
-
-              if (!entity) {
-                  console.log(`Entité non trouvée pour la description (businessFunction) : ${businessFunction}`);
-                  continue; // Passez à la ligne suivante si l'entité n'est pas trouvée
-              }
-
-              // ID de l'entité trouvée
-              const entityId = entity._id;
-
-              // Structurer l'objet de risque
-              const risk = {
-                  serialNumber: row[0],
-                  entityReference: entityId,
-                  businessFunction: row[2],
-                  description: row[3],
-                  outsourcedProcesses: row[4],
-                  riskCategory: row[5],
-                  riskEventCategory: row[6],
-                  causalCategory: row[7],
-                  riskSummary: row[8],
-                  riskDescription: row[9],
-                  occurrenceProbability: row[10],
-                  riskImpact: row[11],
-                  total: row[12],
-                  users: row[13],
-                  riskLevel: row[14],
-              };
-
-              // Structurer l'objet de contrôle
-              const control = {
-                  controlSummary: row[15],
-                  controlDescription: row[16],
-                  monitoringMethodology: row[17],
-                  controlRating: row[18],
-                  residualRiskLevel: row[19],
-                  preventiveDetectiveControl: row[20],
-                  monitoringCycle: row[21],
-                  documentSources: row[22],
-                  usersAgain: row[23],
-                  status: row[24],
-              };
-
-              // Initialisez le groupe pour chaque entité si nécessaire
-              if (!groupedData[entityId]) {
-                  groupedData[entityId] = { entity: entityId, risks: [], controls: [] };
-              }
-
-              // Ajouter le risque et le contrôle dans les groupes correspondants
-              groupedData[entityId].risks.push(risk);
-              groupedData[entityId].controls.push(control);
-          }
-
-          // Conversion en tableau pour faciliter l'affichage et l'insertion dans MongoDB
-          const result = Object.entries(groupedData).map(([entityReference, data]) => ({
-              entity: data.entity, // Ajoutez l'ID de l'entité ici
-              risks: data.risks,
-              controls: data.controls,
-          }));
-
-          // Sauvegarder les nouvelles données dans la base de données
-          await EntityRiskControl.insertMany(result);
-          console.log('Données sauvegardées dans la base de données avec succès.');
-          return result;
-
-      } catch (error) {
-          console.error('Erreur lors de la lecture du fichier Excel :', error.message);
-          return null;
-      }
+  constructor(file) {
+    this.file = file; // Assurez-vous que le fichier est passé ici
   }
-     
 
-    async getEntityRiskControlById(entityRefId) {
-        try {
-            const entityRiskControl = await EntityRiskControl.findOne({ entityRefId })
-                .populate({
-                    path: 'entityRefId',
-                    model: 'Entity'
-                });
+  async readExcelFile() {
+    try {
+      const workbook = XLSX.read(this.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-            return entityRiskControl;
-        } catch (error) {
-            throw new Error('Erreur lors de la récupération des données: ' + error.message);
+      console.log('Données extraites du fichier Excel :', data);
+
+      // Supprimez toutes les données existantes de la collection EntityRiskControl
+      await EntityRiskControl.deleteMany({});
+      console.log("Anciennes données supprimées avec succès.");
+
+      // Trouver le début et la fin du tableau `TOP Risks`
+      const riskTableStartIndex = data.findIndex(row => row[0] === 'TOP Risks') + 2;
+      const riskTableEndIndex = data.findIndex((row, index) => index > riskTableStartIndex && row.length === 0);
+      const riskData = data.slice(riskTableStartIndex, riskTableEndIndex > 0 ? riskTableEndIndex : undefined);
+
+      // Initialiser l'objet de regroupement
+      const groupedData = {};
+
+      // Parcourir chaque ligne de `riskData`
+      for (const row of riskData) {
+        const businessFunction = row[2]; // Champ businessFunction dans le fichier Excel
+
+        // Recherchez l'entité correspondante dans la base de données par description
+        const entity = await Entity.findOne({ description: businessFunction });
+
+        if (!entity) {
+          console.log(`Entité non trouvée pour la description (businessFunction) : ${businessFunction}`);
+          continue; // Passez à la ligne suivante si l'entité n'est pas trouvée
         }
-    }
 
-    // Copier un risque ou un contrôle vers une autre entité
+        // ID de l'entité trouvée
+        const entityId = entity._id;
+
+        // Structurer l'objet de risque
+        const risk = {
+          serialNumber: row[0],
+          entityReference: entityId,
+          businessFunction: row[2],
+          description: row[3],
+          outsourcedProcesses: row[4],
+          riskCategory: row[5],
+          riskEventCategory: row[6],
+          causalCategory: row[7],
+          riskSummary: row[8],
+          riskDescription: row[9],
+          occurrenceProbability: row[10],
+          riskImpact: row[11],
+          total: row[12],
+          users: row[13],
+          riskLevel: row[14],
+        };
+
+        // Structurer l'objet de contrôle
+        const control = {
+          controlSummary: row[15],
+          controlDescription: row[16],
+          monitoringMethodology: row[17],
+          controlRating: row[18],
+          residualRiskLevel: row[19],
+          preventiveDetectiveControl: row[20],
+          monitoringCycle: row[21],
+          documentSources: row[22],
+          usersAgain: row[23],
+          status: row[24],
+        };
+
+        // Initialisez le groupe pour chaque entité si nécessaire
+        if (!groupedData[entityId]) {
+          groupedData[entityId] = { entity: entityId, risks: [], controls: [] };
+        }
+
+        // Ajouter le risque et le contrôle dans les groupes correspondants
+        groupedData[entityId].risks.push(risk);
+        groupedData[entityId].controls.push(control);
+      }
+
+      // Conversion en tableau pour faciliter l'affichage et l'insertion dans MongoDB
+      const result = Object.entries(groupedData).map(([entityReference, data]) => ({
+        entity: data.entity, // Ajoutez l'ID de l'entité ici
+        risks: data.risks,
+        controls: data.controls,
+      }));
+
+      // Sauvegarder les nouvelles données dans la base de données
+      await EntityRiskControl.insertMany(result);
+      console.log('Données sauvegardées dans la base de données avec succès.');
+      return result;
+
+    } catch (error) {
+      console.error('Erreur lors de la lecture du fichier Excel :', error.message);
+      return null;
+    }
+  }
+
+  async getEntityRiskControlById() {
+    try {
+      // Récupère toutes les données en peuplant les informations de l'entité
+      const data = await EntityRiskControl.find()
+        .populate('entity') // Peuple le champ 'entity' avec les détails de l'entité associée
+        .exec();
+
+      // Formate les données pour être plus lisibles
+      const formattedData = data.map(doc => ({
+        entity: {
+          referenceId: doc.entity.referenceId,
+          description: doc.entity.description,
+          ram: doc.entity.ram,
+          location: doc.entity.location,
+          businessLine: doc.entity.businessLine,
+        },
+        risks: doc.risks,
+        controls: doc.controls
+      }));
+
+      console.log('Données récupérées de la base de données:', formattedData);
+      return formattedData;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des données :', error.message);
+      throw new Error('Impossible de récupérer les données.');
+    }
+  }
+
+  // Copier un risque ou un contrôle vers une autre entité
   async copyRiskOrControl(entityRefId, referenceNumber, type) {
     try {
       const sourceDoc = await EntityRiskControl.findOne({ 'risks.referenceNumber': referenceNumber });
