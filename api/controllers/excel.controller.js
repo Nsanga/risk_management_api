@@ -28,8 +28,26 @@ exports.extractDataFromExcel = (req, res) => {
         });
     }
 };
+
+exports.getEntityRiskControlsByEntityName = async (req, res) => {
+    const { entityName } = req.body;
+    const excelService = new ExcelService();
+
+    try {
+        // Appelle le service pour récupérer les données
+        const entityRiskControl = await excelService.getEntityRiskControlsByEntityName(entityName);
+
+        if (!entityRiskControl) {
+            return res.status(404).json({ success: false, message: "Aucune donnée trouvée pour cette entité." });
+        }
+
+        res.status(200).json({ success: true, data: entityRiskControl });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erreur lors de la récupération des données", error: error.message });
+    }
+};
  
-// Contrôleur pour récupérer les risques et contrôles d’une entité par ID
+// Contrôleur pour récupérer les risques et contrôles d’une entité par ID 
 exports.getEntityRiskControlById = async (req, res) => {
     const { entityRefId } = req.params;
     const excelService = new ExcelService();

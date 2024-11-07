@@ -7,6 +7,10 @@ class ExcelService {
     this.file = file; // Assurez-vous que le fichier est passé ici
   }
 
+  generateReference(prefix, count) {
+    return `${prefix}${String(count).padStart(4, '0')}`;
+  }
+
   async readExcelFile() {
     try {
       const workbook = XLSX.read(this.file.buffer, { type: 'buffer' });
@@ -28,6 +32,9 @@ class ExcelService {
       // Initialiser l'objet de regroupement
       const groupedData = {};
 
+      let riskCount = 1;
+      let controlCount = 1;
+
       // Parcourir chaque ligne de `riskData`
       for (const row of riskData) {
         const businessFunction = row[2]; // Champ businessFunction dans le fichier Excel
@@ -43,8 +50,12 @@ class ExcelService {
         // ID de l'entité trouvée
         const entityId = entity._id;
 
+        const riskReference = this.generateReference('RSK', riskCount++);
+        const controlReference = this.generateReference('CTR', controlCount++);
+
         // Structurer l'objet de risque
         const risk = {
+          reference: riskReference,
           serialNumber: row[0],
           entityReference: entityId,
           businessFunction: row[2],
@@ -58,22 +69,28 @@ class ExcelService {
           occurrenceProbability: row[10],
           riskImpact: row[11],
           total: row[12],
-          users: row[13],
-          riskLevel: row[14],
+          ownerRisk: row[13],
+          nomineeRisk: row[14],
+          reviewerRisk: row[15],
+          riskLevel: row[16],
         };
 
         // Structurer l'objet de contrôle
         const control = {
-          controlSummary: row[15],
-          controlDescription: row[16],
-          monitoringMethodology: row[17],
-          controlRating: row[18],
-          residualRiskLevel: row[19],
-          preventiveDetectiveControl: row[20],
-          monitoringCycle: row[21],
-          documentSources: row[22],
-          usersAgain: row[23],
-          status: row[24],
+          reference: controlReference,
+          controlSummary: row[17],
+          controlDescription: row[18],
+          monitoringMethodology: row[19],
+          controlRating: row[20],
+          residualRiskLevel: row[21],
+          preventiveDetectiveControl: row[22],
+          monitoringCycle: row[23],
+          documentSources: row[24],
+          ownerControl: row[25],
+          nomineeControl: row[26],
+          reviewerControl: row[27],
+          library: row[28],
+          status: row[29],
         };
 
         // Initialisez le groupe pour chaque entité si nécessaire
@@ -101,6 +118,40 @@ class ExcelService {
     } catch (error) {
       console.error('Erreur lors de la lecture du fichier Excel :', error.message);
       return null;
+    }
+  }
+
+  async getEntityRiskControlsByEntityName(entityName) {
+    try {
+      // Recherche l'entité en fonction de son nom (description)
+      const entity = await Entity.findOne({ description: entityName });
+
+      if (!entity) {
+        throw new Error(`Entité non trouvée pour le nom : ${entityName}`);
+      }
+
+      // Récupère les EntityRiskControl associés à cette entité
+      const data = await EntityRiskControl.find({ entity: entity._id })
+        .populate('entity') // Peuple les détails de l'entité
+        .exec();
+
+      // Formate les données
+      const formattedData = data.map(doc => ({
+        entity: {
+          referenceId: doc.entity.referenceId,
+          description: doc.entity.description,
+          ram: doc.entity.ram,
+          location: doc.entity.location,
+          businessLine: doc.entity.businessLine,
+        },
+        risks: doc.risks,
+        controls: doc.controls
+      }));
+
+      return formattedData;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des données :', error.message);
+      throw new Error(`Impossible de récupérer les données pour l'entité : ${entityName}`);
     }
   }
 
