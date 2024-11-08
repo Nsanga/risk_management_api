@@ -67,3 +67,4 @@
 2024-09-14 10:20:38 error: Error creating event: Cannot read properties of null (reading 'email')
 2024-09-14 10:27:45 info: Email sent:
 >>>>>>> 2e974d48a478047540bcd29341eb553a15aca1a9
+2024-10-24 16:53:13 error: Error creating event: E11000 duplicate key error collection: risk_management_test.events index: num_ref_1 dup key: { num_ref: "00001" }
