@@ -68,12 +68,12 @@ exports.getEntityRiskControlById = async (req, res) => {
 
 // Contrôleur pour copier un risque ou un contrôle vers une autre entité
 exports.copyRiskOrControl = async (req, res) => {
-    const { entityRefId, referenceNumber, type } = req.params;
+    const { itemId, targetEntityId, itemType } = req.body;
     const excelService = new ExcelService();
 
     try {
         // Appelle le service pour copier le risque/contrôle
-        const copiedItem = await excelService.copyRiskOrControl(entityRefId, referenceNumber, type);
+        const copiedItem = await excelService.copyRiskOrControl(itemId, targetEntityId, itemType);
 
         res.status(200).json({ success: true, data: copiedItem });
     } catch (error) {
@@ -83,12 +83,12 @@ exports.copyRiskOrControl = async (req, res) => {
 
 // Contrôleur pour déplacer un risque ou un contrôle vers une autre entité
 exports.moveRiskOrControl = async (req, res) => {
-    const { entityRefId, referenceNumber, type } = req.params;
+    const { itemId, targetEntityId, itemType } = req.body;
     const excelService = new ExcelService();
 
     try {
         // Appelle le service pour déplacer le risque/contrôle
-        const movedItem = await excelService.moveRiskOrControl(entityRefId, referenceNumber, type);
+        const movedItem = await excelService.moveRiskOrControl(itemId, targetEntityId, itemType);
 
         res.status(200).json({ success: true, data: movedItem });
     } catch (error) {

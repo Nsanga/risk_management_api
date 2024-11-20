@@ -1,6 +1,7 @@
 const XLSX = require('xlsx');
 const Entity = require('../models/entity.model');
 const EntityRiskControl = require('../models/entityRiskControl.model');
+const mongoose = require('mongoose');
 
 class ExcelService {
   constructor(file) {
@@ -18,42 +19,31 @@ class ExcelService {
       const sheet = workbook.Sheets[sheetName];
       const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-      console.log('Données extraites du fichier Excel :', data);
-
-      // Supprimez toutes les données existantes de la collection EntityRiskControl
       await EntityRiskControl.deleteMany({});
       console.log("Anciennes données supprimées avec succès.");
 
-      // Trouver le début et la fin du tableau `TOP Risks`
       const riskTableStartIndex = data.findIndex(row => row[0] === 'TOP Risks') + 2;
       const riskTableEndIndex = data.findIndex((row, index) => index > riskTableStartIndex && row.length === 0);
       const riskData = data.slice(riskTableStartIndex, riskTableEndIndex > 0 ? riskTableEndIndex : undefined);
 
-      // Initialiser l'objet de regroupement
       const groupedData = {};
-
       let riskCount = 1;
       let controlCount = 1;
 
-      // Parcourir chaque ligne de `riskData`
       for (const row of riskData) {
-        const businessFunction = row[2]; // Champ businessFunction dans le fichier Excel
+        const businessFunction = row[2];
 
-        // Recherchez l'entité correspondante dans la base de données par description
         const entity = await Entity.findOne({ description: businessFunction });
-
         if (!entity) {
-          console.log(`Entité non trouvée pour la description (businessFunction) : ${businessFunction}`);
-          continue; // Passez à la ligne suivante si l'entité n'est pas trouvée
+          console.log(`Entité non trouvée pour la description : ${businessFunction}`);
+          continue;
         }
 
-        // ID de l'entité trouvée
         const entityId = entity._id;
 
         const riskReference = this.generateReference('RSK', riskCount++);
         const controlReference = this.generateReference('CTR', controlCount++);
 
-        // Structurer l'objet de risque
         const risk = {
           reference: riskReference,
           serialNumber: row[0],
@@ -75,7 +65,6 @@ class ExcelService {
           riskLevel: row[16],
         };
 
-        // Structurer l'objet de contrôle
         const control = {
           reference: controlReference,
           controlSummary: row[17],
@@ -93,25 +82,22 @@ class ExcelService {
           status: row[29],
         };
 
-        // Initialisez le groupe pour chaque entité si nécessaire
         if (!groupedData[entityId]) {
-          groupedData[entityId] = { entity: entityId, risks: [], controls: [] };
+          groupedData[entityId] = { entity, risks: [], controls: [] };
         }
 
-        // Ajouter le risque et le contrôle dans les groupes correspondants
         groupedData[entityId].risks.push(risk);
         groupedData[entityId].controls.push(control);
       }
 
-      // Conversion en tableau pour faciliter l'affichage et l'insertion dans MongoDB
-      const result = Object.entries(groupedData).map(([entityReference, data]) => ({
-        entity: data.entity, // Ajoutez l'ID de l'entité ici
-        risks: data.risks,
-        controls: data.controls,
+      const result = Object.values(groupedData).map(({ entity, risks, controls }) => ({
+        entity: new mongoose.Types.ObjectId(entity._id), // Convertissez en ObjectId ici
+        risks,
+        controls,
       }));
 
-      // Sauvegarder les nouvelles données dans la base de données
       await EntityRiskControl.insertMany(result);
+
       console.log('Données sauvegardées dans la base de données avec succès.');
       return result;
 
@@ -121,41 +107,7 @@ class ExcelService {
     }
   }
 
-  async getEntityRiskControlsByEntityName(entityName) {
-    try {
-      // Recherche l'entité en fonction de son nom (description)
-      const entity = await Entity.findOne({ description: entityName });
-
-      if (!entity) {
-        throw new Error(`Entité non trouvée pour le nom : ${entityName}`);
-      }
-
-      // Récupère les EntityRiskControl associés à cette entité
-      const data = await EntityRiskControl.find({ entity: entity._id })
-        .populate('entity') // Peuple les détails de l'entité
-        .exec();
-
-      // Formate les données
-      const formattedData = data.map(doc => ({
-        entity: {
-          referenceId: doc.entity.referenceId,
-          description: doc.entity.description,
-          ram: doc.entity.ram,
-          location: doc.entity.location,
-          businessLine: doc.entity.businessLine,
-        },
-        risks: doc.risks,
-        controls: doc.controls
-      }));
-
-      return formattedData;
-    } catch (error) {
-      console.error('Erreur lors de la récupération des données :', error.message);
-      throw new Error(`Impossible de récupérer les données pour l'entité : ${entityName}`);
-    }
-  }
-
-  async getEntityRiskControlById() {
+  async getEntityRiskControlsByEntityName() {
     try {
       // Récupère toutes les données en peuplant les informations de l'entité
       const data = await EntityRiskControl.find()
@@ -182,71 +134,78 @@ class ExcelService {
       throw new Error('Impossible de récupérer les données.');
     }
   }
-
-  // Copier un risque ou un contrôle vers une autre entité
-  async copyRiskOrControl(entityRefId, referenceNumber, type) {
+  async copyRiskOrControl(itemId, targetEntityId, itemType = 'risk') {
     try {
-      const sourceDoc = await EntityRiskControl.findOne({ 'risks.referenceNumber': referenceNumber });
-      const destinationDoc = await EntityRiskControl.findOne({ entityRefId });
+      // Récupérer l'entité source contenant le risque ou le contrôle
+      const sourceEntity = await EntityRiskControl.findOne({
+        [itemType === 'risk' ? 'risks._id' : 'controls._id']: itemId
+      });
 
-      if (!sourceDoc || !destinationDoc) {
-        throw new Error('Document source ou destination non trouvé');
+      if (!sourceEntity) {
+        throw new Error(`${itemType} avec l'ID ${itemId} non trouvé dans la base de données.`);
       }
 
-      let itemToCopy;
-      if (type === 'risk') {
-        itemToCopy = sourceDoc.risks.find(risk => risk.referenceNumber === referenceNumber);
-        if (itemToCopy) {
-          itemToCopy.referenceNumber = String(destinationDoc.risks.length + 1).padStart(5, '0');  // Nouvelle référence
-          destinationDoc.risks.push(itemToCopy);
-        }
-      } else if (type === 'control') {
-        itemToCopy = sourceDoc.controls.find(control => control.referenceNumber === referenceNumber);
-        if (itemToCopy) {
-          itemToCopy.referenceNumber = String(destinationDoc.controls.length + 1).padStart(5, '0');  // Nouvelle référence
-          destinationDoc.controls.push(itemToCopy);
-        }
+      // Trouver le risque ou le contrôle spécifique dans l'entité source
+      const item = sourceEntity[itemType === 'risk' ? 'risks' : 'controls'].id(itemId);
+
+      if (!item) {
+        throw new Error(`${itemType} avec l'ID ${itemId} non trouvé.`);
       }
 
-      await destinationDoc.save();
-      return itemToCopy;
+      // Récupérer le nombre de risques/contrôles pour générer une nouvelle référence
+      const count = await EntityRiskControl.countDocuments({
+        entity: targetEntityId,
+        [itemType === 'risk' ? 'risks' : 'controls']: { $exists: true }
+      });
+
+      // Générer une nouvelle référence pour l'élément copié
+      const newReferenceNumber = this.generateReference(itemType === 'risk' ? 'RSK' : 'CTR', count + 1);
+
+      // Créer une copie de l'élément avec la nouvelle référence et le `referenceNumber`
+      const copiedItem = {
+        ...item.toObject(),
+        _id: new mongoose.Types.ObjectId(), // Nouveau ID pour éviter les conflits
+        referenceNumber: newReferenceNumber, // Assurez-vous que `referenceNumber` est défini ici
+      };
+
+      // Ajouter l'élément copié dans la nouvelle entité
+      const targetEntity = await EntityRiskControl.findOneAndUpdate(
+        { entity: targetEntityId },
+        { $push: { [itemType === 'risk' ? 'risks' : 'controls']: copiedItem } },
+        { new: true, upsert: true }
+      );
+
+      return {
+        message: `${itemType} copié avec succès vers l'entité cible.`,
+        targetEntity
+      };
+
     } catch (error) {
-      throw new Error('Erreur lors de la copie: ' + error.message);
+      console.error('Erreur lors de la copie du risque/contrôle :', error.message);
+      throw error;
     }
   }
 
-  // Déplacer un risque ou un contrôle vers une autre entité
-  async moveRiskOrControl(entityRefId, referenceNumber, type) {
+  // Fonction pour déplacer un risque ou un contrôle vers une autre entité
+  async moveRiskOrControl(itemId, targetEntityId, itemType = 'risk') {
     try {
-      const sourceDoc = await EntityRiskControl.findOne({ 'risks.referenceNumber': referenceNumber });
-      const destinationDoc = await EntityRiskControl.findOne({ entityRefId });
+      // Copier l'élément vers la nouvelle entité
+      const copyResult = await this.copyRiskOrControl(itemId, targetEntityId, itemType);
 
-      if (!sourceDoc || !destinationDoc) {
-        throw new Error('Document source ou destination non trouvé');
-      }
+      // Supprimer l'élément de l'entité d'origine
+      await EntityRiskControl.findOneAndUpdate(
+        { [itemType === 'risk' ? 'risks._id' : 'controls._id']: itemId },
+        { $pull: { [itemType === 'risk' ? 'risks' : 'controls']: { _id: itemId } } }
+      );
 
-      let itemToMove;
-      if (type === 'risk') {
-        itemToMove = sourceDoc.risks.find(risk => risk.referenceNumber === referenceNumber);
-        sourceDoc.risks = sourceDoc.risks.filter(risk => risk.referenceNumber !== referenceNumber);
-        if (itemToMove) {
-          itemToMove.referenceNumber = String(destinationDoc.risks.length + 1).padStart(5, '0');  // Nouvelle référence
-          destinationDoc.risks.push(itemToMove);
-        }
-      } else if (type === 'control') {
-        itemToMove = sourceDoc.controls.find(control => control.referenceNumber === referenceNumber);
-        sourceDoc.controls = sourceDoc.controls.filter(control => control.referenceNumber !== referenceNumber);
-        if (itemToMove) {
-          itemToMove.referenceNumber = String(destinationDoc.controls.length + 1).padStart(5, '0');  // Nouvelle référence
-          destinationDoc.controls.push(itemToMove);
-        }
-      }
+      return {
+        message: `${itemType} déplacé avec succès vers l'entité cible.`,
+        targetEntity: copyResult.targetEntity
+      };
 
-      await sourceDoc.save();
-      await destinationDoc.save();
-      return itemToMove;
     } catch (error) {
-      throw new Error('Erreur lors du déplacement: ' + error.message);
+      console.error('Erreur lors du déplacement du risque/contrôle :', error.message);
+      throw error;
     }
   }
 }

@@ -18,10 +18,10 @@ const excelRoutes = app => {
   router.get('/entity/show', excelController.getEntityRiskControlById);
   
   // Copier un risque ou un contrôle vers une autre entité
-  router.post('/copy/:entityRefId/:referenceNumber/:type', excelController.copyRiskOrControl);
+  router.post('/copy', excelController.copyRiskOrControl);
   
   // Déplacer un risque ou un contrôle vers une autre entité
-  router.post('/move/:entityRefId/:referenceNumber/:type', excelController.moveRiskOrControl);
+  router.post('/move', excelController.moveRiskOrControl);
 };
 
 module.exports = excelRoutes;
