@@ -12,7 +12,7 @@ const excelRoutes = app => {
   // Routes pour l'upload et la gestion des entités Risk-Control
   router.post('/upload', upload.single('file'), excelController.extractDataFromExcel);
   
-  router.post('/getRiskControlsByEntityName', excelController.getEntityRiskControlsByEntityName);
+  router.post('/get-entity', excelController.getEntityRiskControlsByEntityName);
 
   // Récupérer les données pour une entité spécifique
   router.get('/entity/show', excelController.getEntityRiskControlById);

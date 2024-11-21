@@ -12,6 +12,13 @@ class ExcelService {
     return `${prefix}${String(count).padStart(4, '0')}`;
   }
 
+  generateRandomReference(prefix, timestamp) {
+    // Convertit le timestamp en un format unique mais limité à 5 chiffres
+    const randomPart = String(timestamp).slice(-5); // Prend les 5 derniers chiffres du timestamp
+    return `${prefix}${randomPart}`;
+  }
+
+
   async readExcelFile() {
     try {
       const workbook = XLSX.read(this.file.buffer, { type: 'buffer' });
@@ -107,14 +114,20 @@ class ExcelService {
     }
   }
 
-  async getEntityRiskControlsByEntityName() {
+  async getEntityRiskControlsByEntityName(entityName) {
     try {
-      // Récupère toutes les données en peuplant les informations de l'entité
-      const data = await EntityRiskControl.find()
-        .populate('entity') // Peuple le champ 'entity' avec les détails de l'entité associée
+      // Récupère l'entité par son nom
+      const entity = await Entity.findOne({ description: entityName });
+  
+      if (!entity) {
+        throw new Error(`Entité '${entityName}' introuvable`);
+      }
+  
+      // Récupère les risques et contrôles associés à cette entité
+      const data = await EntityRiskControl.find({ entity: entity._id })
+        .populate('entity') // Peupler les détails de l'entité
         .exec();
-
-      // Formate les données pour être plus lisibles
+  
       const formattedData = data.map(doc => ({
         entity: {
           referenceId: doc.entity.referenceId,
@@ -124,88 +137,131 @@ class ExcelService {
           businessLine: doc.entity.businessLine,
         },
         risks: doc.risks,
-        controls: doc.controls
+        controls: doc.controls,
       }));
-
-      console.log('Données récupérées de la base de données:', formattedData);
+  
       return formattedData;
     } catch (error) {
       console.error('Erreur lors de la récupération des données :', error.message);
-      throw new Error('Impossible de récupérer les données.');
+      throw new Error('Impossible de récupérer les données pour l\'entité.');
     }
-  }
-  async copyRiskOrControl(itemId, targetEntityId, itemType = 'risk') {
-    try {
-      // Récupérer l'entité source contenant le risque ou le contrôle
-      const sourceEntity = await EntityRiskControl.findOne({
-        [itemType === 'risk' ? 'risks._id' : 'controls._id']: itemId
-      });
+  }  
 
-      if (!sourceEntity) {
-        throw new Error(`${itemType} avec l'ID ${itemId} non trouvé dans la base de données.`);
+  async copyRiskOrControl(itemId, targetEntityId, type = 'risk') {
+    try {
+      // Vérifie que l'entité cible existe
+      const targetEntity = await Entity.findById(targetEntityId);
+      if (!targetEntity) {
+        throw new Error("Entité cible introuvable.");
       }
 
-      // Trouver le risque ou le contrôle spécifique dans l'entité source
-      const item = sourceEntity[itemType === 'risk' ? 'risks' : 'controls'].id(itemId);
+      // Recherche de l'élément à copier (risque ou contrôle)
+      const item = await EntityRiskControl.findOne({ [`${type}s._id`]: itemId });
+      if (!item) {
+        throw new Error(`${type === 'risk' ? 'Risque' : 'Contrôle'} introuvable.`);
+      }
+
+      // Trouve l'élément spécifique
+      const itemToCopy = item[`${type}s`].id(itemId);
+      if (!itemToCopy) {
+        throw new Error(`Élément ${type === 'risk' ? 'risque' : 'contrôle'} non trouvé.`);
+      }
+
+      // Crée une copie de l'élément
+      const copiedItem = {
+        ...itemToCopy.toObject(),
+        reference: this.generateRandomReference(type === 'risk' ? 'RSK' : 'CTR', Date.now()), // Nouveau `reference`
+        businessFunction: targetEntity.description,
+        _id: new mongoose.Types.ObjectId(), // Génère un nouvel ID
+      };
+
+      // Ajoute la copie à l'entité cible
+      let targetEntityRiskControl = await EntityRiskControl.findOne({ entity: targetEntityId });
+      if (!targetEntityRiskControl) {
+        // Crée une nouvelle entrée si aucune n'existe pour l'entité cible
+        targetEntityRiskControl = new EntityRiskControl({
+          entity: targetEntityId,
+          risks: type === 'risk' ? [copiedItem] : [],
+          controls: type === 'control' ? [copiedItem] : [],
+        });
+      } else {
+        // Ajoute la copie à l'entrée existante
+        targetEntityRiskControl[`${type}s`].push(copiedItem);
+      }
+      await targetEntityRiskControl.save();
+
+      return {
+        success: true,
+        message: `${type === 'risk' ? 'Risque' : 'Contrôle'} copié avec succès.`,
+        data: copiedItem,
+      };
+    } catch (error) {
+      console.error("Erreur lors de la copie :", error.message);
+      return {
+        success: false,
+        message: "Erreur lors de la copie.",
+        error: error.message,
+      };
+    }
+  }
+
+  async moveRiskOrControl(itemId, targetEntityId, type = 'risk') {
+    try {
+      // Vérifie que l'entité cible existe
+      const targetEntity = await Entity.findById(targetEntityId);
+      if (!targetEntity) {
+        throw new Error('Entité cible introuvable');
+      }
+
+      // Recherche de l'entité source contenant l'élément à déplacer
+      const item = await EntityRiskControl.findOne({
+        [`${type}s._id`]: itemId,
+      });
 
       if (!item) {
-        throw new Error(`${itemType} avec l'ID ${itemId} non trouvé.`);
+        throw new Error(`${type === 'risk' ? 'Risque' : 'Contrôle'} introuvable`);
       }
 
-      // Récupérer le nombre de risques/contrôles pour générer une nouvelle référence
-      const count = await EntityRiskControl.countDocuments({
-        entity: targetEntityId,
-        [itemType === 'risk' ? 'risks' : 'controls']: { $exists: true }
-      });
+      // Trouve l'élément à déplacer
+      const itemToMove = item[`${type}s`].find(({ _id }) => _id.toString() === itemId);
+      if (!itemToMove) {
+        throw new Error(`${type === 'risk' ? 'Risque' : 'Contrôle'} non trouvé dans l'entité source`);
+      }
 
-      // Générer une nouvelle référence pour l'élément copié
-      const newReferenceNumber = this.generateReference(itemType === 'risk' ? 'RSK' : 'CTR', count + 1);
+      // Supprime l'élément de l'entité actuelle
+      item[`${type}s`] = item[`${type}s`].filter(({ _id }) => _id.toString() !== itemId);
+      await item.save();
 
-      // Créer une copie de l'élément avec la nouvelle référence et le `referenceNumber`
-      const copiedItem = {
-        ...item.toObject(),
-        _id: new mongoose.Types.ObjectId(), // Nouveau ID pour éviter les conflits
-        referenceNumber: newReferenceNumber, // Assurez-vous que `referenceNumber` est défini ici
-      };
+      // Met à jour le champ businessFunction avec la description de l'entité cible
+      itemToMove.businessFunction = targetEntity.description;
 
-      // Ajouter l'élément copié dans la nouvelle entité
-      const targetEntity = await EntityRiskControl.findOneAndUpdate(
-        { entity: targetEntityId },
-        { $push: { [itemType === 'risk' ? 'risks' : 'controls']: copiedItem } },
-        { new: true, upsert: true }
-      );
-
-      return {
-        message: `${itemType} copié avec succès vers l'entité cible.`,
-        targetEntity
-      };
-
-    } catch (error) {
-      console.error('Erreur lors de la copie du risque/contrôle :', error.message);
-      throw error;
-    }
-  }
-
-  // Fonction pour déplacer un risque ou un contrôle vers une autre entité
-  async moveRiskOrControl(itemId, targetEntityId, itemType = 'risk') {
-    try {
-      // Copier l'élément vers la nouvelle entité
-      const copyResult = await this.copyRiskOrControl(itemId, targetEntityId, itemType);
-
-      // Supprimer l'élément de l'entité d'origine
-      await EntityRiskControl.findOneAndUpdate(
-        { [itemType === 'risk' ? 'risks._id' : 'controls._id']: itemId },
-        { $pull: { [itemType === 'risk' ? 'risks' : 'controls']: { _id: itemId } } }
-      );
+      // Ajoute l'élément à la nouvelle entité
+      const targetEntityRiskControl = await EntityRiskControl.findOne({ entity: targetEntityId });
+      if (!targetEntityRiskControl) {
+        // Crée une nouvelle entrée si aucune n'existe pour l'entité cible
+        const newEntry = new EntityRiskControl({
+          entity: targetEntityId,
+          risks: type === 'risk' ? [itemToMove] : [],
+          controls: type === 'control' ? [itemToMove] : [],
+        });
+        await newEntry.save();
+      } else {
+        // Ajoute l'élément à l'entrée existante
+        targetEntityRiskControl[`${type}s`].push(itemToMove);
+        await targetEntityRiskControl.save();
+      }
 
       return {
-        message: `${itemType} déplacé avec succès vers l'entité cible.`,
-        targetEntity: copyResult.targetEntity
+        success: true,
+        message: `${type === 'risk' ? 'Risque' : 'Contrôle'} déplacé avec succès`,
       };
-
     } catch (error) {
-      console.error('Erreur lors du déplacement du risque/contrôle :', error.message);
-      throw error;
+      console.error('Erreur lors du déplacement :', error.message);
+      return {
+        success: false,
+        message: 'Erreur lors du déplacement',
+        error: error.message,
+      };
     }
   }
 }
