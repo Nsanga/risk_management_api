@@ -94,7 +94,7 @@ exports.copyRiskOrControl = async (req, res) => {
         if (!itemId || !targetEntityId || !itemType) {
             return res.status(400).json({
                 success: false,
-                message: "Les champs itemId, targetEntityId et itemType sont requis.",
+                message: "Les champs itemId, targetEntityId et itemType sont requis.", 
             });
         }
 
