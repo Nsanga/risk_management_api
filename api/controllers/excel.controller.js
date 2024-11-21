@@ -30,23 +30,42 @@ exports.extractDataFromExcel = (req, res) => {
 };
 
 exports.getEntityRiskControlsByEntityName = async (req, res) => {
-    const { entityName } = req.body;
-    const excelService = new ExcelService();
-
-    try {
-        // Appelle le service pour récupérer les données
-        const entityRiskControl = await excelService.getEntityRiskControlsByEntityName(entityName);
-
-        if (!entityRiskControl) {
-            return res.status(404).json({ success: false, message: "Aucune donnée trouvée pour cette entité." });
-        }
-
-        res.status(200).json({ success: true, data: entityRiskControl });
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Erreur lors de la récupération des données", error: error.message });
+    const { entityName } = req.body; // Le nom de l'entité vient du corps de la requête
+  
+    if (!entityName) {
+      return res.status(400).json({
+        success: false,
+        message: "Le nom de l'entité est requis dans le corps de la requête."
+      });
     }
-};
- 
+  
+    const excelService = new ExcelService();
+  
+    try {
+      // Appel à la méthode pour récupérer les risques et contrôles de l'entité
+      const entityRiskControls = await excelService.getEntityRiskControlsByEntityName(entityName);
+  
+      if (!entityRiskControls || entityRiskControls.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: `Aucune donnée trouvée pour l'entité : ${entityName}`
+        });
+      }
+  
+      res.status(200).json({
+        success: true,
+        data: entityRiskControls
+      });
+    } catch (error) {
+      console.error(`Erreur lors de la récupération des données pour l'entité '${entityName}':`, error.message);
+      res.status(500).json({
+        success: false,
+        message: "Erreur lors de la récupération des données",
+        error: error.message
+      });
+    }
+  };  
+
 // Contrôleur pour récupérer les risques et contrôles d’une entité par ID 
 exports.getEntityRiskControlById = async (req, res) => {
     const { entityRefId } = req.params;
@@ -66,33 +85,92 @@ exports.getEntityRiskControlById = async (req, res) => {
     }
 };
 
-// Contrôleur pour copier un risque ou un contrôle vers une autre entité
 exports.copyRiskOrControl = async (req, res) => {
-    const { entityRefId, referenceNumber, type } = req.params;
+    const { itemId, targetEntityId, itemType } = req.body;
     const excelService = new ExcelService();
 
     try {
+        // Validation des entrées
+        if (!itemId || !targetEntityId || !itemType) {
+            return res.status(400).json({
+                success: false,
+                message: "Les champs itemId, targetEntityId et itemType sont requis.", 
+            });
+        }
+
+        if (!['risk', 'control'].includes(itemType)) {
+            return res.status(400).json({
+                success: false,
+                message: "Le type spécifié doit être 'risk' ou 'control'.",
+            });
+        }
+
         // Appelle le service pour copier le risque/contrôle
-        const copiedItem = await excelService.copyRiskOrControl(entityRefId, referenceNumber, type);
+        const copiedItem = await excelService.copyRiskOrControl(itemId, targetEntityId, itemType);
 
-        res.status(200).json({ success: true, data: copiedItem });
+        if (!copiedItem.success) {
+            return res.status(400).json({
+                success: false,
+                message: copiedItem.message,
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: copiedItem.message,
+            data: copiedItem.data,
+        });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Erreur lors de la copie de l'élément", error: error.message });
+        console.error("Erreur lors de la copie :", error);
+        res.status(500).json({
+            success: false,
+            message: "Erreur interne du serveur lors de la copie.",
+            error: error.message,
+        });
     }
 };
 
-// Contrôleur pour déplacer un risque ou un contrôle vers une autre entité
 exports.moveRiskOrControl = async (req, res) => {
-    const { entityRefId, referenceNumber, type } = req.params;
+    const { itemId, targetEntityId, itemType } = req.body;
     const excelService = new ExcelService();
 
     try {
-        // Appelle le service pour déplacer le risque/contrôle
-        const movedItem = await excelService.moveRiskOrControl(entityRefId, referenceNumber, type);
+        if (!itemId || !targetEntityId || !itemType) {
+            return res.status(400).json({
+                success: false,
+                message: "Les paramètres itemId, targetEntityId et itemType sont requis.",
+            });
+        }
 
-        res.status(200).json({ success: true, data: movedItem });
+        // Vérifie que le type est valide
+        if (!['risk', 'control'].includes(itemType)) {
+            return res.status(400).json({
+                success: false,
+                message: "Le type spécifié doit être 'risk' ou 'control'.",
+            });
+        }
+
+        // Appelle le service pour déplacer le risque/contrôle
+        const movedItem = await excelService.moveRiskOrControl(itemId, targetEntityId, itemType);
+
+        if (!movedItem.success) {
+            return res.status(400).json({
+                success: false,
+                message: movedItem.message,
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `${itemType === 'risk' ? 'Risque' : 'Contrôle'} déplacé avec succès.`,
+            data: movedItem,
+        });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Erreur lors du déplacement de l'élément", error: error.message });
+        console.error("Erreur lors du déplacement :", error);
+        res.status(500).json({
+            success: false,
+            message: "Erreur lors du déplacement de l'élément.",
+            error: error.message,
+        });
     }
 };
-
