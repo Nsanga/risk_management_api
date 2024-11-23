@@ -12,11 +12,10 @@ class ExcelService {
     return `${prefix}${String(count).padStart(4, '0')}`;
   }
 
-  generateRandomReference(prefix, timestamp) {
-    // Convertit le timestamp en un format unique mais limité à 5 chiffres
-    const randomPart = String(timestamp).slice(-5); // Prend les 5 derniers chiffres du timestamp
-    return `${prefix}${randomPart}`;
-  }
+  generateRandomReference = (prefix, timestamp) => {
+  const randomString = Math.random().toString(36).substring(2, 8).toUpperCase();
+  return `${prefix}-${timestamp}-${randomString}`;
+};
 
 
   async readExcelFile() {
