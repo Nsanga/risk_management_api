@@ -21,7 +21,7 @@ const excelRoutes = app => {
   router.post('/copy', excelController.copyRiskOrControls);
   
   // Déplacer un risque ou un contrôle vers une autre entité
-  router.post('/move', excelController.moveRiskOrControl);
+  router.post('/move', excelController.moveRiskOrControls);
 };
 
 module.exports = excelRoutes;
