@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const riskSchema = new Schema({
-  reference: { type: String, unique: true, },
+  reference: { type: String, unique: true, sparse: true },
   serialNumber: { type: String, required: true },
   businessFunction: { type: String, required: false },
   description: { type: String, required: true },
@@ -22,7 +22,7 @@ const riskSchema = new Schema({
 });
 
 const controlSchema = new Schema({
-  reference: { type: String, unique: true, },
+  reference: { type: String, unique: true, sparse: true },
   controlSummary: { type: String, required: true },
   controlDescription: { type: String, required: true },
   monitoringMethodology: { type: String, required: false },
