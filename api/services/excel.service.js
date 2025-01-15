@@ -163,19 +163,15 @@ class ExcelService {
 
   async copyRiskOrControls(itemIds, targetEntityId, type = "risk") {
     try {
-      // Vérifie que l'entité cible existe
       const targetEntity = await Entity.findById(targetEntityId);
       if (!targetEntity) {
         throw new Error("Entité cible introuvable.");
       }
 
-      // Recherche l'entité de contrôle des risques associée à l'entité cible
       let targetEntityRiskControl = await EntityRiskControl.findOne({
         entity: targetEntityId,
       });
-
       if (!targetEntityRiskControl) {
-        // Crée une nouvelle entrée si aucune n'existe pour l'entité cible
         targetEntityRiskControl = new EntityRiskControl({
           entity: targetEntityId,
           risks: [],
@@ -183,63 +179,42 @@ class ExcelService {
         });
       }
 
-      // Assurez-vous que les propriétés sont des tableaux
-      if (!Array.isArray(targetEntityRiskControl.controls)) {
-        targetEntityRiskControl.controls = [];
-      }
-      if (!Array.isArray(targetEntityRiskControl.risks)) {
-        targetEntityRiskControl.risks = [];
-      }
+      targetEntityRiskControl.controls = targetEntityRiskControl.controls || [];
+      targetEntityRiskControl.risks = targetEntityRiskControl.risks || [];
 
-      let copiedCount = 0; // Compteur d'éléments copiés
+      let copiedCount = 0;
 
-      // Parcourt tous les éléments à copier
       for (const itemId of itemIds) {
-        // Cherche l'élément (risque ou contrôle) à copier
         const item = await EntityRiskControl.findOne({
           [`${type}s._id`]: itemId,
         });
-
-        if (!item) {
-          console.error(
-            `${type === "risk" ? "Risque" : "Contrôle"} introuvable.`
-          );
-          continue;
-        }
+        if (!item) continue;
 
         const itemToCopy = item[`${type}s`].id(itemId);
-        if (!itemToCopy) {
-          console.error(
-            `Élément ${type === "risk" ? "risque" : "contrôle"} non trouvé.`
-          );
-          continue;
-        }
 
-        // Vérifier si le risque/contrôle est déjà présent dans l'entité cible
+        if (!itemToCopy) continue;
+
         const alreadyExists = targetEntityRiskControl[`${type}s`].some(
-          (existingItem) => existingItem.description === itemToCopy.description
-        ); // Utilisez la référence ou un autre attribut unique
+          (existingItem) =>
+            existingItem[
+              `${type === "risk" ? "description" : "controlDescription"}`
+            ] ===
+            itemToCopy[
+              `${type === "risk" ? "description" : "controlDescription"}`
+            ]
+        );
 
         if (alreadyExists) {
-          // Si l'élément existe déjà, retournez cette réponse
-          return {
-            success: false,
-            message: "Élément déjà existant",
-            data: {},
-          };
+          return { success: false, message: "Élément déjà existant", data: {} };
         }
 
-        // Génère une nouvelle référence unique pour le risque/contrôle copié
         const newReference = this.generateRandomReference(
           type === "risk" ? "RSK" : "CTR",
           Date.now()
         );
-
-        if (!newReference) {
+        if (!newReference)
           throw new Error("La référence générée est invalide.");
-        }
 
-        // Prépare l'élément copié
         const copiedItem = {
           ...itemToCopy.toObject(),
           reference: newReference,
@@ -247,20 +222,63 @@ class ExcelService {
           _id: new mongoose.Types.ObjectId(),
         };
 
-        // Ajout de l'élément (risque ou contrôle) à l'entité cible
         targetEntityRiskControl[`${type}s`].push(copiedItem);
-        copiedCount++; // Augmente le compteur
+        copiedCount++;
+
+        const relatedIndex = item[`${type}s`].findIndex(
+          (current) => current._id.toString() === itemToCopy._id.toString()
+        );
+
+        if (
+          type === "risk" &&
+          relatedIndex >= 0 &&
+          relatedIndex < item.controls.length
+        ) {
+          const controlToCopy = item.controls[relatedIndex];
+          if (controlToCopy) {
+            const controlAlreadyExists = targetEntityRiskControl.controls.some(
+              (existingControl) =>
+                existingControl.controlDescription ===
+                controlToCopy.controlDescription
+            );
+
+            if (!controlAlreadyExists) {
+              const copiedControl = {
+                ...controlToCopy.toObject(),
+                reference: this.generateRandomReference("CTR", Date.now()),
+                businessFunction: targetEntity.description,
+                _id: new mongoose.Types.ObjectId(),
+              };
+              targetEntityRiskControl.controls.push(copiedControl);
+            }
+          }
+        } else if (
+          type === "control" &&
+          relatedIndex >= 0 &&
+          relatedIndex < item.risks.length
+        ) {
+          const riskToCopy = item.risks[relatedIndex];
+          if (riskToCopy) {
+            const riskAlreadyExists = targetEntityRiskControl.risks.some(
+              (existingRisk) =>
+                existingRisk.riskDescription === riskToCopy.riskDescription
+            );
+
+            if (!riskAlreadyExists) {
+              const copiedRisk = {
+                ...riskToCopy.toObject(),
+                reference: this.generateRandomReference("RSK", Date.now()),
+                businessFunction: targetEntity.description,
+                _id: new mongoose.Types.ObjectId(),
+              };
+              targetEntityRiskControl.risks.push(copiedRisk);
+            }
+          }
+        }
       }
 
-      // Sauvegarde les modifications dans la base de données si des éléments ont été copiés
-      if (copiedCount > 0) {
-        console.log(`${copiedCount} éléments ont été copiés.`);
-        await targetEntityRiskControl.save();
-      } else {
-        console.log("Aucun élément n'a été copié.");
-      }
+      if (copiedCount > 0) await targetEntityRiskControl.save();
 
-      // Structure la réponse en fonction du succès de l'opération
       return {
         success: true,
         message: `Tous les ${
@@ -269,7 +287,6 @@ class ExcelService {
         data: targetEntityRiskControl,
       };
     } catch (error) {
-      console.error("Erreur lors de la copie :", error.message);
       return {
         success: false,
         message: "Erreur lors de la copie.",
