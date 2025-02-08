@@ -363,10 +363,24 @@ class ExcelService {
             continue;
           }
 
-          const movedItem = {
-            ...itemToMove.toObject(),
-            _id: new mongoose.Types.ObjectId(),
-          };
+          const newReference = this.generateRandomReference(
+            type === "risk" ? "RSK" : "CTR",
+            Date.now()
+          );
+
+          if (!newReference)
+            throw new Error("La référence générée est invalide.");
+          const movedItem =
+            targetEntity.description === "Corbeille "
+              ? {
+                  ...itemToMove.toObject(),
+                  _id: new mongoose.Types.ObjectId(),
+                }
+              : {
+                  ...itemToMove.toObject(),
+                  reference: newReference,
+                  _id: new mongoose.Types.ObjectId(),
+                };
 
           targetEntityRiskControl[`${type}s`].push(movedItem);
           movedCount++;
@@ -381,10 +395,18 @@ class ExcelService {
             item.controls.length > indexToRemove
           ) {
             const controlToMove = item.controls[indexToRemove];
-            const movedControl = {
-              ...controlToMove.toObject(),
-              _id: new mongoose.Types.ObjectId(),
-            };
+
+            const movedControl =
+              targetEntity.description === "Corbeille "
+                ? {
+                    ...controlToMove.toObject(),
+                    _id: new mongoose.Types.ObjectId(),
+                  }
+                : {
+                    ...controlToMove.toObject(),
+                    reference: this.generateRandomReference("CTR", Date.now()),
+                    _id: new mongoose.Types.ObjectId(),
+                  };
 
             const controlExists = targetEntityRiskControl.controls.some(
               (existingControl) =>
@@ -401,10 +423,17 @@ class ExcelService {
             item.risks.length > indexToRemove
           ) {
             const riskToMove = item.risks[indexToRemove];
-            const movedRisk = {
-              ...riskToMove.toObject(),
-              _id: new mongoose.Types.ObjectId(),
-            };
+            const movedRisk =
+              targetEntity.description === "Corbeille "
+                ? {
+                    ...riskToMove.toObject(),
+                    _id: new mongoose.Types.ObjectId(),
+                  }
+                : {
+                    ...riskToMove.toObject(),
+                    reference: this.generateRandomReference("CTR", Date.now()),
+                    _id: new mongoose.Types.ObjectId(),
+                  };
 
             const riskExists = targetEntityRiskControl.risks.some(
               (existingRisk) =>
