@@ -53,6 +53,11 @@
 2024-08-31 17:53:28 error: Error creating event: Event validation failed: details.entityOfOrigin: Path `details.entityOfOrigin` is required., details.entityOfDetection: Path `details.entityOfDetection` is required., details.nominee: Path `details.nominee` is required., details.owner: Path `details.owner` is required.
 2024-08-31 17:55:15 error: Error creating event: Event validation failed: details.entityOfOrigin: Path `details.entityOfOrigin` is required., details.entityOfDetection: Path `details.entityOfDetection` is required., details.nominee: Path `details.nominee` is required., details.owner: Path `details.owner` is required.
 2024-09-03 06:38:19 error: Error creating event: E11000 duplicate key error collection: risk_management_test.events index: num_ref_1 dup key: { num_ref: "00001" }
+<<<<<<< HEAD
+2024-09-03 14:33:26 error: Error creating event: Cast to ObjectId failed for value "" (type string) at path "_id" for model "Entity"
+2024-09-07 12:17:48 error: Error creating event: Event validation failed: details.reviewer: Cast to ObjectId failed for value "" (type string) at path "details.reviewer" because of "BSONError"
+2024-09-07 12:23:24 error: Error creating event: Cannot read properties of null (reading 'email')
+=======
 2024-09-07 11:20:34 error: Error creating event: Event validation failed: details.reviewer: Cast to ObjectId failed for value "" (type string) at path "details.reviewer" because of "BSONError"
 2024-09-07 11:40:50 error: Error creating event: E11000 duplicate key error collection: risk_management_test.events index: num_ref_1 dup key: { num_ref: "00002" }
 2024-09-14 09:04:47 error: Error creating event: E11000 duplicate key error collection: risk_management_test.events index: num_ref_1 dup key: { num_ref: "00002" }
@@ -61,3 +66,5 @@
 2024-09-14 10:19:52 error: Error creating event: Cannot read properties of null (reading 'email')
 2024-09-14 10:20:38 error: Error creating event: Cannot read properties of null (reading 'email')
 2024-09-14 10:27:45 info: Email sent:
+>>>>>>> 2e974d48a478047540bcd29341eb553a15aca1a9
+2024-10-24 16:53:13 error: Error creating event: E11000 duplicate key error collection: risk_management_test.events index: num_ref_1 dup key: { num_ref: "00001" }
