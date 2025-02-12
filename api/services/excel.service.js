@@ -145,7 +145,7 @@ class ExcelService {
           description: doc.entity.description,
           ram: doc.entity.ram,
           location: doc.entity.location,
-          businessLine: doc.entity.businessLine,
+          businessLine: doc.entity.businessLine, 
         },
         risks: doc.risks,
         controls: doc.controls,
