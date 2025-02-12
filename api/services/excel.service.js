@@ -163,6 +163,20 @@ class ExcelService {
 
   async copyRiskOrControls(itemIds, targetEntityId, type = "risk") {
     try {
+      let items = await EntityRiskControl.find();
+
+      const totalRisks = items.reduce(
+        (sum, item) => sum + item.risks.length,
+        0
+      );
+      const totalControls = items.reduce(
+        (sum, item) => sum + item.controls.length,
+        0
+      );
+
+      let riskCounter = totalRisks;
+      let controlCounter = totalControls;
+
       const targetEntity = await Entity.findById(targetEntityId);
       if (!targetEntity) {
         throw new Error("Entité cible introuvable.");
@@ -183,8 +197,10 @@ class ExcelService {
       targetEntityRiskControl.risks = targetEntityRiskControl.risks || [];
 
       let copiedCount = 0;
+      let iterationCount = 0;
 
       for (const itemId of itemIds) {
+        iterationCount++;
         const item = await EntityRiskControl.findOne({
           [`${type}s._id`]: itemId,
         });
@@ -208,10 +224,10 @@ class ExcelService {
           return { success: false, message: "Élément déjà existant", data: {} };
         }
 
-        const newReference = this.generateRandomReference(
-          type === "risk" ? "RSK" : "CTR",
-          Date.now()
-        );
+        const newReference =
+          type === "risk"
+            ? `RSK${String(++riskCounter).padStart(5, "0")}`
+            : `CTR${String(++controlCounter).padStart(5, "0")}`;
         if (!newReference)
           throw new Error("La référence générée est invalide.");
 
@@ -245,7 +261,8 @@ class ExcelService {
             if (!controlAlreadyExists) {
               const copiedControl = {
                 ...controlToCopy.toObject(),
-                reference: this.generateRandomReference("CTR", Date.now()),
+                reference: `CTR${String(++controlCounter).padStart(5, "0")}`,
+                // reference: this.generateRandomReference("CTR", Date.now()),
                 businessFunction: targetEntity.description,
                 _id: new mongoose.Types.ObjectId(),
               };
@@ -267,7 +284,8 @@ class ExcelService {
             if (!riskAlreadyExists) {
               const copiedRisk = {
                 ...riskToCopy.toObject(),
-                reference: this.generateRandomReference("RSK", Date.now()),
+                reference: `RSK${String(++riskCounter).padStart(5, "0")}`,
+                // reference: this.generateRandomReference("RSK", Date.now()),
                 businessFunction: targetEntity.description,
                 _id: new mongoose.Types.ObjectId(),
               };

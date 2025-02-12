@@ -210,55 +210,60 @@ exports.moveRiskOrControls = async (req, res) => {
 
 exports.updateRiskOrControl = async (req, res) => {
   const { itemIds, itemType, updates } = req.body;
-
   try {
     // Validation des paramètres d'entrée
-    if (!itemIds || !itemType || !updates) {
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
       return res.status(400).json({
-        message: "Les paramètres itemIds, itemType et updates sont requis.",
+        message: "Un tableau de itemIds est requis.",
       });
     }
 
-    if (!["risk", "control"].includes(itemType)) {
+    if (!itemType || !["risk", "control"].includes(itemType)) {
       return res.status(400).json({
         message: "Le type spécifié doit être 'risk' ou 'control'.",
       });
     }
 
-    // Recherche de l'élément correspondant dans la base de données
-    const item = await EntityRiskControl.findOne({
-      [`${itemType}s._id`]: itemIds,
+    if (!updates || typeof updates !== "object") {
+      return res.status(400).json({
+        message: "Les mises à jour doivent être un objet valide.",
+      });
+    }
+
+    // Recherche de tous les éléments correspondants en une seule requête
+    const items = await EntityRiskControl.find({
+      [`${itemType}s._id`]: { $in: itemIds },
     });
 
-    if (!item) {
+    if (!items || items.length === 0) {
       return res.status(404).json({
-        message: `Aucun ${itemType} trouvé avec l'ID spécifié.`,
+        message: `Aucun ${itemType} trouvé avec les IDs spécifiés.`,
       });
     }
 
-    // Extraction de la liste des items et recherche de l'élément à modifier
-    const itemList = item[`${itemType}s`];
-    const elementIndex = itemList.findIndex((el) => el._id == itemIds);
+    let updatedItems = [];
 
-    if (elementIndex === -1) {
-      return res.status(404).json({
-        message: `Aucun élément correspondant trouvé pour l'ID spécifié.`,
+    // Mise à jour de chaque élément trouvé
+    items.forEach((item) => {
+      const itemList = item[`${itemType}s`];
+
+      itemIds.forEach((id) => {
+        const elementIndex = itemList.findIndex((el) => el._id == id);
+        if (elementIndex !== -1) {
+          Object.assign(itemList[elementIndex], updates);
+          updatedItems.push(itemList[elementIndex]);
+        }
       });
-    }
 
-    // Appliquer les modifications à l'élément
-    const elementToUpdate = itemList[elementIndex];
-    Object.assign(elementToUpdate, updates);
+      // Sauvegarde de l'élément après modification
+      item.save();
+    });
 
-    // Sauvegarder les modifications dans la base de données
-    await item.save();
-
-    // Retourner la réponse avec les données mises à jour
     return res.status(200).json({
       message: `${
-        itemType === "risk" ? "Risque" : "Contrôle"
+        itemType === "risk" ? "Risques" : "Contrôles"
       } mis à jour avec succès.`,
-      data: elementToUpdate,
+      data: updatedItems,
     });
   } catch (error) {
     console.error("Erreur :", error);
