@@ -315,6 +315,19 @@ class ExcelService {
 
   async moveRiskOrControls(itemIds, targetEntityId, type = "risk") {
     try {
+      let items = await EntityRiskControl.find();
+
+      const totalRisks = items.reduce(
+        (sum, item) => sum + item.risks.length,
+        0
+      );
+      const totalControls = items.reduce(
+        (sum, item) => sum + item.controls.length,
+        0
+      );
+
+      let riskCounter = totalRisks;
+      let controlCounter = totalControls;
       const targetEntity = await Entity.findById(targetEntityId);
       if (!targetEntity) {
         throw new Error("Entité cible introuvable.");
@@ -339,6 +352,7 @@ class ExcelService {
       }
 
       let movedCount = 0;
+      let iterationCount = 0;
       const errorItems = [];
 
       for (const itemId of itemIds) {
@@ -381,10 +395,10 @@ class ExcelService {
             continue;
           }
 
-          const newReference = this.generateRandomReference(
-            type === "risk" ? "RSK" : "CTR",
-            Date.now()
-          );
+          const newReference =
+            type === "risk"
+              ? `RSK${String(++riskCounter).padStart(5, "0")}`
+              : `CTR${String(++controlCounter).padStart(5, "0")}`;
 
           if (!newReference)
             throw new Error("La référence générée est invalide.");
@@ -422,7 +436,11 @@ class ExcelService {
                   }
                 : {
                     ...controlToMove.toObject(),
-                    reference: this.generateRandomReference("CTR", Date.now()),
+                    reference: `CTR${String(++controlCounter).padStart(
+                      5,
+                      "0"
+                    )}`,
+                    // reference: this.generateRandomReference("CTR", Date.now()),
                     _id: new mongoose.Types.ObjectId(),
                   };
 
@@ -449,7 +467,8 @@ class ExcelService {
                   }
                 : {
                     ...riskToMove.toObject(),
-                    reference: this.generateRandomReference("CTR", Date.now()),
+                    reference: `RSK${String(++riskCounter).padStart(5, "0")}`,
+                    // reference: this.generateRandomReference("CTR", Date.now()),
                     _id: new mongoose.Types.ObjectId(),
                   };
 
