@@ -56,3 +56,11 @@
 2024-09-14 10:19:23 error: Error creating event: Cannot read properties of null (reading 'email')
 2024-09-14 10:19:52 error: Error creating event: Cannot read properties of null (reading 'email')
 2024-09-14 10:20:38 error: Error creating event: Cannot read properties of null (reading 'email')
+2025-02-17 19:46:06 error: Error updating event: Cast to ObjectId failed for value "jean pascal Cedric Mapoure njiawue" (type string) at path "details.reviewer" because of "BSONError"
+2025-02-17 19:47:50 error: Error updating event: Cast to ObjectId failed for value "jean pascal Cedric Mapoure njiawue" (type string) at path "details.reviewer" because of "BSONError"
+2025-02-17 19:51:08 error: Error updating event: Cast to ObjectId failed for value "jean pascal Cedric Mapoure njiawue" (type string) at path "details.reviewer" because of "BSONError"
+2025-02-26 18:48:04 error: Error creating event: Cannot read properties of null (reading 'email')
+2025-02-26 18:52:12 error: Error creating event: E11000 duplicate key error collection: risk_management_test.events index: num_ref_1 dup key: { num_ref: "00001" }
+2025-02-26 18:57:55 error: Error creating event: E11000 duplicate key error collection: risk_management_test.events index: num_ref_1 dup key: { num_ref: "00001" }
+2025-02-26 19:44:38 error: Error creating event: emails is not defined
+2025-02-26 19:47:06 error: Error creating event: emails is not defined
