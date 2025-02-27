@@ -161,10 +161,38 @@ class ExcelService {
     }
   }
 
+  getNextReference(array, reference, key) {
+    console.log("====================================");
+    console.log("array", array);
+    console.log("ref", reference);
+    console.log("====================================");
+    const extractNumber = (ref) => parseInt(ref.replace(/[^\d]/g, ""));
+
+    // Trouver l'élément avec la plus grande référence supérieure à la référence donnée
+    const maxReference = array
+      .flatMap((item) => item[key])
+      .filter(
+        (item) => extractNumber(item.reference) > extractNumber(reference)
+      )
+      .reduce(
+        (max, current) => {
+          return extractNumber(current.reference) > extractNumber(max.reference)
+            ? current
+            : max;
+        },
+        { reference }
+      );
+
+    // Extraire la partie numérique de la plus grande référence et l'incrémenter de 1
+    const maxNumber = extractNumber(maxReference.reference);
+    const nextNumber = maxNumber + 1;
+
+    return nextNumber;
+  }
+
   async copyRiskOrControls(itemIds, targetEntityId, type = "risk") {
     try {
       let items = await EntityRiskControl.find();
-
       const totalRisks = items.reduce(
         (sum, item) => sum + item.risks.length,
         0
@@ -198,6 +226,7 @@ class ExcelService {
 
       let copiedCount = 0;
       let iterationCount = 0;
+      let refNumber = 0;
 
       for (const itemId of itemIds) {
         iterationCount++;
@@ -224,10 +253,28 @@ class ExcelService {
           return { success: false, message: "Élément déjà existant", data: {} };
         }
 
+        // const newReference =
+        //   type === "risk"
+        //     ? `RSK${String(++riskCounter).padStart(5, "0")}`
+        //     : `CTR${String(++controlCounter).padStart(5, "0")}`;
+
+        refNumber = iterationCount > 1 ? ++refNumber : this.getNextReference(
+          items,
+          itemToCopy.reference.toString(),
+          type === "risk" ? "risks" : "controls"
+        );
+
+        console.log("refNumber", refNumber, iterationCount);
+        
+
+        const codeRef = refNumber.toString().padStart(4, "0")
+
         const newReference =
           type === "risk"
-            ? `RSK${String(++riskCounter).padStart(5, "0")}`
-            : `CTR${String(++controlCounter).padStart(5, "0")}`;
+            ? `RSK${codeRef}`
+            : `CTR${codeRef}`;
+
+        console.log("newReference", newReference);
         if (!newReference)
           throw new Error("La référence générée est invalide.");
 
@@ -261,7 +308,7 @@ class ExcelService {
             if (!controlAlreadyExists) {
               const copiedControl = {
                 ...controlToCopy.toObject(),
-                reference: `CTR${String(++controlCounter).padStart(5, "0")}`,
+                reference: `CTR${codeRef}`,
                 // reference: this.generateRandomReference("CTR", Date.now()),
                 businessFunction: targetEntity.description,
                 _id: new mongoose.Types.ObjectId(),
@@ -283,8 +330,8 @@ class ExcelService {
 
             if (!riskAlreadyExists) {
               const copiedRisk = {
-                ...riskToCopy.toObject(),
-                reference: `RSK${String(++riskCounter).padStart(5, "0")}`,
+                ...riskToCopy,
+                reference: `RSK${codeRef}`,
                 // reference: this.generateRandomReference("RSK", Date.now()),
                 businessFunction: targetEntity.description,
                 _id: new mongoose.Types.ObjectId(),
