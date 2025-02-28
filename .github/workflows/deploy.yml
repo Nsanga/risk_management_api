@@ -20,7 +20,6 @@ jobs:
       - name: Récupérer le code du backend
         uses: actions/checkout@v3
         with:
-          # Le code du backend se trouve dans le sous-dossier "backend"
           path: backend
 
       - name: Déployer l'API sur le serveur
@@ -30,6 +29,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
+          cipher: aes128-ctr
+          use_insecure_cipher: true
           script: |
             echo "=== Vérification de la structure des dossiers ==="
             if [ ! -d "/var/www" ]; then
