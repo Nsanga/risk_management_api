@@ -22,42 +22,37 @@ jobs:
         with:
           path: backend
 
-      - name: Déployer l'API sur le serveur
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Transférer le code sur le serveur
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          cipher: aes128-ctr
-          use_insecure_cipher: true
+          source: "backend/risk_management_api/"
+          target: "/var/www/backend/"
+          recursive: true
+          strip_components: 1 # Ignore le premier dossier du chemin source
+
+      - name: Déployer l'API via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            echo "=== Vérification de la structure des dossiers ==="
-            if [ ! -d "/var/www" ]; then
-              sudo mkdir -p /var/www
-              echo "Répertoire /var/www créé"
-            else
-              echo "Répertoire /var/www existe déjà"
-            fi
-            if [ ! -d "/var/www/backend" ]; then
-              sudo mkdir -p /var/www/backend
-              echo "Répertoire /var/www/backend créé"
-            else
-              echo "Répertoire /var/www/backend existe déjà"
-            fi
-            if [ ! -d "/var/www/backend/risk_management_api" ]; then
-              sudo mkdir -p /var/www/backend/risk_management_api
-              echo "Répertoire /var/www/backend/risk_management_api créé"
-            else
-              echo "Répertoire /var/www/backend/risk_management_api existe déjà"
-            fi
-            echo "=== Déploiement de l'API Server Express ==="
+            echo "=== Structure du dossier après transfert ==="
+            ls -la /var/www/backend/risk_management_api
+            
+            echo "=== Installation des dépendances ==="
             cd /var/www/backend/risk_management_api
-            git pull origin main
-            npm install --production
-            pm2 reload risk_management_api || pm2 start index.js --name risk_management_api --watch
+            npm ci --production
+            
+            echo "=== Redémarrage PM2 ==="
+            pm2 reload risk_management_api --update-env || \
+            pm2 start index.js --name risk_management_api --watch --update-env
             pm2 save
-            echo "✓ Déploiement de l'API réussi !"
+
 
   notification:
     needs: deploy-api
@@ -79,20 +74,20 @@ jobs:
           echo "Liste des destinataires : $recipients"
 
       - name: Envoyer email de succès
-        if: ${{ needs.deploy-api.result == 'success' }}
+        if: ${{ needs.deploy-api.result == 'success' && steps.recipients.outputs.allEmails != '' }}
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
           server_port: 465
           subject: "🎉 Déploiement de l'API réussi !"
-          body: "🚀 Le déploiement de l'API Server Express a été réalisé avec succès en mode watch. PM2 a sauvegardé la configuration. 👍"
+          body: "🚀 Le déploiement de l'API Server Express a été réalisé avec succès et PM2 a sauvegardé la configuration. 👍"
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
           from: ${{ secrets.SMTP_FROM }}
           to: ${{ steps.recipients.outputs.allEmails }}
 
       - name: Envoyer email d'échec
-        if: ${{ needs.deploy-api.result == 'failure' }}
+        if: ${{ needs.deploy-api.result == 'failure' && steps.recipients.outputs.allEmails != '' }}
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -103,3 +98,7 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           from: ${{ secrets.SMTP_FROM }}
           to: ${{ steps.recipients.outputs.allEmails }}
+
+      - name: Aucune notification envoyée
+        if: ${{ steps.recipients.outputs.allEmails == '' }}
+        run: echo "Aucun destinataire défini, aucun email n'a été envoyé."
