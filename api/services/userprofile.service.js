@@ -1,6 +1,7 @@
 const UserProfile = require('../models/userProfile.model');
 const ResponseService = require('./response.service');
 const nodemailer = require('nodemailer');
+const logger = require("../helpers/logger");
 
 const transporter = nodemailer.createTransport({
   service: 'gmail', // Utilisez le service de messagerie de votre choix
