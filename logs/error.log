@@ -75,3 +75,4 @@
 2025-02-26 19:44:38 error: Error creating event: emails is not defined
 2025-02-26 19:47:06 error: Error creating event: emails is not defined
 >>>>>>> f6f9ee1c99c65c316eafb1f771bdb3d2818962cb
+2025-02-28 14:30:57 error: Error sending email: No recipients defined
