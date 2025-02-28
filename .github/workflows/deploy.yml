@@ -20,13 +20,8 @@ jobs:
       - name: Récupérer le code du backend
         uses: actions/checkout@v3
         with:
-          # Le code backend se trouve dans le sous-dossier "backend"
+          # Le code du backend se trouve dans le sous-dossier "backend"
           path: backend
-
-      - name: Installer les dépendances du backend localement (facultatif)
-        run: |
-          cd backend/risk_management_api
-          npm install
 
       - name: Déployer l'API sur le serveur
         uses: appleboy/ssh-action@v1.0.3
@@ -36,15 +31,30 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
           script: |
+            echo "=== Vérification de la structure des dossiers ==="
+            if [ ! -d "/var/www" ]; then
+              sudo mkdir -p /var/www
+              echo "Répertoire /var/www créé"
+            else
+              echo "Répertoire /var/www existe déjà"
+            fi
+            if [ ! -d "/var/www/backend" ]; then
+              sudo mkdir -p /var/www/backend
+              echo "Répertoire /var/www/backend créé"
+            else
+              echo "Répertoire /var/www/backend existe déjà"
+            fi
+            if [ ! -d "/var/www/backend/risk_management_api" ]; then
+              sudo mkdir -p /var/www/backend/risk_management_api
+              echo "Répertoire /var/www/backend/risk_management_api créé"
+            else
+              echo "Répertoire /var/www/backend/risk_management_api existe déjà"
+            fi
             echo "=== Déploiement de l'API Server Express ==="
             cd /var/www/backend/risk_management_api
-            # Mettre à jour le code depuis Git
             git pull origin main
-            # Installer les dépendances en production
             npm install --production
-            # Recharger ou démarrer l'application avec PM2 en mode watch
             pm2 reload risk_management_api || pm2 start index.js --name risk_management_api --watch
-            # Sauvegarder la configuration PM2 pour qu'elle soit restaurée en cas de redémarrage du serveur
             pm2 save
             echo "✓ Déploiement de l'API réussi !"
 
