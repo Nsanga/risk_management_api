@@ -23,9 +23,14 @@ jobs:
         with:
           path: backend
 
-      - name: Vérifier la structure locale
+      - name: Vérifier la structure complète après checkout
         run: |
+          echo "==== Structure complète après checkout ===="
+          tree -L 3
+          echo "==== Contenu de backend ===="
           ls -la backend
+          echo "==== Contenu de backend/risk_management_api ===="
+          ls -la backend/risk_management_api || echo "⚠️ Dossier backend/risk_management_api introuvable"
 
       - name: Préparer la structure du dossier sur le serveur
         uses: appleboy/ssh-action@v1.0.3
@@ -35,8 +40,18 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
           script: |
+            echo "=== Préparation du dossier sur le serveur ==="
             sudo mkdir -p /var/www/backend/risk_management_api
             sudo chown -R $USER:$USER /var/www/backend/risk_management_api
+            echo "=== Structure du dossier serveur avant transfert ==="
+            ls -la /var/www/backend/risk_management_api
+
+      - name: Vérification avant transfert SCP
+        run: |
+          echo "==== Vérification avant transfert SCP ===="
+          echo "Contenu de backend/risk_management_api à transférer:"
+          ls -la backend/risk_management_api
+          echo "==== Fin vérification ===="
 
       - name: Transférer le code sur le serveur
         uses: appleboy/scp-action@master
@@ -47,9 +62,9 @@ jobs:
           port: 22
           source: "backend/risk_management_api/"
           target: "/var/www/backend/risk_management_api/"
-          strip_components: 2  # Corrigé pour bien gérer la structure si besoin
+          strip_components: 2
 
-      - name: Déployer l'API via SSH
+      - name: Vérifier la structure après transfert sur le serveur
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -59,11 +74,19 @@ jobs:
           script: |
             echo "=== Structure du dossier après transfert ==="
             ls -la /var/www/backend/risk_management_api
-            
+
+      - name: Déployer l'API via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script: |
             echo "=== Installation des dépendances ==="
-            cd /var/www/backend/risk_management_api
+            cd /var/www/backend/risk_management_api || exit 1
             npm ci --production
-            
+
             echo "=== Redémarrage PM2 ==="
             pm2 reload risk_management_api --update-env || \
             pm2 start index.js --name risk_management_api --watch --update-env
