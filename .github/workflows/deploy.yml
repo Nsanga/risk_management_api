@@ -1,0 +1,94 @@
+name: Déploiement de l'API Server Express
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CI: false
+      DEFAULT_PASSWORD: ${{ secrets.DEFAULT_PASSWORD }}
+      URL_DB_LIVE: ${{ secrets.URL_DB_LIVE }}
+      URL_DB_LOCAL: ${{ secrets.URL_DB_LOCAL }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      NGROK_AUTHTOKEN: ${{ secrets.NGROK_AUTHTOKEN }}
+    steps:
+      - name: Récupérer le code du backend
+        uses: actions/checkout@v3
+        with:
+          # Le code backend se trouve dans le sous-dossier "backend"
+          path: backend
+
+      - name: Installer les dépendances du backend localement (facultatif)
+        run: |
+          cd backend/risk_management_api
+          npm install
+
+      - name: Déployer l'API sur le serveur
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            echo "=== Déploiement de l'API Server Express ==="
+            cd /var/www/backend/risk_management_api
+            # Mettre à jour le code depuis Git
+            git pull origin main
+            # Installer les dépendances en production
+            npm install --production
+            # Recharger ou démarrer l'application avec PM2 en mode watch
+            pm2 reload risk_management_api || pm2 start index.js --name risk_management_api --watch
+            # Sauvegarder la configuration PM2 pour qu'elle soit restaurée en cas de redémarrage du serveur
+            pm2 save
+            echo "✓ Déploiement de l'API réussi !"
+
+  notification:
+    needs: deploy-api
+    runs-on: ubuntu-latest
+    environment: production
+    if: always()
+    steps:
+      - name: Construire la liste des destinataires
+        id: recipients
+        run: |
+          recipients="${{ vars.SMTP_TO }}"
+          if [ -n "${{ vars.SMTP_TO_2 }}" ]; then
+            recipients="$recipients, ${{ vars.SMTP_TO_2 }}"
+          fi
+          if [ -n "${{ vars.SMTP_TO_3 }}" ]; then
+            recipients="$recipients, ${{ vars.SMTP_TO_3 }}"
+          fi
+          echo "allEmails=$recipients" >> $GITHUB_OUTPUT
+          echo "Liste des destinataires : $recipients"
+
+      - name: Envoyer email de succès
+        if: ${{ needs.deploy-api.result == 'success' }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          subject: "🎉 Déploiement de l'API réussi !"
+          body: "🚀 Le déploiement de l'API Server Express a été réalisé avec succès en mode watch. PM2 a sauvegardé la configuration. 👍"
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          from: ${{ secrets.SMTP_FROM }}
+          to: ${{ steps.recipients.outputs.allEmails }}
+
+      - name: Envoyer email d'échec
+        if: ${{ needs.deploy-api.result == 'failure' }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          subject: "❌ Déploiement de l'API échoué ❌"
+          body: "⚠️ Le déploiement de l'API Server Express a échoué. Veuillez vérifier les logs pour plus de détails. 😞"
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          from: ${{ secrets.SMTP_FROM }}
+          to: ${{ steps.recipients.outputs.allEmails }}
