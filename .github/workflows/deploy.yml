@@ -89,6 +89,10 @@ jobs:
             pm2 start index.js --name risk_management_api --watch --update-env
             pm2 save
 
+            echo "=== Réapplication du watch PM2 ==="
+            pm2 restart risk_management_api --watch --update-env
+            pm2 save
+
   notification:
     needs: deploy-api
     runs-on: ubuntu-latest
