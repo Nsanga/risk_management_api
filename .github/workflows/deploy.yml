@@ -55,10 +55,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          source: "backend/"   # Correction ici (transfert tout backend)
+          source: "backend/"  
           target: "/var/www/backend/risk_management_api"
-          strip_components: 1   # Retire le dossier racine "backend"
-
+          strip_components: 1 
       - name: Vérification sur le serveur après transfert
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -70,6 +69,28 @@ jobs:
             echo "=== Structure après transfert ==="
             ls -la /var/www/backend/risk_management_api
 
+      - name: Créer fichier .env sur le serveur
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            echo "Création du fichier .env"
+
+            cat <<EOF > /var/www/backend/risk_management_api/.env
+            DEFAULT_PASSWORD=${{ secrets.DEFAULT_PASSWORD }}
+            URL_DB_LIVE=${{ secrets.URL_DB_LIVE }}
+            URL_DB_LOCAL=${{ secrets.URL_DB_LOCAL }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTHTOKEN }}
+            EOF
+
+            echo "Fichier .env créé avec succès"
+            cat /var/www/backend/risk_management_api/.env
+            
       - name: Déployer l'API via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
