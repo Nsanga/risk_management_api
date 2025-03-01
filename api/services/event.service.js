@@ -32,63 +32,52 @@ async function createEvent(req, res) {
     eventData.num_ref = generateReferenceNumber();
 
     // Convertir les emails en ObjectId
-    // const ownerProfile = await UserProfile.findOne({
-    //   email: eventData.details.owner,
-    // });
-    // const nomineeProfile = await UserProfile.findOne({
-    //   email: eventData.details.nominee,
-    // });
-    // const reviewerProfile = await UserProfile.findOne({
-    //   email: eventData.details.reviewer,
-    // });
-    // const entityOfDetection = await Entity.findById(
-    //   eventData.details.entityOfDetection
-    // );
-    // const entityOfOrigin = await Entity.findById(
-    //   eventData.details.entityOfOrigin
-    // );
-    // console.log('====================================');
-    // console.log("eventData", eventData);
-    // console.log('====================================');
+    const ownerProfile = await UserProfile.findOne({
+      _id: eventData.details.owner,
+    });
+    const nomineeProfile = await UserProfile.findOne({
+      _id: eventData.details.nominee,
+    });
+    const reviewerProfile = await UserProfile.findOne({
+      _id: eventData.details.reviewer,
+    });
+    const entityOfDetection = await Entity.findById(
+      eventData.details.entityOfDetection
+    );
+    const entityOfOrigin = await Entity.findById(
+      eventData.details.entityOfOrigin
+    );
 
-    // // Vérifiez si les profils et entités existent avant d'assigner leurs ObjectIds
-    // if (ownerProfile) eventData.details.owner = ownerProfile._id;
-    // if (nomineeProfile) eventData.details.nominee = nomineeProfile._id;
-    // if (reviewerProfile) eventData.details.reviewer = reviewerProfile._id;
-    // if (entityOfDetection)
-    //   eventData.details.entityOfDetection = entityOfDetection._id;
-    // if (entityOfOrigin) eventData.details.entityOfOrigin = entityOfOrigin._id;
+    // Vérifiez si les profils et entités existent avant d'assigner leurs ObjectIds
+    if (ownerProfile) eventData.details.owner = ownerProfile._id;
+    if (nomineeProfile) eventData.details.nominee = nomineeProfile._id;
+    if (reviewerProfile) eventData.details.reviewer = reviewerProfile._id;
+    if (entityOfDetection)
+      eventData.details.entityOfDetection = entityOfDetection._id;
+    if (entityOfOrigin) eventData.details.entityOfOrigin = entityOfOrigin._id;
 
     const newEvent = new Event(eventData);
     await newEvent.save();
 
 
-    console.log('====================================');
-    console.log("newEvent", newEvent);
-    console.log('====================================');
+    if (eventData.details.notify) {
+      const emails = [ownerProfile.email, nomineeProfile.email];
 
-    // if (eventData.details.notify) {
-    //   const emails = [ownerProfile.email, nomineeProfile.email];
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: emails.join(", "),
+      subject: "Notification de Création d'Événement",
+      text: `Un nouvel événement a été créé.\n\nDétails de l'événement:\nRéférence: EVT${eventData.num_ref}\nTitre: ${eventData.details.description}\nDate: ${eventData.details.event_date}`,
+    };
 
-    //   console.log("====================================");
-    //   console.log("emails", emails);
-    //   console.log("====================================");
-
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: emails.join(", "),
-        subject: "Notification de Création d'Événement",
-        text: `Un nouvel événement a été créé.\n\nDétails de l'événement:\nRéférence: EVT${eventData.num_ref}\nTitre: ${eventData.details.description}\nDate: ${eventData.details.event_date}`,
-      };
-
-    //   transporter.sendMail(mailOptions, (error, info) => {
-    //     if (error) {
-    //       logger.error("Error sending email:", error);
-    //     } else {
-    //       logger.info("Email sent:", info.response);
-    //     }
-    //   });
-    // }
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          logger.error("Error sending email:", error);
+        } else {
+          logger.info("Email sent:", info.response);
+        }
+      });
+    }
 
     return ResponseService.created(res, {
       message: "Event created successfully",
