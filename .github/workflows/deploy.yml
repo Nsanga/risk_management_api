@@ -10,12 +10,6 @@ jobs:
     environment: production
     env:
       CI: false
-      DEFAULT_PASSWORD: ${{ secrets.DEFAULT_PASSWORD }}
-      URL_DB_LIVE: ${{ secrets.URL_DB_LIVE }}
-      URL_DB_LOCAL: ${{ secrets.URL_DB_LOCAL }}
-      DB_NAME: ${{ secrets.DB_NAME }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      NGROK_AUTHTOKEN: ${{ secrets.NGROK_AUTHTOKEN }}
 
     steps:
       - name: Récupérer le code du backend
@@ -83,6 +77,7 @@ jobs:
             cat <<EOF > /var/www/backend/risk_management_api/.env
             DEFAULT_PASSWORD=${{ secrets.DEFAULT_PASSWORD }}
             URL_DB_LIVE=${{ secrets.URL_DB_LIVE }}
+            URL_DB_LOCAL=${{ secrets.URL_DB_LIVE }}
             DB_NAME=${{ secrets.DB_NAME }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTHTOKEN }}
