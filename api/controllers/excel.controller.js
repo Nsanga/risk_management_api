@@ -260,9 +260,7 @@ exports.updateRiskOrControl = async (req, res) => {
     });
 
     return res.status(200).json({
-      message: `${
-        itemType === "risk" ? "Risques" : "Contrôles"
-      } mis à jour avec succès.`,
+      message: `Success`,
       data: updatedItems,
     });
   } catch (error) {

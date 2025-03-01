@@ -81,3 +81,9 @@
 2025-02-26 19:47:06 error: Error creating event: emails is not defined
 >>>>>>> f6f9ee1c99c65c316eafb1f771bdb3d2818962cb
 2025-02-28 14:30:57 error: Error sending email: No recipients defined
+2025-03-01 14:32:33 error: Error creating event: E11000 duplicate key error collection: management_risk.events index: num_ref_1 dup key: { num_ref: "00001" }
+2025-03-01 14:36:48 error: Error creating event: Event validation failed: details.owner: Cast to ObjectId failed for value "mercuremekinda@gmail.com" (type string) at path "details.owner" because of "BSONError", details.nominee: Cast to ObjectId failed for value "mercuremekinda@gmail.com" (type string) at path "details.nominee" because of "BSONError"
+2025-03-01 14:40:38 error: Error creating event: E11000 duplicate key error collection: management_risk.events index: num_ref_1 dup key: { num_ref: "00001" }
+2025-03-01 14:44:11 error: Error creating event: E11000 duplicate key error collection: management_risk.events index: num_ref_1 dup key: { num_ref: "00001" }
+2025-03-01 14:44:55 info: Email sent:
+2025-03-01 14:48:42 info: Email sent:
