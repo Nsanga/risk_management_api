@@ -2,11 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const appRoutes = require("./api/routes/index");
 const bodyParser = require("body-parser");
-const cors = require('cors');
 const createError = require("http-errors");
 const cookieParser = require("cookie-parser");
 const dbConnect = require('./api/config/dbConnect');
 const http = require('http');
+const cors = require('cors');
 
 // Connection to MongoDB
 dbConnect();
@@ -14,20 +14,28 @@ dbConnect();
 // App initialization
 const app = express();
 
+// CORS Configuration
+const corsOptions = {
+  origin: '*', // Tu peux restreindre à un domaine spécifique si nécessaire
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true // si tu utilises des cookies ou des headers d'authentification
+};
+app.use(cors(corsOptions));
+
 // Middleware configuration
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cors());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// Middleware to handle CORS requests
-app.use((req, res, next) => {
+// Preflight handling (OPTIONS requests)
+app.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  next();
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.sendStatus(204); // Recommandé pour les preflight
 });
 
 // App Routes
@@ -52,6 +60,7 @@ app.use((err, req, res, next) => {
 const server = http.createServer(app);
 
 // Start the server on port 4500
-server.listen(4500, () => {
-  console.log("Server started on port 4500");
+const PORT = process.env.PORT || 4500;
+server.listen(PORT, () => {
+  console.log(`Server started on port ${PORT}`);
 });
