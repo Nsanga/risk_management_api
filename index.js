@@ -6,7 +6,7 @@ const createError = require("http-errors");
 const cookieParser = require("cookie-parser");
 const dbConnect = require('./api/config/dbConnect');
 const http = require('http');
-// const cors = require('cors');
+const cors = require('cors');
 
 // Connection to MongoDB
 dbConnect();
@@ -22,6 +22,18 @@ const app = express();
 //   credentials: true // si tu utilises des cookies ou des headers d'authentification
 // };
 // app.use(cors(corsOptions));
+
+app.use(cors('*'));
+app.use(bodyParser.json({ limit: '1mb', type: 'application/json' }));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(function (req, res, next) {
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, authorization");
+    res.setHeader("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,PATCH,OPTIONS");
+    next();
+});
+
 
 // Middleware configuration
 app.use(express.json());
