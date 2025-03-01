@@ -10,17 +10,37 @@ jobs:
     environment: production
     env:
       CI: false
-      DEFAULT_PASSWORD: ${{ secrets.DEFAULT_PASSWORD }}
-      URL_DB_LIVE: ${{ secrets.URL_DB_LIVE }}
-      URL_DB_LOCAL: ${{ secrets.URL_DB_LOCAL }}
-      DB_NAME: ${{ secrets.DB_NAME }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      NGROK_AUTHTOKEN: ${{ secrets.NGROK_AUTHTOKEN }}
+
     steps:
       - name: Récupérer le code du backend
         uses: actions/checkout@v3
         with:
           path: backend
+
+      - name: Vérifier la structure du dépôt après checkout
+        run: |
+          echo "==== Structure complète après checkout ===="
+          tree -L 3 backend || ls -R backend
+
+      - name: Préparer la structure du dossier sur le serveur
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            echo "=== Préparation du dossier serveur ==="
+            sudo mkdir -p /var/www/backend/risk_management_api
+            sudo chown -R $USER:$USER /var/www/backend/risk_management_api
+            echo "=== Structure initiale sur le serveur ==="
+            ls -la /var/www/backend/risk_management_api
+
+      - name: Vérification avant transfert SCP
+        run: |
+          echo "==== Vérification avant transfert SCP ===="
+          echo "Contenu de backend à transférer :"
+          ls -la backend
 
       - name: Transférer le code sur le serveur
         uses: appleboy/scp-action@master
@@ -29,10 +49,42 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          source: "backend/risk_management_api/"
-          target: "/var/www/backend/"
-          recursive: true
-          strip_components: 1 # Ignore le premier dossier du chemin source
+          source: "backend/"  
+          target: "/var/www/backend/risk_management_api"
+          strip_components: 1 
+
+      - name: Vérification sur le serveur après transfert
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            echo "=== Structure après transfert ==="
+            ls -la /var/www/backend/risk_management_api
+
+      - name: Créer fichier .env sur le serveur
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            echo "Création du fichier .env"
+
+            cat <<EOF > /var/www/backend/risk_management_api/.env
+            DEFAULT_PASSWORD=${{ secrets.DEFAULT_PASSWORD }}
+            URL_DB_LIVE=${{ secrets.URL_DB_LIVE }}
+            URL_DB_LOCAL=${{ secrets.URL_DB_LIVE }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTHTOKEN }}
+            EOF
+
+            echo "Fichier .env créé avec succès"
+            cat /var/www/backend/risk_management_api/.env
 
       - name: Déployer l'API via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -40,19 +92,21 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
           script: |
-            echo "=== Structure du dossier après transfert ==="
-            ls -la /var/www/backend/risk_management_api
-            
-            echo "=== Installation des dépendances ==="
+            echo "=== Démarrage du déploiement ==="
             cd /var/www/backend/risk_management_api
+
+            echo "=== Installation des dépendances ==="
             npm ci --production
-            
+
             echo "=== Redémarrage PM2 ==="
             pm2 reload risk_management_api --update-env || \
             pm2 start index.js --name risk_management_api --watch --update-env
-            pm2 save
 
+            echo "=== Réapplication du watch PM2 ==="
+            pm2 restart risk_management_api --watch --update-env
+            pm2 save
 
   notification:
     needs: deploy-api
