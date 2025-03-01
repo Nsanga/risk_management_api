@@ -6,7 +6,7 @@ const createError = require("http-errors");
 const cookieParser = require("cookie-parser");
 const dbConnect = require('./api/config/dbConnect');
 const http = require('http');
-const cors = require('cors');
+// const cors = require('cors');
 
 // Connection to MongoDB
 dbConnect();
@@ -15,13 +15,13 @@ dbConnect();
 const app = express();
 
 // CORS Configuration
-const corsOptions = {
-  origin: '*', // Tu peux restreindre à un domaine spécifique si nécessaire
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true // si tu utilises des cookies ou des headers d'authentification
-};
-app.use(cors(corsOptions));
+// const corsOptions = {
+//   origin: '*', // Tu peux restreindre à un domaine spécifique si nécessaire
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   credentials: true // si tu utilises des cookies ou des headers d'authentification
+// };
+// app.use(cors(corsOptions));
 
 // Middleware configuration
 app.use(express.json());
@@ -31,12 +31,12 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // Preflight handling (OPTIONS requests)
-app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.sendStatus(204); // Recommandé pour les preflight
-});
+// app.options('*', (req, res) => {
+//   res.header('Access-Control-Allow-Origin', '*');
+//   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+//   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+//   res.sendStatus(204); // Recommandé pour les preflight
+// });
 
 // App Routes
 app.use('/api/v1', appRoutes());
