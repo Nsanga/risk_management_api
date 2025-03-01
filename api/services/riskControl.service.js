@@ -17,7 +17,7 @@ async function createRiskControl(req, res) {
 }
 
 async function getRiskControlById(req, res) {
-  try {
+  try { 
     const riskControlId = req.params.id;
 
     // Récupérer un RiskControl par son ID
