@@ -76,3 +76,12 @@
 2025-02-26 19:47:06 error: Error creating event: emails is not defined
 >>>>>>> f6f9ee1c99c65c316eafb1f771bdb3d2818962cb
 2025-02-28 14:30:57 error: Error sending email: No recipients defined
+2025-03-01 08:32:04 error: Error creating event: emails is not defined
+2025-03-01 08:33:51 error: Error creating event: emails is not defined
+2025-03-01 08:40:56 error: Error creating event: Cannot read properties of null (reading 'email')
+2025-03-01 08:42:17 error: Error creating event: emails is not defined
+2025-03-01 08:48:16 error: Error creating event: emails is not defined
+2025-03-01 09:05:12 error: Error creating event: Cannot read properties of undefined (reading 'id')
+2025-03-01 09:12:28 error: Error creating event: userId is not defined
+2025-03-01 09:15:31 error: Error creating event: userProfile is not defined
+2025-03-01 09:18:23 error: Error creating event: Cannot read properties of null (reading 'email')
