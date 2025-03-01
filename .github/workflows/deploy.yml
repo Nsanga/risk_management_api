@@ -58,6 +58,7 @@ jobs:
           source: "backend/"  
           target: "/var/www/backend/risk_management_api"
           strip_components: 1 
+
       - name: Vérification sur le serveur après transfert
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -82,7 +83,6 @@ jobs:
             cat <<EOF > /var/www/backend/risk_management_api/.env
             DEFAULT_PASSWORD=${{ secrets.DEFAULT_PASSWORD }}
             URL_DB_LIVE=${{ secrets.URL_DB_LIVE }}
-            URL_DB_LOCAL=${{ secrets.URL_DB_LOCAL }}
             DB_NAME=${{ secrets.DB_NAME }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTHTOKEN }}
@@ -90,7 +90,7 @@ jobs:
 
             echo "Fichier .env créé avec succès"
             cat /var/www/backend/risk_management_api/.env
-            
+
       - name: Déployer l'API via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -108,7 +108,6 @@ jobs:
             echo "=== Redémarrage PM2 ==="
             pm2 reload risk_management_api --update-env || \
             pm2 start index.js --name risk_management_api --watch --update-env
-            pm2 save
 
             echo "=== Réapplication du watch PM2 ==="
             pm2 restart risk_management_api --watch --update-env
