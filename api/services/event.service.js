@@ -15,21 +15,17 @@ const transporter = nodemailer.createTransport({
 
 let currentNumber = 1; // Point de départ à 00001
 
-function generateReferenceNumber() {
-  if (currentNumber > 99999) {
-    // Réinitialiser à 1 si la limite de 99999 est atteinte
-    currentNumber = 1;
-  }
+async function generateReferenceNumber() {
+  const events = await Event.find();
+  const nextNumber = (events.length + 1).toString().padStart(5, "0"); // Générer un nombre à 5 chiffres
 
-  const referenceNumber = currentNumber.toString().padStart(5, "0");
-  currentNumber++; // Incrémenter pour le prochain numéro
-  return referenceNumber;
+  return nextNumber;
 }
 
 async function createEvent(req, res) {
   try {
     const eventData = req.body;
-    eventData.num_ref = generateReferenceNumber();
+    eventData.num_ref = await generateReferenceNumber();
 
     // Convertir les emails en ObjectId
     const ownerProfile = await UserProfile.findOne({
@@ -59,16 +55,15 @@ async function createEvent(req, res) {
     const newEvent = new Event(eventData);
     await newEvent.save();
 
-
     if (eventData.details.notify) {
       const emails = [ownerProfile.email, nomineeProfile.email];
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: emails.join(", "),
-      subject: "Notification de Création d'Événement",
-      text: `Un nouvel événement a été créé.\n\nDétails de l'événement:\nRéférence: EVT${eventData.num_ref}\nTitre: ${eventData.details.description}\nDate: ${eventData.details.event_date}`,
-    };
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: emails.join(", "),
+        subject: "Notification de Création d'Événement",
+        text: `Un nouvel événement a été créé.\n\nDétails de l'événement:\nRéférence: EVT${eventData.num_ref}\nTitre: ${eventData.details.description}\nDate: ${eventData.details.event_date}\nlien de connexion: "https://futuriskmanagement.com"/`,
+      };
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {

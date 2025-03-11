@@ -81,3 +81,9 @@
 2025-03-01 14:40:38 error: Error creating event: E11000 duplicate key error collection: management_risk.events index: num_ref_1 dup key: { num_ref: "00001" }
 2025-03-01 14:44:11 error: Error creating event: E11000 duplicate key error collection: management_risk.events index: num_ref_1 dup key: { num_ref: "00001" }
 2025-03-08 09:20:51 error: Error creating event: E11000 duplicate key error collection: management_risk.events index: num_ref_1 dup key: { num_ref: "00001" }
+2025-03-11 16:15:05 error: Error creating event: E11000 duplicate key error collection: management_risk.events index: num_ref_1 dup key: { num_ref: "00001" }
+2025-03-11 16:15:12 error: Error creating event: E11000 duplicate key error collection: management_risk.events index: num_ref_1 dup key: { num_ref: "00002" }
+2025-03-11 16:28:59 error: Error creating event: eventData is not defined
+2025-03-11 16:36:24 error: Error creating event: Event validation failed: num_ref: Cast to string failed for value "Promise { '00001' }" (type Promise) at path "num_ref"
+2025-03-11 16:37:06 error: Error creating event: Event validation failed: num_ref: Cast to string failed for value "Promise { '00001' }" (type Promise) at path "num_ref"
+2025-03-11 16:39:41 error: Error creating event: Event validation failed: num_ref: Cast to string failed for value "Promise { '00004' }" (type Promise) at path "num_ref"
