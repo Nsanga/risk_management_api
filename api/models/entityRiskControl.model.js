@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const riskSchema = new Schema({
   reference: { type: String, unique: true, sparse: true },
   serialNumber: { type: String, required: true },
-  businessFunction: { type: String, required: false },
+  departmentFunction: { type: String, required: false },
   description: { type: String, required: true },
   outsourcedProcesses: { type: String, required: false },
   riskCategory: { type: String, required: true },
@@ -18,7 +18,17 @@ const riskSchema = new Schema({
   ownerRisk: { type: String, required: false },
   nomineeRisk: { type: String, required: false },
   reviewerRisk: { type: String, required: false },
-  riskLevel: { type: String, required: false }
+  riskLevel: { type: String, required: false },
+  riskIndicatorDescription: { type: String, require: false },
+  riskMesure: { type: String, require: false },
+  frequenceCaptureRisk: { type: String, require: false },
+  calculMethodRisk: { type: String, require: false },
+  riskTolerence: { type: String, require: false },
+  riskSeuil: { type: String, require: false },
+  riskEscalade: { type: String, require: false },
+  activeRisk: { type: Boolean, required: false, default: false },
+  ownerEmail: { type: Boolean, required: false, default: false },
+  remindOn: { type: String, require: false },
 });
 
 const controlSchema = new Schema({
@@ -35,19 +45,27 @@ const controlSchema = new Schema({
   nomineeControl: { type: String, required: false },
   reviewerControl: { type: String, required: false },
   library: { type: String, required: false },
-  status: { type: String, required: false }
+  status: { type: String, required: false },
+  keyControl: { type: Boolean, required: false, default: false },
+  activeControl: { type: Boolean, required: false, default: false },
 });
 
-const entityRiskControlSchema = new Schema({
-  entity: {
-    type: Schema.Types.ObjectId,
-    ref: 'Entity',
-    required: true
+const entityRiskControlSchema = new Schema(
+  {
+    entity: {
+      type: Schema.Types.ObjectId,
+      ref: "Entity",
+      required: true,
+    },
+    risks: [riskSchema],
+    controls: [controlSchema],
   },
-  risks: [riskSchema],
-  controls: [controlSchema],
-}, { timestamps: true });
+  { timestamps: true }
+);
 
-const EntityRiskControl = mongoose.model('EntityRiskControl', entityRiskControlSchema);
+const EntityRiskControl = mongoose.model(
+  "EntityRiskControl",
+  entityRiskControlSchema
+);
 
 module.exports = EntityRiskControl;

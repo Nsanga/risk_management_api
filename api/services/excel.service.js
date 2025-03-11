@@ -33,6 +33,10 @@ class ExcelService {
       const riskTableEndIndex = data.findIndex(
         (row, index) => index > riskTableStartIndex && row.length === 0
       );
+
+      console.log('====================================');
+      console.log("riskTableStartIndex", riskTableStartIndex);
+      console.log('====================================');
       const riskData = data.slice(
         riskTableStartIndex,
         riskTableEndIndex > 0 ? riskTableEndIndex : undefined
@@ -62,7 +66,7 @@ class ExcelService {
           reference: riskReference,
           serialNumber: row[0],
           entityReference: entityId,
-          businessFunction: row[2],
+          departmentFunction: row[2],
           description: row[3],
           outsourcedProcesses: row[4],
           riskCategory: row[5],
@@ -73,27 +77,34 @@ class ExcelService {
           occurrenceProbability: row[10],
           riskImpact: row[11],
           total: row[12],
-          ownerRisk: row[13],
-          nomineeRisk: row[14],
-          reviewerRisk: row[15],
-          riskLevel: row[16],
+          riskLevel: row[13],
+          riskIndicatorDescription: row[24],
+          riskMesure: row[25],
+          frequenceCaptureRisk: row[26],
+          calculMethodRisk: row[27],
+          riskTolerence: row[28],
+          riskSeuil: row[29],
+          riskEscalade: row[30],
+          // ownerRisk: row[13],
+          // nomineeRisk: row[14],
+          // reviewerRisk: row[15],
         };
 
         const control = {
           reference: controlReference,
-          controlSummary: row[17],
-          controlDescription: row[18],
-          monitoringMethodology: row[19],
-          controlRating: row[20],
-          residualRiskLevel: row[21],
-          preventiveDetectiveControl: row[22],
-          monitoringCycle: row[23],
-          documentSources: row[24],
-          ownerControl: row[25],
-          nomineeControl: row[26],
-          reviewerControl: row[27],
-          library: row[28],
+          controlSummary: row[15],
+          controlDescription: row[16],
+          monitoringMethodology: row[17],
+          controlRating: row[18],
+          residualRiskLevel: row[19],
+          preventiveDetectiveControl: row[20],
+          monitoringCycle: row[21],
+          documentSources: row[22],
           status: row[29],
+          // library: row[28],
+          // ownerControl: row[23],
+          // nomineeControl: row[24],
+          // reviewerControl: row[2],
         };
 
         if (!groupedData[entityId]) {
@@ -145,7 +156,7 @@ class ExcelService {
           description: doc.entity.description,
           ram: doc.entity.ram,
           location: doc.entity.location,
-          businessLine: doc.entity.businessLine, 
+          businessLine: doc.entity.businessLine,
         },
         risks: doc.risks,
         controls: doc.controls,
@@ -258,21 +269,21 @@ class ExcelService {
         //     ? `RSK${String(++riskCounter).padStart(5, "0")}`
         //     : `CTR${String(++controlCounter).padStart(5, "0")}`;
 
-        refNumber = iterationCount > 1 ? ++refNumber : this.getNextReference(
-          items,
-          itemToCopy.reference.toString(),
-          type === "risk" ? "risks" : "controls"
-        );
+        refNumber =
+          iterationCount > 1
+            ? ++refNumber
+            : this.getNextReference(
+                items,
+                itemToCopy.reference.toString(),
+                type === "risk" ? "risks" : "controls"
+              );
 
         console.log("refNumber", refNumber, iterationCount);
-        
 
-        const codeRef = refNumber.toString().padStart(4, "0")
+        const codeRef = refNumber.toString().padStart(4, "0");
 
         const newReference =
-          type === "risk"
-            ? `RSK${codeRef}`
-            : `CTR${codeRef}`;
+          type === "risk" ? `RSK${codeRef}` : `CTR${codeRef}`;
 
         console.log("newReference", newReference);
         if (!newReference)
