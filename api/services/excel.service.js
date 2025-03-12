@@ -33,10 +33,6 @@ class ExcelService {
       const riskTableEndIndex = data.findIndex(
         (row, index) => index > riskTableStartIndex && row.length === 0
       );
-
-      console.log('====================================');
-      console.log("riskTableStartIndex", riskTableStartIndex);
-      console.log('====================================');
       const riskData = data.slice(
         riskTableStartIndex,
         riskTableEndIndex > 0 ? riskTableEndIndex : undefined
@@ -173,10 +169,6 @@ class ExcelService {
   }
 
   getNextReference(array, reference, key) {
-    console.log("====================================");
-    console.log("array", array);
-    console.log("ref", reference);
-    console.log("====================================");
     const extractNumber = (ref) => parseInt(ref.replace(/[^\d]/g, ""));
 
     // Trouver l'élément avec la plus grande référence supérieure à la référence donnée
@@ -278,21 +270,19 @@ class ExcelService {
                 type === "risk" ? "risks" : "controls"
               );
 
-        console.log("refNumber", refNumber, iterationCount);
-
         const codeRef = refNumber.toString().padStart(4, "0");
 
         const newReference =
           type === "risk" ? `RSK${codeRef}` : `CTR${codeRef}`;
 
-        console.log("newReference", newReference);
         if (!newReference)
           throw new Error("La référence générée est invalide.");
 
         const copiedItem = {
           ...itemToCopy.toObject(),
           reference: newReference,
-          businessFunction: targetEntity.description,
+          // businessFunction: targetEntity.description,
+          departmentFunction: targetEntity.description,
           _id: new mongoose.Types.ObjectId(),
         };
 
@@ -341,8 +331,9 @@ class ExcelService {
 
             if (!riskAlreadyExists) {
               const copiedRisk = {
-                ...riskToCopy,
+                ...riskToCopy.toObject(),
                 reference: `RSK${codeRef}`,
+                departmentFunction: targetEntity.description,
                 // reference: this.generateRandomReference("RSK", Date.now()),
                 businessFunction: targetEntity.description,
                 _id: new mongoose.Types.ObjectId(),
@@ -464,11 +455,13 @@ class ExcelService {
             targetEntity.description === "Corbeille "
               ? {
                   ...itemToMove.toObject(),
+                  departmentFunction: targetEntity.description,
                   _id: new mongoose.Types.ObjectId(),
                 }
               : {
                   ...itemToMove.toObject(),
                   reference: newReference,
+                  departmentFunction: targetEntity.description,
                   _id: new mongoose.Types.ObjectId(),
                 };
 
@@ -521,11 +514,13 @@ class ExcelService {
               targetEntity.description === "Corbeille "
                 ? {
                     ...riskToMove.toObject(),
+                    departmentFunction: targetEntity.description,
                     _id: new mongoose.Types.ObjectId(),
                   }
                 : {
                     ...riskToMove.toObject(),
                     reference: `RSK${String(++riskCounter).padStart(5, "0")}`,
+                    departmentFunction: targetEntity.description,
                     // reference: this.generateRandomReference("CTR", Date.now()),
                     _id: new mongoose.Types.ObjectId(),
                   };

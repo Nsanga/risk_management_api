@@ -62,7 +62,13 @@ async function createEvent(req, res) {
         from: process.env.EMAIL_USER,
         to: emails.join(", "),
         subject: "Notification de Création d'Événement",
-        text: `Un nouvel événement a été créé.\n\nDétails de l'événement:\nRéférence: EVT${eventData.num_ref}\nTitre: ${eventData.details.description}\nDate: ${eventData.details.event_date}\nlien de connexion: "https://futuriskmanagement.com"/`,
+        html: `Un nouvel événement a été créé.<br><br>
+        <strong>Détails de l'événement:</strong><br>
+        Référence: EVT${eventData.num_ref}<br>
+        Titre: ${eventData.details.description}<br>
+        Date: ${eventData.details.event_date}<br>
+        <br>
+        <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
       };
 
       transporter.sendMail(mailOptions, (error, info) => {

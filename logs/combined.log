@@ -99,3 +99,10 @@
 2025-03-11 16:36:24 error: Error creating event: Event validation failed: num_ref: Cast to string failed for value "Promise { '00001' }" (type Promise) at path "num_ref"
 2025-03-11 16:37:06 error: Error creating event: Event validation failed: num_ref: Cast to string failed for value "Promise { '00001' }" (type Promise) at path "num_ref"
 2025-03-11 16:39:41 error: Error creating event: Event validation failed: num_ref: Cast to string failed for value "Promise { '00004' }" (type Promise) at path "num_ref"
+2025-03-11 16:43:22 info: Email sent:
+2025-03-11 16:43:47 info: Email sent:
+2025-03-12 14:24:50 info: Email sent:
+2025-03-12 14:28:27 info: Email sent:
+2025-03-12 14:29:38 info: Email sent:
+2025-03-12 14:35:23 info: Email sent:
+2025-03-12 14:35:50 info: Email sent:
