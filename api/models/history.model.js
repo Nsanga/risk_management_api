@@ -9,8 +9,9 @@ var historySchema = new mongoose.Schema(
     efficiency: { type: String, required: true },
     cost: { type: String, required: false },
     currency: { type: String, required: true },
-    dueOne: { type: String, required: false },
+    dueOn: { type: String, required: false },
     note: { type: String, required: false },
+    attested: { type: boolean, required: false },
     idControl: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "EntityRiskControl",
