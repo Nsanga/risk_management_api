@@ -8,7 +8,7 @@ const userGroupRoutes = require("./userGroup.route");
 const riskControlRoutes = require("./riskControl.route");
 const entityRiskControlRoutes = require("./entityRiskControl.route");
 const excelRoutes = require("./excel.route");
-const { historyRoutes } = require("./history.route");
+const historyRoutes = require("./history.route");
 
 const router = express.Router();
 
