@@ -11,7 +11,7 @@ var historySchema = new mongoose.Schema(
     currency: { type: String, required: true },
     dueOn: { type: String, required: false },
     note: { type: String, required: false },
-    attested: { type: boolean, required: false },
+    attested: { type: Boolean, required: false },
     idControl: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "EntityRiskControl",
