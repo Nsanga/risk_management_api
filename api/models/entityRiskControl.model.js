@@ -48,6 +48,12 @@ const controlSchema = new Schema({
   status: { type: String, required: false },
   keyControl: { type: Boolean, required: false, default: false },
   activeControl: { type: Boolean, required: false, default: false },
+  frequence: { type: String, required: false },
+  history: {
+    type: Schema.Types.ObjectId,
+    ref: "History",
+    required: false,
+  },
 });
 
 const entityRiskControlSchema = new Schema(

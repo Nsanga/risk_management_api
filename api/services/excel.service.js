@@ -81,26 +81,28 @@ class ExcelService {
           riskTolerence: row[28],
           riskSeuil: row[29],
           riskEscalade: row[30],
-          // ownerRisk: row[13],
-          // nomineeRisk: row[14],
-          // reviewerRisk: row[15],
+          ownerRisk: "Database administrator",
+          nomineeRisk: "Database administrator",
+          reviewerRisk: "Database administrator",
         };
 
         const control = {
           reference: controlReference,
-          controlSummary: row[15],
-          controlDescription: row[16],
-          monitoringMethodology: row[17],
-          controlRating: row[18],
-          residualRiskLevel: row[19],
-          preventiveDetectiveControl: row[20],
+          controlSummary: row[14],
+          controlDescription: row[15],
+          monitoringMethodology: row[16],
+          controlRating: row[17],
+          residualRiskLevel: row[18],
+          preventiveDetectiveControl: row[19],
+          frequence: row[20],
           monitoringCycle: row[21],
           documentSources: row[22],
           status: row[29],
+
           // library: row[28],
-          // ownerControl: row[23],
-          // nomineeControl: row[24],
-          // reviewerControl: row[2],
+          ownerControl: "Database administrator",
+          nomineeControl: "Database administrator",
+          reviewerControl: "Database administrator",
         };
 
         if (!groupedData[entityId]) {
