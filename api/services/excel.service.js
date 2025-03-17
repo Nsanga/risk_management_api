@@ -1,6 +1,7 @@
 const XLSX = require("xlsx");
 const Entity = require("../models/entity.model");
 const EntityRiskControl = require("../models/entityRiskControl.model");
+const historyModel = require("../models/history.model");
 const mongoose = require("mongoose");
 
 class ExcelService {
@@ -135,6 +136,40 @@ class ExcelService {
   }
 
   async getEntityRiskControlsByEntityName(entityName) {
+    // try {
+    //   // Récupère l'entité par son nom
+    //   const entity = await Entity.findOne({ description: entityName });
+
+    //   if (!entity) {
+    //     throw new Error(`Entité '${entityName}' introuvable`);
+    //   }
+
+    //   // Récupère les risques et contrôles associés à cette entité
+    //   const data = await EntityRiskControl.find({ entity: entity._id })
+    //     .populate("entity") // Peupler les détails de l'entité
+    //     .exec();
+
+    //   const formattedData = data.map((doc) => ({
+    //     entity: {
+    //       referenceId: doc.entity.referenceId,
+    //       description: doc.entity.description,
+    //       ram: doc.entity.ram,
+    //       location: doc.entity.location,
+    //       businessLine: doc.entity.businessLine,
+    //     },
+    //     risks: doc.risks,
+    //     controls: doc.controls,
+    //   }));
+
+    //   return formattedData;
+    // } catch (error) {
+    //   console.error(
+    //     "Erreur lors de la récupération des données :",
+    //     error.message
+    //   );
+    //   throw new Error("Impossible de récupérer les données pour l'entité.");
+    // }
+
     try {
       // Récupère l'entité par son nom
       const entity = await Entity.findOne({ description: entityName });
@@ -148,17 +183,34 @@ class ExcelService {
         .populate("entity") // Peupler les détails de l'entité
         .exec();
 
-      const formattedData = data.map((doc) => ({
-        entity: {
-          referenceId: doc.entity.referenceId,
-          description: doc.entity.description,
-          ram: doc.entity.ram,
-          location: doc.entity.location,
-          businessLine: doc.entity.businessLine,
-        },
-        risks: doc.risks,
-        controls: doc.controls,
-      }));
+      // Pour chaque document, on enrichit les contrôles avec les historiques
+      const formattedData = await Promise.all(
+        data.map(async (doc) => {
+          const enrichedControls = await Promise.all(
+            doc.controls.map(async (control) => {
+              const historyControl = await historyModel.find({
+                idControl: control._id,
+              });
+              return {
+                ...control.toObject(), // Convertir en objet pour éviter les problèmes avec Mongoose
+                historyControl, // Ajouter les historiques trouvés
+              };
+            })
+          );
+
+          return {
+            entity: {
+              referenceId: doc.entity.referenceId,
+              description: doc.entity.description,
+              ram: doc.entity.ram,
+              location: doc.entity.location,
+              businessLine: doc.entity.businessLine,
+            },
+            risks: doc.risks,
+            controls: enrichedControls, // Insérer les contrôles enrichis avec leurs historiques
+          };
+        })
+      );
 
       return formattedData;
     } catch (error) {
