@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 var historySchema = new mongoose.Schema(
   {
-    reference: {type: String, unique: true,},
+    reference: { type: String, unique: true },
     performance: { type: String, required: true },
     design: { type: String, required: true },
     assessedBy: { type: String, required: false },
@@ -11,6 +11,7 @@ var historySchema = new mongoose.Schema(
     currency: { type: String, required: true },
     dueOn: { type: String, required: false },
     note: { type: String, required: false },
+    closeDate: { type: String, required: false },
     attested: { type: Boolean, required: false },
     idControl: {
       type: mongoose.Schema.Types.ObjectId,
