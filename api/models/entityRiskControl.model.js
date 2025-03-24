@@ -47,7 +47,8 @@ const controlSchema = new Schema({
   library: { type: String, required: false },
   status: { type: String, required: false },
   keyControl: { type: Boolean, required: false, default: false },
-  activeControl: { type: Boolean, required: false, default: false },
+  activeControl: { type: Boolean, required: false, default: true },
+  reviewDate: { type: String, required: false },
   frequence: { type: String, required: false },
   history: {
     type: Schema.Types.ObjectId,
