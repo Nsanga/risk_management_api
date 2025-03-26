@@ -2,13 +2,13 @@ const mongoose = require("mongoose");
 var historySchema = new mongoose.Schema(
   {
     reference: { type: String, unique: true },
-    performance: { type: String, required: true },
-    design: { type: String, required: true },
+    performance: { type: String, required: false },
+    design: { type: String, required: false },
     assessedBy: { type: String, required: false },
-    assessedOn: { type: String, required: true },
-    efficiency: { type: String, required: true },
+    assessedOn: { type: String, required: false },
+    efficiency: { type: String, required: false },
     cost: { type: String, required: false },
-    currency: { type: String, required: true },
+    currency: { type: String, required: false },
     dueOn: { type: String, required: false },
     note: { type: String, required: false },
     closeDate: { type: String, required: false },
