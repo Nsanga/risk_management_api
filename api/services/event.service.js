@@ -104,6 +104,29 @@ async function getEventById(req, res) {
   }
 }
 
+async function getEventByEntity(req, res) {
+  try {
+    const eventId = req.params.id;
+    const events = await Event.find({
+      $or: [
+        { "details.entityOfDetection": eventId },
+        { "details.entityOfOrigin": eventId },
+      ],
+    });
+
+    if (!events || events.length === 0) {
+      return ResponseService.notFound(res, {
+        message: "Aucun événement trouvé",
+      });
+    }
+
+    return ResponseService.success(res, { events });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des événements:", error);
+    return ResponseService.internalServerError(res, { error: error.message });
+  }
+}
+
 async function updateEvent(req, res) {
   try {
     const eventId = req.params.id;
@@ -185,4 +208,5 @@ module.exports = {
   updateEvent,
   deleteEvent,
   getAllEvents,
+  getEventByEntity,
 };

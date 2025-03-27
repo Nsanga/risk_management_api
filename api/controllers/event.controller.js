@@ -1,4 +1,4 @@
-const eventService = require('../services/event.service');
+const eventService = require("../services/event.service");
 
 async function createEvent(req, res) {
   await eventService.createEvent(req, res);
@@ -6,6 +6,9 @@ async function createEvent(req, res) {
 
 async function getEventById(req, res) {
   return await eventService.getEventById(req, res);
+}
+async function getEventByEntity(req, res) {
+  return await eventService.getEventByEntity(req, res);
 }
 
 async function updateEvent(req, res) {
@@ -26,4 +29,5 @@ module.exports = {
   updateEvent,
   deleteEvent,
   getAllEvents,
+  getEventByEntity,
 };
