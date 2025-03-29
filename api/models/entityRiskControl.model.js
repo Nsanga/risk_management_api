@@ -49,6 +49,8 @@ const controlSchema = new Schema({
   keyControl: { type: Boolean, required: false, default: false },
   activeControl: { type: Boolean, required: false, default: true },
   reviewDate: { type: String, required: false },
+  lastOperation: { type: String, required: false },
+  nextOperation: { type: String, required: false },
   frequence: { type: String, required: false },
   nextAssessMent: { type: String, required: false, default: "" },
   history: {
