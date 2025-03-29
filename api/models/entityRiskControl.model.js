@@ -50,6 +50,7 @@ const controlSchema = new Schema({
   activeControl: { type: Boolean, required: false, default: true },
   reviewDate: { type: String, required: false },
   frequence: { type: String, required: false },
+  nextAssessMent: { type: String, required: false, default: "" },
   history: {
     type: Schema.Types.ObjectId,
     ref: "History",

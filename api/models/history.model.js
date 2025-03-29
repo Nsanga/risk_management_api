@@ -13,6 +13,7 @@ var historySchema = new mongoose.Schema(
     note: { type: String, required: false },
     closeDate: { type: String, required: false },
     attested: { type: Boolean, required: false },
+    frequency: { type: String, required: false },
     idControl: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "EntityRiskControl",
