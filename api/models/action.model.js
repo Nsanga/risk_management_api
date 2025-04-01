@@ -1,0 +1,24 @@
+const mongoose = require("mongoose");
+
+var actionSchema = new mongoose.Schema(
+  {
+    reference: { type: String, unique: true },
+    descriptionAction: { type: String, required: false },
+    delaisAction: { type: String, required: false },
+    proprioAction: { type: String, required: false },
+    evolutionAction: { type: String, required: false },
+    idControl: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "EntityRiskControl",
+      required: false,
+    },
+    idEntity: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Entity",
+      required: false,
+    },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("actions", actionSchema);
