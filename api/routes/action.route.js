@@ -8,7 +8,7 @@ const actionRoutes = (app) => {
 
   router.post("/postAction", actionController.createAction);
   router.get("/getAction", actionController.getAllAction);
-  router.get("/byEntitity", actionController.getAllActionByEntity);
+  router.get("/byEntity", actionController.getAllActionByEntity);
   router.get("/byControl", actionController.getAllActionByControl);
 //   router.get("/byControl/:id", actionController.getAllActionByControl);
 };
