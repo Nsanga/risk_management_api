@@ -1,13 +1,25 @@
 const Action = require("../models/action.model");
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail", // Utilisez le service de messagerie de votre choix
+  auth: {
+    user: process.env.EMAIL_USER, // Votre adresse email
+    pass: process.env.EMAIL_PASS, // Votre mot de passe email ou un mot de passe d'application
+  },
+});
 
 async function generateReference() {
   try {
     const lastAction = await Action.findOne().sort({ createdAt: -1 });
-    let newReference = "001";
+    let newReference = "ACT001";
 
     if (lastAction && lastAction.reference) {
-      const lastReference = parseInt(lastAction.reference, 10);
-      newReference = String(lastReference + 1).padStart(3, "0");
+      const lastReferenceNumber = parseInt(
+        lastAction.reference.replace("ACT", ""),
+        10
+      );
+      newReference = `ACT${String(lastReferenceNumber + 1).padStart(3, "0")}`;
     }
 
     return newReference;
@@ -23,6 +35,29 @@ async function createAction(req, res) {
     const reference = await generateReference();
     const newAction = new Action({ ...req.body, reference });
     const savedAction = await newAction.save();
+
+    if (req.body.emailProprio) {
+      const emails = req.body.emailProprio;
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: emails,
+        subject: "Notification de Création d'Action",
+        html: `Vous avez été assigné à l'action : <br><br>
+            <strong>Détails de l'action:</strong><br>
+            Référence: ${reference}<br>
+            <br>
+            <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          logger.error("Error sending email:", error);
+        } else {
+          logger.info("Email sent:", info.response);
+        }
+      });
+    }
     res.status(200).json({
       statut: 200,
       message: "Action créé avec succès",
