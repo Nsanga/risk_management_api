@@ -45,7 +45,7 @@ async function createAction(req, res) {
         subject: "Notification de Création d'Action",
         html: `Vous avez été assigné à l'action : <br><br>
             <strong>Détails de l'action:</strong><br>
-            Référence: ${reference}<br>
+            Référence: ACT${reference}<br>
             <br>
             <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
       };
