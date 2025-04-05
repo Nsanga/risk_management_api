@@ -7,6 +7,7 @@ var actionSchema = new mongoose.Schema(
     delaisAction: { type: String, required: false },
     proprioAction: { type: String, required: false },
     evolutionAction: { type: String, required: false },
+    emailProprio: { type: String, required: false },
     idControl: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "EntityRiskControl",
