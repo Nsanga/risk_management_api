@@ -12,14 +12,11 @@ const transporter = nodemailer.createTransport({
 async function generateReference() {
   try {
     const lastAction = await Action.findOne().sort({ createdAt: -1 });
-    let newReference = "ACT001";
+    let newReference = "001";
 
     if (lastAction && lastAction.reference) {
-      const lastReferenceNumber = parseInt(
-        lastAction.reference.replace("ACT", ""),
-        10
-      );
-      newReference = `ACT${String(lastReferenceNumber + 1).padStart(3, "0")}`;
+      const lastReference = parseInt(lastAction.reference, 10);
+      newReference = String(lastReference + 1).padStart(3, "0");
     }
 
     return newReference;
@@ -102,6 +99,24 @@ async function getAllActionByControl(req, res) {
   }
 }
 
+async function getAllActionByReference(req, res) {
+  try {
+    const actions = await Action.find({
+      reference: req.body.reference,
+    });
+    // res.status(200).json(actions);
+    res.status(200).json({
+      statut: 200,
+      message: "Action liée à la référence",
+      data: actions,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la récupération de l'historique: " + error.message,
+    });
+  }
+}
+
 async function getAllAction(req, res) {
   try {
     const actions = await Action.find();
@@ -122,4 +137,5 @@ module.exports = {
   createAction,
   getAllActionByEntity,
   getAllActionByControl,
+  getAllActionByReference,
 };

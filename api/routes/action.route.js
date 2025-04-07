@@ -10,7 +10,8 @@ const actionRoutes = (app) => {
   router.get("/getAction", actionController.getAllAction);
   router.post("/byEntitity", actionController.getAllActionByEntity);
   router.post("/byControl", actionController.getAllActionByControl);
-//   router.get("/byControl/:id", actionController.getAllActionByControl);
+  router.post("/byReference", actionController.getAllActionByReference);
+  //   router.get("/byControl/:id", actionController.getAllActionByControl);
 };
 
 module.exports = actionRoutes;

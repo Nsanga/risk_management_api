@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 var actionSchema = new mongoose.Schema(
   {
-    reference: { type: String, unique: true },
+    reference: { type: String},
     descriptionAction: { type: String, required: false },
     delaisAction: { type: String, required: false },
     proprioAction: { type: String, required: false },
