@@ -140,6 +140,56 @@ async function updateEvent(req, res) {
       return ResponseService.notFound(res, { message: "Event not found" });
     }
 
+    // Convertir les emails en ObjectId
+    const ownerProfile = await UserProfile.findOne({
+      _id: updatedData.details.owner,
+    });
+    const nomineeProfile = await UserProfile.findOne({
+      _id: updatedData.details.nominee,
+    });
+    const reviewerProfile = await UserProfile.findOne({
+      _id: updatedData.details.reviewer,
+    });
+    const entityOfDetection = await Entity.findById(
+      updatedData.details.entityOfDetection
+    );
+    const entityOfOrigin = await Entity.findById(
+      updatedData.details.entityOfOrigin
+    );
+
+    // Vérifiez si les profils et entités existent avant d'assigner leurs ObjectIds
+    if (ownerProfile) updatedData.details.owner = ownerProfile._id;
+    if (nomineeProfile) updatedData.details.nominee = nomineeProfile._id;
+    if (reviewerProfile) updatedData.details.reviewer = reviewerProfile._id;
+    if (entityOfDetection)
+      updatedData.details.entityOfDetection = entityOfDetection._id;
+    if (entityOfOrigin) updatedData.details.entityOfOrigin = entityOfOrigin._id;
+
+    if (updatedData.details.notify) {
+      const emails = [ownerProfile.email, nomineeProfile.email];
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: emails.join(", "),
+        subject: "Notification de Création d'Événement",
+        html: `Un nouvel événement a été créé.<br><br>
+        <strong>Détails de l'événement:</strong><br>
+        Référence: EVT${updatedData.num_ref}<br>
+        Titre: ${updatedData.details.description}<br>
+        Date: ${updatedData.details.event_date}<br>
+        <br>
+        <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          logger.error("Error sending email:", error);
+        } else {
+          logger.info("Email sent:", info.response);
+        }
+      });
+    }
+
     return ResponseService.success(res, {
       message: "Event updated successfully",
       event,
