@@ -15,9 +15,14 @@ async function getAllActionByControl(req, res) {
   return await actionService.getAllActionByControl(req, res);
 }
 
+async function getAllActionByReference(req, res) {
+  return await actionService.getAllActionByReference(req, res);
+}
+
 module.exports = {
   createAction,
   getAllAction,
   getAllActionByControl,
   getAllActionByEntity,
+  getAllActionByReference,
 };
