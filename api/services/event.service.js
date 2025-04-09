@@ -16,17 +16,29 @@ const transporter = nodemailer.createTransport({
 let currentNumber = 1; // Point de départ à 00001
 
 async function generateReferenceNumber() {
-  const events = await Event.find();
-  const nextNumber = (events.length + 1).toString().padStart(5, "0"); // Générer un nombre à 5 chiffres
+  try {
+    const lastAction = await Event.findOne().sort({ createdAt: -1 });
+    let newReference = "00001";
 
-  return nextNumber;
+    if (lastAction && lastAction.num_ref) {
+      const lastReference = parseInt(lastAction.num_ref, 10);
+      newReference = String(lastReference + 1).padStart(5, "0");
+    }
+
+    return newReference;
+  } catch (error) {
+    throw new Error(
+      "Erreur lors de la génération de la référence: " + error.message
+    );
+  }
 }
 
 async function createEvent(req, res) {
   try {
     const eventData = req.body;
-    eventData.num_ref = await generateReferenceNumber();
 
+    // eventData.num_ref = await generateReferenceNumber();
+    const num_ref = await generateReferenceNumber();
     // Convertir les emails en ObjectId
     const ownerProfile = await UserProfile.findOne({
       _id: eventData.details.owner,
@@ -52,7 +64,7 @@ async function createEvent(req, res) {
       eventData.details.entityOfDetection = entityOfDetection._id;
     if (entityOfOrigin) eventData.details.entityOfOrigin = entityOfOrigin._id;
 
-    const newEvent = new Event(eventData);
+    const newEvent = new Event({ ...eventData, num_ref });
     await newEvent.save();
 
     if (eventData.details.notify) {
@@ -64,7 +76,7 @@ async function createEvent(req, res) {
         subject: "Notification de Création d'Événement",
         html: `Un nouvel événement a été créé.<br><br>
         <strong>Détails de l'événement:</strong><br>
-        Référence: EVT${eventData.num_ref}<br>
+        Référence: EVT${num_ref}<br>
         Titre: ${eventData.details.description}<br>
         Date: ${eventData.details.event_date}<br>
         <br>

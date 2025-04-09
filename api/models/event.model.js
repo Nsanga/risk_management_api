@@ -21,7 +21,6 @@ const additionnalInfoSchema = new Schema(
 const eventSchema = new Schema({
   num_ref: {
     type: String,
-    required: true,
   },
   details: {
     event_date: Date,

@@ -1,0 +1,2 @@
+2025-04-09 09:48:53 error: Error creating event: Cannot read properties of null (reading 'email')
+2025-04-09 09:55:12 error: Error creating event: Event validation failed: num_ref: Path `num_ref` is required.
