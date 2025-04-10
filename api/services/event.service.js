@@ -67,30 +67,27 @@ async function createEvent(req, res) {
     const newEvent = new Event({ ...eventData, num_ref });
     await newEvent.save();
 
-    if (eventData.details.notify) {
-      const emails = [ownerProfile.email, nomineeProfile.email];
-
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: emails.join(", "),
-        subject: "Notification de Création d'Événement",
-        html: `Un nouvel événement a été créé.<br><br>
+    const emails = [ownerProfile.email, nomineeProfile.email];
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: emails.join(", "),
+      subject: "Notification de Création d'Événement",
+      html: `Un nouvel événement a été créé.<br><br>
         <strong>Détails de l'événement:</strong><br>
         Référence: EVT${num_ref}<br>
         Titre: ${eventData.details.description}<br>
         Date: ${eventData.details.event_date}<br>
         <br>
         <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
-      };
+    };
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          logger.error("Error sending email:", error);
-        } else {
-          logger.info("Email sent:", info.response);
-        }
-      });
-    }
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        logger.error("Error sending email:", error);
+      } else {
+        logger.info("Email sent:", info.response);
+      }
+    });
 
     return ResponseService.created(res, {
       message: "Event created successfully",
@@ -177,7 +174,7 @@ async function updateEvent(req, res) {
       updatedData.details.entityOfDetection = entityOfDetection._id;
     if (entityOfOrigin) updatedData.details.entityOfOrigin = entityOfOrigin._id;
 
-    if (updatedData.details.notify) {
+    // if (updatedData.details.notify) {
       const emails = [ownerProfile.email, nomineeProfile.email];
 
       const mailOptions = {
@@ -200,7 +197,7 @@ async function updateEvent(req, res) {
           logger.info("Email sent:", info.response);
         }
       });
-    }
+    // }
 
     return ResponseService.success(res, {
       message: "Event updated successfully",
