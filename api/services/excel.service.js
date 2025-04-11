@@ -332,13 +332,29 @@ class ExcelService {
         if (!newReference)
           throw new Error("La référence générée est invalide.");
 
-        const copiedItem = {
-          ...itemToCopy.toObject(),
-          reference: newReference,
-          // businessFunction: targetEntity.description,
-          departmentFunction: targetEntity.description,
-          _id: new mongoose.Types.ObjectId(),
-        };
+        const copiedItem =
+          type === "risk"
+            ? {
+                ...itemToCopy.toObject(),
+                reference: newReference,
+                // businessFunction: targetEntity.description,
+                departmentFunction: targetEntity.description,
+                reference: `RSK${codeRef}`,
+                ownerRisk: "Database administrator",
+                nomineeRisk: "Database administrator",
+                reviewerRisk: "Database administrator",
+                _id: new mongoose.Types.ObjectId(),
+              }
+            : {
+                ...itemToCopy.toObject(),
+                reference: newReference,
+                // businessFunction: targetEntity.description,
+                departmentFunction: targetEntity.description,
+                ownerControl: "Database administrator",
+                nomineeControl: "Database administrator",
+                reviewerControl: "Database administrator",
+                _id: new mongoose.Types.ObjectId(),
+              };
 
         targetEntityRiskControl[`${type}s`].push(copiedItem);
         copiedCount++;
@@ -364,6 +380,9 @@ class ExcelService {
               const copiedControl = {
                 ...controlToCopy.toObject(),
                 reference: `CTR${codeRef}`,
+                ownerControl: "Database administrator",
+                nomineeControl: "Database administrator",
+                reviewerControl: "Database administrator",
                 // reference: this.generateRandomReference("CTR", Date.now()),
                 businessFunction: targetEntity.description,
                 _id: new mongoose.Types.ObjectId(),
@@ -387,6 +406,9 @@ class ExcelService {
               const copiedRisk = {
                 ...riskToCopy.toObject(),
                 reference: `RSK${codeRef}`,
+                ownerRisk: "Database administrator",
+                nomineeRisk: "Database administrator",
+                reviewerRisk: "Database administrator",
                 departmentFunction: targetEntity.description,
                 // reference: this.generateRandomReference("RSK", Date.now()),
                 businessFunction: targetEntity.description,
@@ -505,19 +527,45 @@ class ExcelService {
 
           if (!newReference)
             throw new Error("La référence générée est invalide.");
-          const movedItem =
-            targetEntity.description === "Corbeille "
-              ? {
-                  ...itemToMove.toObject(),
-                  departmentFunction: targetEntity.description,
-                  _id: new mongoose.Types.ObjectId(),
-                }
+
+          const isRisk = type === "risk";
+          const isTrash = targetEntity.description === "Corbeille ";
+
+          const movedItem = {
+            ...itemToCopy.toObject(),
+            departmentFunction: targetEntity.description,
+            _id: new mongoose.Types.ObjectId(),
+            ...(isTrash
+              ? {}
               : {
-                  ...itemToMove.toObject(),
-                  reference: newReference,
-                  departmentFunction: targetEntity.description,
-                  _id: new mongoose.Types.ObjectId(),
-                };
+                  reference: `RSK${codeRef}`,
+                  ...(isRisk
+                    ? {
+                        ownerRisk: "Database administrator",
+                        nomineeRisk: "Database administrator",
+                        reviewerRisk: "Database administrator",
+                      }
+                    : {
+                        ownerControl: "Database administrator",
+                        nomineeControl: "Database administrator",
+                        reviewerControl: "Database administrator",
+                      }),
+                }),
+          };
+
+          // const movedItem =
+          // targetEntity.description === "Corbeille "
+          //   ? {
+          //       ...itemToMove.toObject(),
+          //       departmentFunction: targetEntity.description,
+          //       _id: new mongoose.Types.ObjectId(),
+          //     }
+          //   : {
+          //       ...itemToMove.toObject(),
+          //       reference: newReference,
+          //       departmentFunction: targetEntity.description,
+          //       _id: new mongoose.Types.ObjectId(),
+          //     };
 
           targetEntityRiskControl[`${type}s`].push(movedItem);
           movedCount++;
