@@ -20,6 +20,9 @@ const excelRoutes = (app) => {
   // Récupérer les données pour une entité spécifique
   router.get("/entity/show", excelController.getEntityRiskControlById);
 
+  router.get("/getKeyIndicator", excelController.getAllKeyIndicators);
+  router.post("/get-keyIndicator", excelController.getKeyIndicatorByEntity);
+
   // Copier un risque ou un contrôle vers une autre entité
   router.post("/copy", excelController.copyRiskOrControls);
 

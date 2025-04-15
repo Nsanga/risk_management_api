@@ -271,3 +271,69 @@ exports.updateRiskOrControl = async (req, res) => {
     });
   }
 };
+
+exports.getAllKeyIndicators = async (req, res) => {
+  const excelService = new ExcelService();
+
+  try {
+    // Appelle le service pour récupérer les données
+    const entityRiskControl = await excelService.getAllKeyIndicators();
+
+    if (!entityRiskControl) {
+      return res.status(404).json({
+        success: false,
+        message: "Aucune donnée trouvée pour cette entité.",
+      });
+    }
+
+    res.status(200).json({ success: true, data: entityRiskControl });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des données",
+      error: error.message,
+    });
+  }
+};
+
+exports.getKeyIndicatorByEntity = async (req, res) => {
+  const { entityId } = req.body; // Le nom de l'entité vient du corps de la requête
+
+  if (!entityId) {
+    return res.status(400).json({
+      success: false,
+      message: "L'id de l'entité est requis dans le corps de la requête.",
+    });
+  }
+
+  const excelService = new ExcelService();
+
+  try {
+    // Appel à la méthode pour récupérer les risques et contrôles de l'entité
+    const entityRiskControls = await excelService.getKeyIndicatorByEntity(
+      entityId
+    );
+
+    if (!entityRiskControls || entityRiskControls.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: `Aucune donnée trouvée pour l'entité : ${entityId}`,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: entityRiskControls,
+    });
+  } catch (error) {
+    console.error(
+      `Erreur lors de la récupération des données pour l'entité '${entityId}':`,
+      error.message
+    );
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des données",
+      error: error.message,
+    });
+  }
+};

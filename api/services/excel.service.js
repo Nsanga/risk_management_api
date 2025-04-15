@@ -2,6 +2,8 @@ const XLSX = require("xlsx");
 const Entity = require("../models/entity.model");
 const EntityRiskControl = require("../models/entityRiskControl.model");
 const historyModel = require("../models/history.model");
+const KeyIndicator = require("../models/keyIndicator.model");
+
 const mongoose = require("mongoose");
 
 class ExcelService {
@@ -40,8 +42,10 @@ class ExcelService {
       );
 
       const groupedData = {};
+      const groupedKeyIndicator = {};
       let riskCount = 1;
       let controlCount = 1;
+      let riskCountKeyIndicator = 1;
 
       for (const row of riskData) {
         const businessFunction = row[2];
@@ -58,6 +62,10 @@ class ExcelService {
 
         const riskReference = this.generateReference("RSK", riskCount++);
         const controlReference = this.generateReference("CTR", controlCount++);
+        const riskReferenceKeyIndicator = this.generateReference(
+          "KI",
+          riskCountKeyIndicator++
+        );
 
         const risk = {
           reference: riskReference,
@@ -106,12 +114,34 @@ class ExcelService {
           reviewerControl: "Database administrator",
         };
 
+        const dataKeyIndicator = {
+          reference: riskReferenceKeyIndicator,
+          entityReference: entityId,
+          departmentFunction: row[2],
+          riskIndicatorDescription: row[24],
+          mesureKeyIndicator: row[25],
+          frequenceKeyIndicator: row[26],
+          calculMethodKeyIndicator: row[27],
+          toleranceKeyIndicator: row[28],
+          seuilKeyIndicator: row[29],
+          escaladeKeyIndicator: row[30],
+          ownerKeyIndicator: "Database administrator",
+          nomineeKeyIndicator: "Database administrator",
+          reviewerKeyIndicator: "Database administrator",
+        };
+
         if (!groupedData[entityId]) {
           groupedData[entityId] = { entity, risks: [], controls: [] };
         }
 
         groupedData[entityId].risks.push(risk);
         groupedData[entityId].controls.push(control);
+
+        if (!groupedKeyIndicator[entityId]) {
+          groupedKeyIndicator[entityId] = { entity, dataKeyIndicators: [] };
+        }
+
+        groupedKeyIndicator[entityId].dataKeyIndicators.push(dataKeyIndicator);
       }
 
       const result = Object.values(groupedData).map(
@@ -124,8 +154,17 @@ class ExcelService {
 
       await EntityRiskControl.insertMany(result);
 
+      const resultKeyIndicator = Object.values(groupedKeyIndicator).map(
+        ({ entity, dataKeyIndicators }) => ({
+          entity: new mongoose.Types.ObjectId(entity._id),
+          dataKeyIndicators,
+        })
+      );
+
+      await KeyIndicator.insertMany(resultKeyIndicator);
+
       console.log("Données sauvegardées dans la base de données avec succès.");
-      return result;
+      return { result, resultKeyIndicator };
     } catch (error) {
       console.error(
         "Erreur lors de la lecture du fichier Excel :",
@@ -478,6 +517,7 @@ class ExcelService {
 
       let movedCount = 0;
       let iterationCount = 0;
+      let refNumber = 0;
       const errorItems = [];
 
       for (const itemId of itemIds) {
@@ -532,13 +572,14 @@ class ExcelService {
           const isTrash = targetEntity.description === "Corbeille ";
 
           const movedItem = {
-            ...itemToCopy.toObject(),
+            ...itemToMove.toObject(),
             departmentFunction: targetEntity.description,
             _id: new mongoose.Types.ObjectId(),
             ...(isTrash
               ? {}
               : {
-                  reference: `RSK${codeRef}`,
+                  // reference: `RSK${codeRef}`,
+                  reference: newReference,
                   ...(isRisk
                     ? {
                         ownerRisk: "Database administrator",
@@ -585,10 +626,18 @@ class ExcelService {
               targetEntity.description === "Corbeille "
                 ? {
                     ...controlToMove.toObject(),
+                    ownerControl: "Database administrator",
+                    nomineeControl: "Database administrator",
+                    reviewerControl: "Database administrator",
+                    businessFunction: targetEntity.description,
                     _id: new mongoose.Types.ObjectId(),
                   }
                 : {
                     ...controlToMove.toObject(),
+                    ownerControl: "Database administrator",
+                    nomineeControl: "Database administrator",
+                    reviewerControl: "Database administrator",
+                    businessFunction: targetEntity.description,
                     reference: `CTR${String(++controlCounter).padStart(
                       5,
                       "0"
@@ -617,11 +666,17 @@ class ExcelService {
                 ? {
                     ...riskToMove.toObject(),
                     departmentFunction: targetEntity.description,
+                    ownerRisk: "Database administrator",
+                    nomineeRisk: "Database administrator",
+                    reviewerRisk: "Database administrator",
                     _id: new mongoose.Types.ObjectId(),
                   }
                 : {
                     ...riskToMove.toObject(),
                     reference: `RSK${String(++riskCounter).padStart(5, "0")}`,
+                    ownerRisk: "Database administrator",
+                    nomineeRisk: "Database administrator",
+                    reviewerRisk: "Database administrator",
                     departmentFunction: targetEntity.description,
                     // reference: this.generateRandomReference("CTR", Date.now()),
                     _id: new mongoose.Types.ObjectId(),
@@ -668,6 +723,40 @@ class ExcelService {
         message: "Erreur lors du déplacement des éléments.",
         error: error.message,
       };
+    }
+  }
+
+  async getAllKeyIndicators() {
+    try {
+      const keyIndicators = await KeyIndicator.find();
+
+      return keyIndicators;
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des indicateurs clés :",
+        error
+      );
+      throw new Error("Impossible de récupérer les indicateurs clés.");
+    }
+  }
+
+  async getKeyIndicatorByEntity(entityId) {
+    try {
+      const entity = await KeyIndicator.findOne({
+        entity: entityId,
+      });
+
+      if (!entity) {
+        throw new Error(`Entité '${entityId}' introuvable`);
+      }
+
+      return entity;
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des données :",
+        error.message
+      );
+      throw new Error("Impossible de récupérer les données pour l'entité.");
     }
   }
 }
