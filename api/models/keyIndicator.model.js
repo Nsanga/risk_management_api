@@ -11,6 +11,8 @@ const dataKeyIndicatorSchema = new mongoose.Schema({
   calculMethodKeyIndicator: { type: String },
   toleranceKeyIndicator: { type: String },
   seuilKeyIndicator: { type: String },
+  type: { type: String, default: "Numeric" },
+  category: { type: String, default: "Key Risk Indicator" },
   escaladeKeyIndicator: { type: String },
   ownerKeyIndicator: { type: String },
   nomineeKeyIndicator: { type: String },
@@ -24,7 +26,7 @@ const keyIndicatorSchema = new mongoose.Schema(
       ref: "Entity",
       required: true,
     },
-    dataKeyIndicators: [dataKeyIndicatorSchema], 
+    dataKeyIndicators: [dataKeyIndicatorSchema],
   },
   { timestamps: true }
 );
