@@ -15,6 +15,10 @@ class ExcelService {
     return `${prefix}${String(count).padStart(4, "0")}`;
   }
 
+  generateReferenceIndicator(count) {
+    return `${String(count).padStart(4, "0")}`;
+  }
+
   generateRandomReference(prefix, timestamp) {
     // Convertit le timestamp en un format unique mais limité à 5 chiffres
     const randomPart = String(timestamp).slice(-5); // Prend les 5 derniers chiffres du timestamp
@@ -62,8 +66,7 @@ class ExcelService {
 
         const riskReference = this.generateReference("RSK", riskCount++);
         const controlReference = this.generateReference("CTR", controlCount++);
-        const riskReferenceKeyIndicator = this.generateReference(
-          "KI",
+        const riskReferenceKeyIndicator = this.generateReferenceIndicator(
           riskCountKeyIndicator++
         );
 

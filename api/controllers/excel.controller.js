@@ -1,6 +1,8 @@
 const fs = require("fs");
 const ExcelService = require("../services/excel.service"); // Assurez-vous que ce chemin est correct
 const EntityRiskControl = require("../models/entityRiskControl.model");
+const keyIndicatorModel = require("../models/keyIndicator.model");
+
 // Contrôleur pour uploader et sauvegarder un fichier Excel
 exports.extractDataFromExcel = (req, res) => {
   const file = req.file; // Obtenir le fichier téléchargé
@@ -333,6 +335,59 @@ exports.getKeyIndicatorByEntity = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Erreur lors de la récupération des données",
+      error: error.message,
+    });
+  }
+};
+exports.updateKeyIndicator = async (req, res) => {
+  const { itemIds, updates } = req.body;
+  try {
+    // Validation des paramètres d'entrée
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+      return res.status(400).json({
+        message: "Un tableau de itemIds est requis.",
+      });
+    }
+
+    if (!updates || typeof updates !== "object") {
+      return res.status(400).json({
+        message: "Les mises à jour doivent être un objet valide.",
+      });
+    }
+
+    // Recherche du document contenant les dataKeyIndicators
+    const document = await keyIndicatorModel.findOne({
+      "dataKeyIndicators._id": { $in: itemIds },
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        message: `Aucun dataKeyIndicator trouvé avec les IDs spécifiés.`,
+      });
+    }
+
+    let updatedItems = [];
+
+    // Mise à jour de chaque élément dans dataKeyIndicators
+    itemIds.forEach((id) => {
+      const indicator = document.dataKeyIndicators.id(id);
+      if (indicator) {
+        Object.assign(indicator, updates);
+        updatedItems.push(indicator);
+      }
+    });
+
+    // Sauvegarde du document après modifications
+    await document.save();
+
+    return res.status(200).json({
+      message: `Mise à jour réussie`,
+      data: updatedItems,
+    });
+  } catch (error) {
+    console.error("Erreur :", error);
+    return res.status(500).json({
+      message: "Erreur lors de la mise à jour.",
       error: error.message,
     });
   }

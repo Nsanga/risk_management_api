@@ -30,6 +30,8 @@ const excelRoutes = (app) => {
   router.post("/move", excelController.moveRiskOrControls);
 
   router.put("/update", excelController.updateRiskOrControl);
+
+  router.put("/updateKri", excelController.updateKeyIndicator);
 };
 
 module.exports = excelRoutes;
