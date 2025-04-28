@@ -10,6 +10,7 @@ const entityRiskControlRoutes = require("./entityRiskControl.route");
 const excelRoutes = require("./excel.route");
 const historyRoutes = require("./history.route");
 const actionRouter = require("./action.route");
+const historiqueKRIrouter = require("./historyKRI.route");
 
 const router = express.Router();
 
@@ -30,6 +31,7 @@ const appRoutes = () => {
   excelRoutes(app);
   historyRoutes(app);
   actionRouter(app);
+  historiqueKRIrouter(app);
   return app;
 };
 

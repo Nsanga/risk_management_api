@@ -1,0 +1,24 @@
+const mongoose = require("mongoose");
+var historyKRI = new mongoose.Schema(
+  {
+    avage: { type: String, required: false },
+    period: { type: String, required: false },
+    time: { type: String, required: false },
+    value: { type: String, required: false },
+    comment: { type: String, required: false },
+    status: { type: String, required: false, default: "active" },
+    idKeyIndicator: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "KeyIndicator",
+      required: false,
+    },
+    idEntity: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Entity",
+      required: false,
+    },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("kRI_History", historyKRI);
