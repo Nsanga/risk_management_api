@@ -11,6 +11,7 @@ const excelRoutes = require("./excel.route");
 const historyRoutes = require("./history.route");
 const actionRouter = require("./action.route");
 const historiqueKRIrouter = require("./historyKRI.route");
+const actionkRIroute = require("./actionKRI.route");
 
 const router = express.Router();
 
@@ -32,6 +33,7 @@ const appRoutes = () => {
   historyRoutes(app);
   actionRouter(app);
   historiqueKRIrouter(app);
+  actionkRIroute(app);
   return app;
 };
 
