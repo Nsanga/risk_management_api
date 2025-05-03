@@ -8,7 +8,7 @@ const historyKRIRoutes = (app) => {
 
   router.post("/postHistoriqueKRI", historiqueKRIController.createHistoryKRI);
   router.get("/getHistoriqueKRI", historiqueKRIController.getAllHistoriqueKri);
-  router.get(
+  router.post(
     "/getHistoriqueKRIByIdKeyIndicator",
     historiqueKRIController.getAllHistoriqueByIdKeyIndicator
   );

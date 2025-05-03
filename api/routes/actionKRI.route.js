@@ -8,7 +8,7 @@ const actionKRIRoutes = (app) => {
 
   router.post("/postActionKRI", actionKRIController.createActionKRI);
   router.get("/getActionKRI", actionKRIController.getAllActionKRI);
-  router.get(
+  router.post(
     "/getActionByIdKeyIndicator",
     actionKRIController.getAllActionByIdKeyIndicator
   );
