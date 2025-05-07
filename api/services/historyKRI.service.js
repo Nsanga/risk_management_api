@@ -72,7 +72,7 @@ async function getAllHistoriqueByIdKeyIndicator(req, res) {
       message: "Historique liée au KRI (5 derniers éléments)",
 
       data: {
-        Average: average,
+        average: average,
         histories: historique,
       },
     });
