@@ -7,12 +7,12 @@ const userHandler = require('../controllers/user.controller');
  * @param {express.Application} app - The Express application.
  */
 const setupUserRoutes = (app) => {
+<<<<<<< HEAD
     // Mount the 'router' to handle routes with the base path '/user'.
     app.use("/user", router);
 
     router.get('/list', (req, res) => {
         userHandler.getAllUser(req, res);
-    });
 
     router.post('/login', (req, res) => {
         userHandler.login(req, res);
@@ -28,3 +28,9 @@ const setupUserRoutes = (app) => {
 };
 
 module.exports = { setupUserRoutes };
+=======
+  // Mount the 'router' to handle routes with the base path '/user'.
+  app.use("/user", router);
+
+  router.get("/list", (req, res) => {
+    userHandler.getAllUser(req, res);

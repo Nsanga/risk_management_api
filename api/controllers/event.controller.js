@@ -26,4 +26,8 @@ module.exports = {
   updateEvent,
   deleteEvent,
   getAllEvents,
+<<<<<<< HEAD
+=======
+  getEventByEntity,
+>>>>>>> 4729169 (Re-initialisation après suppression du .git)
 };
