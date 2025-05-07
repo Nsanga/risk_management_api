@@ -1,18 +1,7 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> 4729169 (Re-initialisation après suppression du .git)
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const entitySchema = new Schema({
-<<<<<<< HEAD
-=======
-  referenceId: {
-    type: String,
-    unique: true,
-  },
->>>>>>> 4729169 (Re-initialisation après suppression du .git)
   description: {
     type: String,
     required: true

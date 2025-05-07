@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 2024-08-03 11:22:30 error: Error creating event: Cannot read properties of undefined (reading 'notify')
 2024-08-03 11:24:09 error: Error sending email: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
 535 5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-36bbd01e0a7sm3972447f8f.43 - gsmtp
@@ -21,3 +22,20 @@
 2024-08-03 12:23:20 error: Error sending email: Invalid login: 534-5.7.9 Application-specific password required. For more information, go to
 534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor ffacd0b85a97d-36bbd06dfb4sm4137495f8f.103 - gsmtp
 2024-08-03 12:40:10 info: Email sent:
+=======
+2025-04-07 16:36:45 info: Email sent:
+2025-04-07 16:54:11 info: Email sent:
+2025-04-09 09:24:16 info: Email sent:
+2025-04-09 09:41:39 info: Email sent:
+2025-04-09 09:48:53 error: Error creating event: Cannot read properties of null (reading 'email')
+2025-04-09 09:50:23 info: Email sent:
+2025-04-09 09:55:12 error: Error creating event: Event validation failed: num_ref: Path `num_ref` is required.
+2025-04-09 10:04:45 info: Email sent:
+2025-04-09 10:05:30 info: Email sent:
+2025-04-09 10:23:32 info: Email sent:
+2025-04-10 19:01:24 info: Email sent:
+2025-04-10 19:21:43 info: Email sent:
+2025-04-10 19:34:12 info: Email sent:
+2025-04-10 19:43:59 info: Email sent:
+2025-04-10 19:52:55 info: Email sent:
+>>>>>>> 6820c9b (first local commit)
