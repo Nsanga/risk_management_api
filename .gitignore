@@ -3,12 +3,8 @@ node_modules
 uploads/images/*
 data/*
 !uploads/images/.gitkeep
-<<<<<<< HEAD
-.env
-=======
 .env
 .vercel
 
 # Local Netlify folder
 .netlify
->>>>>>> 4729169 (Re-initialisation après suppression du .git)

@@ -1,21 +1,5 @@
 const Entity = require('../models/entity.model');
 const ResponseService = require('./response.service');
-<<<<<<< HEAD
-const UploadService = require('./uploadFile.service');
-
-function generateReferenceNumber() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-async function createEntity(req, res) {
-  try {
-    const entityData = req.body;
-    // entityData.num_ref = generateReferenceNumber();
-
-    const newEntity = new Entity(entityData);
-    await newEntity.save();
-
-=======
 
 async function createEntity(req, res) {
   try {
@@ -41,7 +25,6 @@ async function createEntity(req, res) {
     await newEntity.save();
 
     // Retourner la réponse avec succès
->>>>>>> 4729169 (Re-initialisation après suppression du .git)
     return ResponseService.created(res, newEntity);
   } catch (error) {
     console.error('Error creating entity:', error);
@@ -97,9 +80,6 @@ async function deleteEntity(req, res) {
 
 async function getAllEntities(req, res) {
   try {
-<<<<<<< HEAD
-    const entities = await Entity.find();
-=======
     // Recherche des entités et peuplement du champ 'owner' avec les données de UserProfile
     const entities = await Entity.find()
       .populate({
@@ -117,7 +97,6 @@ async function getAllEntities(req, res) {
         select: 'name surname'  // Les champs à inclure dans la réponse
       });
       
->>>>>>> 4729169 (Re-initialisation après suppression du .git)
     return ResponseService.success(res, { entities });
   } catch (error) {
     console.error('Erreur lors de la récupération des entités:', error);

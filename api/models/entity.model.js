@@ -1,7 +1,12 @@
+
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const entitySchema = new Schema({
+  referenceId: {
+    type: String,
+    unique: true,
+  },
   description: {
     type: String,
     required: true
@@ -16,19 +21,24 @@ const entitySchema = new Schema({
   },
   entityActive: {
     type: Boolean,
-    default: false
+    default: true
   },
   owner: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: 'UserProfile',
     required: true
   },
   nominee: {
-    type: String,
-    required: true
+    type: Schema.Types.ObjectId,
+    ref: 'UserProfile',
+    required: false,
+    default: null
   },
   reviewer: {
-    type: String,
-    required: false
+    type: Schema.Types.ObjectId,
+    ref: 'UserProfile',
+    required: false,
+    default: null
   },
   reviewDate: {
     type: Date,
@@ -39,9 +49,9 @@ const entitySchema = new Schema({
     required: true
   },
   businessLine: { 
-    type: String, 
-    required: true
-  } 
+    type: String,
+    required: false 
+  }, 
 }, { timestamps: true });
 
 const Entity = mongoose.model('Entity', entitySchema);
