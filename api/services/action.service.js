@@ -1,5 +1,6 @@
 const Action = require("../models/action.model");
 const nodemailer = require("nodemailer");
+const EntityRiskControl = require("../models/entityRiskControl.model");
 
 const transporter = nodemailer.createTransport({
   service: "gmail", // Utilisez le service de messagerie de votre choix
@@ -132,10 +133,51 @@ async function getAllAction(req, res) {
   }
 }
 
+async function getDataRapport(req, res) {
+  const { sesion, targetEntityId, type } = req.body;
+  try {
+    if (!sesion || !targetEntityId || !type) {
+      throw new Error(
+        "Les paramètres 'sesion', 'targetEntityId' et 'type' sont requis."
+      );
+    }
+
+    let filteredControls = [];
+
+    for (const itemId of targetEntityId) {
+      const entityData = await EntityRiskControl.findOne({ entity: itemId });
+
+      if (entityData && entityData.controls) {
+        const controlsMatched = entityData.controls.filter(
+          (control) => control.frequence === sesion
+        );
+
+        console.log("Contrôles filtrés :", controlsMatched);
+
+        filteredControls.push(...controlsMatched);
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: `Tous les contrôles avec frequence = '${sesion}' ont été récupérés avec succès.`,
+      data: filteredControls,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération :", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des éléments.",
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   getAllAction,
   createAction,
   getAllActionByEntity,
   getAllActionByControl,
   getAllActionByReference,
+  getDataRapport,
 };

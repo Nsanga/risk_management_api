@@ -7,6 +7,7 @@ const actionRoutes = (app) => {
   app.use("/actions", router);
 
   router.post("/postAction", actionController.createAction);
+  router.post("/getRapport", actionController.getDataRapport);
   router.get("/getAction", actionController.getAllAction);
   router.post("/byEntitity", actionController.getAllActionByEntity);
   router.post("/byControl", actionController.getAllActionByControl);
