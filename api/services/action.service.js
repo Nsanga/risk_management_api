@@ -150,15 +150,15 @@ async function getDataRapport(req, res) {
       if (entityData && entityData.controls && entityData.risks) {
         const controlsMatched = entityData.controls
           .map((control, index) => {
-            if (control.frequence === sesion) {
-              const correspondingRisk = entityData.risks[index];
-              return {
-                ...(control.toObject?.() ?? control),
-                referenceRisk: correspondingRisk?.reference || null,
-                descriptionRisk: correspondingRisk?.description || null,
-              };
-            }
-            return null;
+            // if (control.frequence === sesion) {
+            const correspondingRisk = entityData.risks[index];
+            return {
+              ...(control.toObject?.() ?? control),
+              referenceRisk: correspondingRisk?.reference || null,
+              descriptionRisk: correspondingRisk?.description || null,
+            };
+            // }
+            // return null;
           })
           .filter(Boolean);
 
@@ -170,6 +170,7 @@ async function getDataRapport(req, res) {
       success: true,
       message: `Tous les contrôles avec frequence = '${sesion}' ont été récupérés avec succès.`,
       data: filteredControls,
+      total: filteredControls.length,
     });
   } catch (error) {
     console.error("Erreur lors de la récupération :", error.message);
