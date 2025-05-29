@@ -147,12 +147,20 @@ async function getDataRapport(req, res) {
     for (const itemId of targetEntityId) {
       const entityData = await EntityRiskControl.findOne({ entity: itemId });
 
-      if (entityData && entityData.controls) {
-        const controlsMatched = entityData.controls.filter(
-          (control) => control.frequence === sesion
-        );
-
-        console.log("Contrôles filtrés :", controlsMatched);
+      if (entityData && entityData.controls && entityData.risks) {
+        const controlsMatched = entityData.controls
+          .map((control, index) => {
+            if (control.frequence === sesion) {
+              const correspondingRisk = entityData.risks[index];
+              return {
+                ...(control.toObject?.() ?? control),
+                referenceRisk: correspondingRisk?.reference || null,
+                descriptionRisk: correspondingRisk?.description || null,
+              };
+            }
+            return null;
+          })
+          .filter(Boolean);
 
         filteredControls.push(...controlsMatched);
       }
