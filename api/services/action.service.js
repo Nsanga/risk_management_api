@@ -1,6 +1,7 @@
 const Action = require("../models/action.model");
 const nodemailer = require("nodemailer");
 const EntityRiskControl = require("../models/entityRiskControl.model");
+const keyIndicatorSchema = require("../models/keyIndicator.model");
 
 const transporter = nodemailer.createTransport({
   service: "gmail", // Utilisez le service de messagerie de votre choix
@@ -144,25 +145,34 @@ async function getDataRapport(req, res) {
 
     let filteredControls = [];
 
-    for (const itemId of targetEntityId) {
-      const entityData = await EntityRiskControl.findOne({ entity: itemId });
+    if (sesion === "riskControl") {
+      for (const itemId of targetEntityId) {
+        const entityData = await EntityRiskControl.findOne({ entity: itemId });
 
-      if (entityData && entityData.controls && entityData.risks) {
-        const controlsMatched = entityData.controls
-          .map((control, index) => {
-            // if (control.frequence === sesion) {
-            const correspondingRisk = entityData.risks[index];
-            return {
-              ...(control.toObject?.() ?? control),
-              referenceRisk: correspondingRisk?.reference || null,
-              descriptionRisk: correspondingRisk?.description || null,
-            };
-            // }
-            // return null;
-          })
-          .filter(Boolean);
+        if (entityData && entityData.controls && entityData.risks) {
+          const controlsMatched = entityData.controls
+            .map((control, index) => {
+              // if (control.frequence === sesion) {
+              const correspondingRisk = entityData.risks[index];
+              return {
+                ...(control.toObject?.() ?? control),
+                referenceRisk: correspondingRisk?.reference || null,
+                descriptionRisk: correspondingRisk?.description || null,
+              };
+              // }
+              // return null;
+            })
+            .filter(Boolean);
 
-        filteredControls.push(...controlsMatched);
+          filteredControls.push(...controlsMatched);
+        }
+      }
+    } else {
+      for (const itemId of targetEntityId) {
+        const entityData = await keyIndicatorSchema.findOne({ entity: itemId });
+        if (entityData && Array.isArray(entityData.dataKeyIndicators)) {
+          filteredControls.push(...entityData.dataKeyIndicators);
+        }
       }
     }
 
