@@ -169,12 +169,31 @@ async function getDataRapport(req, res) {
       }
     } else {
       for (const itemId of targetEntityId) {
-        const entityData = await keyIndicatorSchema.findOne({ entity: itemId });
+        const entityData = await keyIndicatorSchema
+          .findOne({ entity: itemId })
+          .populate("entity");
+
         if (entityData && Array.isArray(entityData.dataKeyIndicators)) {
-          filteredControls.push(...entityData.dataKeyIndicators);
+          const enrichedIndicators = entityData.dataKeyIndicators.map(
+            (indicator) => ({
+              ...(indicator.toObject?.() ?? indicator),
+              entitie: entityData.entity,
+            })
+          );
+
+          filteredControls.push(...enrichedIndicators);
         }
       }
     }
+
+    // else {
+    //   for (const itemId of targetEntityId) {
+    //     const entityData = await keyIndicatorSchema.findOne({ entity: itemId });
+    //     if (entityData && Array.isArray(entityData.dataKeyIndicators)) {
+    //       filteredControls.push(...entityData.dataKeyIndicators);
+    //     }
+    //   }
+    // }
 
     return res.json({
       success: true,
