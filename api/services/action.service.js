@@ -2,6 +2,7 @@ const Action = require("../models/action.model");
 const nodemailer = require("nodemailer");
 const EntityRiskControl = require("../models/entityRiskControl.model");
 const keyIndicatorSchema = require("../models/keyIndicator.model");
+const historyKRIModel = require("../models/historyKRI.model");
 
 const transporter = nodemailer.createTransport({
   service: "gmail", // Utilisez le service de messagerie de votre choix
@@ -174,10 +175,30 @@ async function getDataRapport(req, res) {
           .populate("entity");
 
         if (entityData && Array.isArray(entityData.dataKeyIndicators)) {
+          // Extraire tous les IDs d'indicateurs
+          const indicatorIds = entityData.dataKeyIndicators.map(
+            (item) => item._id
+          );
+
+          // Récupérer tous les historiques liés à ces indicateurs
+          const histories = await historyKRIModel.find({
+            idKeyIndicator: { $in: indicatorIds },
+          });
+
+          // Grouper les historiques par ID d'indicateur
+          const historyMap = histories.reduce((acc, hist) => {
+            const key = hist.idKeyIndicator.toString();
+            if (!acc[key]) acc[key] = [];
+            acc[key] = acc[key] || [];
+            acc[key].push(hist);
+            return acc;
+          }, {});
+
           const enrichedIndicators = entityData.dataKeyIndicators.map(
             (indicator) => ({
               ...(indicator.toObject?.() ?? indicator),
               entitie: entityData.entity,
+              history: historyMap[indicator._id.toString()] || [],
             })
           );
 
@@ -185,15 +206,6 @@ async function getDataRapport(req, res) {
         }
       }
     }
-
-    // else {
-    //   for (const itemId of targetEntityId) {
-    //     const entityData = await keyIndicatorSchema.findOne({ entity: itemId });
-    //     if (entityData && Array.isArray(entityData.dataKeyIndicators)) {
-    //       filteredControls.push(...entityData.dataKeyIndicators);
-    //     }
-    //   }
-    // }
 
     return res.json({
       success: true,
