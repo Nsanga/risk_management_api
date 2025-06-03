@@ -1,9 +1,53 @@
+const historyKRIModel = require("../models/historyKRI.model");
 const Historique = require("../models/historyKRI.model");
+const keyIndicatorSchema = require("../models/keyIndicator.model");
 
 async function createHistoryKRI(req, res) {
   try {
-    const historique = new Historique(req.body);
+    let filteredControls = [];
+    const { idEntity, idKeyIndicator } = req.body;
+
+    const entityData = await keyIndicatorSchema.findOne({ entity: idEntity });
+
+    const indicatorIds = entityData.dataKeyIndicators.map((item) => item._id);
+
+    const histories = await historyKRIModel.find({
+      idKeyIndicator: { $in: indicatorIds },
+    });
+
+    const historyMap = histories.reduce((acc, hist) => {
+      const key = hist.idKeyIndicator.toString();
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(hist);
+      return acc;
+    }, {});
+
+    const enrichedIndicators = entityData.dataKeyIndicators.map(
+      (indicator) => ({
+        ...(indicator.toObject?.() ?? indicator),
+        history: historyMap[indicator._id.toString()] || [],
+      })
+    );
+
+    filteredControls.push(...enrichedIndicators);
+
+    // Trouver la longueur maximale de tous les tableaux "history"
+    let maxHistoryLength = 0;
+    for (const control of filteredControls) {
+      const length = control.history.length;
+      if (length > maxHistoryLength) {
+        maxHistoryLength = length;
+      }
+    }
+
+    const dataLength = maxHistoryLength;
+
+    const historique = new Historique({
+      ...req.body,
+      coutAnnually: `Q${dataLength === 4 ? dataLength : dataLength + 1},`,
+    });
     await historique.save();
+
     res.status(201).json({
       statut: 201,
       message: "Historique KRI créé avec succès",

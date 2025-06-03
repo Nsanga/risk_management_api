@@ -138,11 +138,11 @@ async function getAllAction(req, res) {
 async function getDataRapport(req, res) {
   const { sesion, targetEntityId, type } = req.body;
   try {
-    if (!sesion || !targetEntityId || !type) {
-      throw new Error(
-        "Les paramètres 'sesion', 'targetEntityId' et 'type' sont requis."
-      );
-    }
+    // if (!sesion || !targetEntityId || !type) {
+    //   throw new Error(
+    //     "Les paramètres 'sesion', 'targetEntityId' et 'type' sont requis."
+    //   );
+    // }
 
     let filteredControls = [];
 
