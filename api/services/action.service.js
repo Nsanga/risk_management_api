@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer");
 const EntityRiskControl = require("../models/entityRiskControl.model");
 const keyIndicatorSchema = require("../models/keyIndicator.model");
 const historyKRIModel = require("../models/historyKRI.model");
+const historySchema = require("../models/history.model");
 
 const transporter = nodemailer.createTransport({
   service: "gmail", // Utilisez le service de messagerie de votre choix
@@ -146,19 +147,35 @@ async function getDataRapport(req, res) {
 
     let filteredControls = [];
 
-    if (sesion === "riskControl") {
+    if (type === "riskControl") {
       for (const itemId of targetEntityId) {
         const entityData = await EntityRiskControl.findOne({ entity: itemId });
 
         if (entityData && entityData.controls && entityData.risks) {
+          const indicatorIds = entityData.controls.map((item) => item._id);
+
+          const histories = await historySchema.find({
+            idControl: { $in: indicatorIds },
+          });
+
+          const historyMap = histories.reduce((acc, hist) => {
+            const key = hist.idControl.toString();
+            if (!acc[key]) acc[key] = [];
+            acc[key] = acc[key] || [];
+            acc[key].push(hist);
+            return acc;
+          }, {});
+
           const controlsMatched = entityData.controls
             .map((control, index) => {
               // if (control.frequence === sesion) {
               const correspondingRisk = entityData.risks[index];
+
               return {
                 ...(control.toObject?.() ?? control),
                 referenceRisk: correspondingRisk?.reference || null,
                 descriptionRisk: correspondingRisk?.description || null,
+                history: historyMap[control._id.toString()] || [],
               };
               // }
               // return null;
