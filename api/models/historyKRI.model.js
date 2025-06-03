@@ -7,6 +7,7 @@ var historyKRI = new mongoose.Schema(
     value: { type: String, required: false },
     comment: { type: String, required: false },
     status: { type: String, required: false, default: "active" },
+    coutAnnually: { type: String, required: false },
     idKeyIndicator: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "KeyIndicator",
