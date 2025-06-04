@@ -31,6 +31,10 @@ async function createHistoryKRI(req, res) {
 
     filteredControls.push(...enrichedIndicators);
 
+    const tailleHistory = filteredControls?.find(
+      (item) => item._id.toString() === idKeyIndicator.toString()
+    );
+
     // Trouver la longueur maximale de tous les tableaux "history"
     let maxHistoryLength = 0;
     for (const control of filteredControls) {
@@ -40,7 +44,7 @@ async function createHistoryKRI(req, res) {
       }
     }
 
-    const dataLength = maxHistoryLength;
+    const dataLength = tailleHistory?.history?.length;
 
     const historique = new Historique({
       ...req.body,

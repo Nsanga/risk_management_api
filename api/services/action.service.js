@@ -149,7 +149,9 @@ async function getDataRapport(req, res) {
 
     if (type === "riskControl") {
       for (const itemId of targetEntityId) {
-        const entityData = await EntityRiskControl.findOne({ entity: itemId });
+        const entityData = await EntityRiskControl.findOne({
+          entity: itemId,
+        }).populate("entity");
 
         if (entityData && entityData.controls && entityData.risks) {
           const indicatorIds = entityData.controls.map((item) => item._id);
@@ -174,7 +176,8 @@ async function getDataRapport(req, res) {
               return {
                 ...(control.toObject?.() ?? control),
                 referenceRisk: correspondingRisk?.reference || null,
-                descriptionRisk: correspondingRisk?.description || null,
+                entitie: entityData.entity,
+                riskAssociate: correspondingRisk || null,
                 history: historyMap[control._id.toString()] || [],
               };
               // }
