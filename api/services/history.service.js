@@ -77,8 +77,25 @@ const createHistory = async (data) => {
   await entityWithControl.save();
 
   try {
+    // Étape 1 : Récupérer les historiques liés à ce contrôle
+    const existingHistories = await History.find({
+      idControl: data.idControl,
+    });
+
+    // Étape 2 : Calculer le coutAnnually
+    const historyLength = existingHistories.length;
+    const coutAnnually = `Q${
+      historyLength === 4 ? historyLength : historyLength + 1
+    }`;
+
+    // Étape 3 : Générer une référence et créer le nouvel historique
     const reference = await generateReference();
-    const newHistory = new History({ ...data, reference });
+    const newHistory = new History({
+      ...data,
+      reference,
+      coutAnnually,
+    });
+
     return await newHistory.save();
   } catch (error) {
     throw new Error("Erreur lors de la création du test: " + error.message);
