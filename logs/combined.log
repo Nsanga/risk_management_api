@@ -1,15 +1,1 @@
-2025-04-07 16:36:45 info: Email sent:
-2025-04-07 16:54:11 info: Email sent:
-2025-04-09 09:24:16 info: Email sent:
-2025-04-09 09:41:39 info: Email sent:
-2025-04-09 09:48:53 error: Error creating event: Cannot read properties of null (reading 'email')
-2025-04-09 09:50:23 info: Email sent:
-2025-04-09 09:55:12 error: Error creating event: Event validation failed: num_ref: Path `num_ref` is required.
-2025-04-09 10:04:45 info: Email sent:
-2025-04-09 10:05:30 info: Email sent:
-2025-04-09 10:23:32 info: Email sent:
-2025-04-10 19:01:24 info: Email sent:
-2025-04-10 19:21:43 info: Email sent:
-2025-04-10 19:34:12 info: Email sent:
-2025-04-10 19:43:59 info: Email sent:
-2025-04-10 19:52:55 info: Email sent:
+2025-06-09 09:33:47 info: Email sent:
