@@ -1,4 +1,5 @@
 const UserProfile = require('../models/userProfile.model');
+const Entity = require("../models/entity.model");
 const ResponseService = require('./response.service');
 const nodemailer = require('nodemailer');
 const logger = require("../helpers/logger");
@@ -16,6 +17,14 @@ async function createProfile(req, res) {
     const profileData = req.body;
 
     profileData.password = process.env.DEFAULT_PASSWORD;
+
+    const entity = await Entity.findById(
+      profileData.entity
+    );
+
+    if (entity) {
+      profileData.entity = entity._id
+    }
 
     const newUserProfile = new UserProfile(profileData);
     await newUserProfile.save();
@@ -122,7 +131,13 @@ async function deleteProfile(req, res) {
 
 async function getAllProfiles(req, res) {
   try {
-    const profiles = await UserProfile.find();
+    const profiles = await UserProfile.find()
+    .populate({
+      path: "entity",
+      select: "referenceId description",
+      strictPopulate: true,
+    });
+      
     return ResponseService.success(res, { profiles });
   } catch (error) {
     console.error('Erreur lors de la récupération des Profils:', error);
