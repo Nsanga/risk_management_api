@@ -49,8 +49,8 @@ async function getStatistics(req, res) {
                 return acc;
             }, {}),
             byStatus: {
-                active: profiles.filter(p => p.isActive).length,
-                inactive: profiles.filter(p => !p.isActive).length
+                active: profiles.filter(p => p.activeUser).length,
+                inactive: profiles.filter(p => !p.activeUser).length
             }
         };
 
