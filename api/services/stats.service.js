@@ -2,6 +2,7 @@ const Event = require("../models/event.model");
 const EntityRiskControl = require("../models/entityRiskControl.model");
 const KeyIndicator = require("../models/keyIndicator.model");
 const Action = require("../models/action.model");
+const UserProfile = require("../models/userProfile.model");
 const ResponseService = require("./response.service");
 
 async function getStatistics(req, res) {
