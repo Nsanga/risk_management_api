@@ -13,45 +13,54 @@ const transporter = nodemailer.createTransport({
 });
 
 async function createProfile(req, res) {
-  try {
-    const profileData = req.body;
-    profileData.password = process.env.DEFAULT_PASSWORD;
+  const email = req.body.email;
+  const findUser = await UserProfile.findOne({ email: email });
 
-    const entity = await Entity.findById(profileData.entity);
+  if (!findUser) {
+    try {
+      const profileData = req.body;
+      profileData.password = process.env.DEFAULT_PASSWORD;
 
-    if (entity) {
-      profileData.entity = entity._id;
-    }
+      const entity = await Entity.findById(profileData.entity);
 
-    const newUserProfile = new UserProfile(profileData);
-    await newUserProfile.save();
+      if (entity) {
+        profileData.entity = entity._id;
+      }
 
-    if (profileData.activeUser) {
-      const emails = [profileData.email];
+      const newUserProfile = new UserProfile(profileData);
+      await newUserProfile.save();
 
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: emails.join(", "),
-        subject: "Activation du compte",
-        text: `Votre compte à été activé avec succès.\n\nVos informations de connexion sont les suivante::\n-> User id: ${profileData.userId}\n🔐: ${process.env.DEFAULT_PASSWORD}`,
-      };
+      if (profileData.activeUser) {
+        const emails = [profileData.email];
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          logger.error("Error sending email:", error);
-        } else {
-          logger.info("Email sent:", info.response);
-        }
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: emails.join(", "),
+          subject: "Activation du compte",
+          text: `Votre compte à été activé avec succès.\n\nVos informations de connexion sont les suivante::\n-> User id: ${profileData.userId}\n🔐: ${process.env.DEFAULT_PASSWORD}`,
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            logger.error("Error sending email:", error);
+          } else {
+            logger.info("Email sent:", info.response);
+          }
+        });
+      }
+
+      return ResponseService.created(res, {
+        message: "Profile created successfully",
+        newUserProfile,
       });
+    } catch (error) {
+      console.error("Error creating Profile:", error);
+      return ResponseService.internalServerError(res, { error: error.message });
     }
-
-    return ResponseService.created(res, {
-      message: "Profile created successfully",
-      newUserProfile,
+  } else {
+    return ResponseService.internalServerError(res, {
+      message: "Un profil avec cet email existe déjà",
     });
-  } catch (error) {
-    console.error("Error creating Profile:", error);
-    return ResponseService.internalServerError(res, { error: error.message });
   }
 }
 
