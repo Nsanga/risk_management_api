@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer");
 const EntityRiskControl = require("../models/entityRiskControl.model");
 const keyIndicatorSchema = require("../models/keyIndicator.model");
 const historyKRIModel = require("../models/historyKRI.model");
+const actionKRIModel = require("../models/actionKRI.model");
 const historySchema = require("../models/history.model");
 
 const transporter = nodemailer.createTransport({
@@ -205,8 +206,20 @@ async function getDataRapport(req, res) {
             idKeyIndicator: { $in: indicatorIds },
           });
 
+          const actions = await actionKRIModel.find({
+            idKeyIndicator: { $in: indicatorIds },
+          });
+
           // Grouper les historiques par ID d'indicateur
           const historyMap = histories.reduce((acc, hist) => {
+            const key = hist.idKeyIndicator.toString();
+            if (!acc[key]) acc[key] = [];
+            acc[key] = acc[key] || [];
+            acc[key].push(hist);
+            return acc;
+          }, {});
+
+          const actionMap = actions.reduce((acc, hist) => {
             const key = hist.idKeyIndicator.toString();
             if (!acc[key]) acc[key] = [];
             acc[key] = acc[key] || [];
@@ -219,6 +232,7 @@ async function getDataRapport(req, res) {
               ...(indicator.toObject?.() ?? indicator),
               entitie: entityData.entity,
               history: historyMap[indicator._id.toString()] || [],
+              actions: actionMap[indicator._id.toString()] || [],
             })
           );
 

@@ -15,6 +15,7 @@ var historySchema = new mongoose.Schema(
     attested: { type: Boolean, required: false },
     frequency: { type: String, required: false },
     coutAnnually: { type: String, required: false },
+    author: { type: String, required: false },
     idControl: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "EntityRiskControl",
