@@ -23,6 +23,7 @@ const actionKRISchema = new mongoose.Schema(
     targetDate: { type: String, required: false },
     cost: { type: String, required: false },
     currency: { type: String, required: false },
+    author: { type: String, required: false },
     idKeyIndicator: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "KeyIndicator",

@@ -5,6 +5,7 @@ const keyIndicatorSchema = require("../models/keyIndicator.model");
 const historyKRIModel = require("../models/historyKRI.model");
 const actionKRIModel = require("../models/actionKRI.model");
 const historySchema = require("../models/history.model");
+const actionSchema = require("../models/action.model");
 
 const transporter = nodemailer.createTransport({
   service: "gmail", // Utilisez le service de messagerie de votre choix
@@ -161,7 +162,19 @@ async function getDataRapport(req, res) {
             idControl: { $in: indicatorIds },
           });
 
+          const actions = await actionSchema.find({
+            idControl: { $in: indicatorIds },
+          });
+
           const historyMap = histories.reduce((acc, hist) => {
+            const key = hist.idControl.toString();
+            if (!acc[key]) acc[key] = [];
+            acc[key] = acc[key] || [];
+            acc[key].push(hist);
+            return acc;
+          }, {});
+
+          const actionsMap = actions.reduce((acc, hist) => {
             const key = hist.idControl.toString();
             if (!acc[key]) acc[key] = [];
             acc[key] = acc[key] || [];
@@ -180,6 +193,7 @@ async function getDataRapport(req, res) {
                 entitie: entityData.entity,
                 riskAssociate: correspondingRisk || null,
                 history: historyMap[control._id.toString()] || [],
+                actions: actionsMap[control._id.toString()] || [],
               };
               // }
               // return null;
