@@ -10,7 +10,7 @@ const historyRoutes = app => {
 //Get a list of all predict
 router.post('/postHistory', historyController.createHistory);
 router.get('/getHistory', historyController.getAllHistory);
-router.post('/updateHistory/:id', historyController.updateHistory);
+router.put('/updateHistory/:id', historyController.updateHistory);
 }
 
 module.exports = historyRoutes;
