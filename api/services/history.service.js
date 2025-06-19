@@ -112,7 +112,51 @@ const getAllHistory = async () => {
   }
 };
 
+const updateHistory = async (id, data) => {
+  const allRiskControl = await EntityRiskControl.find();
+
+  const entityWithControl = allRiskControl.find((entity) =>
+    entity.controls.some((control) => control._id.toString() === data.idControl)
+  );
+
+  if (!entityWithControl) {
+    throw new Error("Entité contenant le contrôle non trouvée !");
+  }
+
+  const controlIndex = entityWithControl.controls.findIndex(
+    (control) => control._id.toString() === data.idControl
+  );
+
+  if (controlIndex === -1) {
+    throw new Error("Contrôle non trouvé !");
+  }
+
+  entityWithControl.controls[controlIndex].nextAssessMent =
+    calculateRemindOnDate(data.frequency, data.assessedOn);
+
+  entityWithControl.markModified("controls");
+  await entityWithControl.save();
+
+  try {
+    // Met à jour l’historique existant
+    const updatedHistory = await History.findByIdAndUpdate(
+      id,
+      { $set: data },
+      { new: true }
+    );
+
+    if (!updatedHistory) {
+      throw new Error("Historique introuvable !");
+    }
+
+    return updatedHistory;
+  } catch (error) {
+    throw new Error("Erreur lors de la mise à jour du test: " + error.message);
+  }
+};
+
 module.exports = {
   createHistory,
   getAllHistory,
+  updateHistory,
 };
