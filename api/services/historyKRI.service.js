@@ -131,8 +131,80 @@ async function getAllHistoriqueByIdKeyIndicator(req, res) {
   }
 }
 
+async function updateHistoryKRI(req, res) {
+  try {
+    let filteredControls = [];
+    const { idEntity, idKeyIndicator } = req.body;
+    const { id } = req.params;
+
+    const entityData = await keyIndicatorSchema.findOne({ entity: idEntity });
+    if (!entityData) {
+      return res.status(404).json({ message: "Entité introuvable." });
+    }
+
+    const indicatorIds = entityData.dataKeyIndicators.map((item) => item._id);
+
+    const histories = await historyKRIModel.find({
+      idKeyIndicator: { $in: indicatorIds },
+    });
+
+    const historyMap = histories.reduce((acc, hist) => {
+      const key = hist.idKeyIndicator.toString();
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(hist);
+      return acc;
+    }, {});
+
+    const enrichedIndicators = entityData.dataKeyIndicators.map(
+      (indicator) => ({
+        ...(indicator.toObject?.() ?? indicator),
+        history: historyMap[indicator._id.toString()] || [],
+      })
+    );
+
+    filteredControls.push(...enrichedIndicators);
+
+    const selectedKRI = filteredControls.find(
+      (item) => item._id.toString() === idKeyIndicator.toString()
+    );
+
+    if (!selectedKRI) {
+      return res.status(404).json({ message: "Indicateur clé introuvable." });
+    }
+
+    const dataLength = selectedKRI.history.length;
+
+    const coutAnnually = `Q${dataLength === 4 ? dataLength : dataLength + 1},`;
+
+    const updated = await historyKRIModel.findByIdAndUpdate(
+      id,
+      {
+        ...req.body,
+        coutAnnually,
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Historique non trouvé." });
+    }
+
+    res.status(200).json({
+      statut: 200,
+      message: "Historique KRI mis à jour avec succès",
+      data: updated,
+    });
+  } catch (error) {
+    res.status(500).json({
+      statut: 500,
+      error: "Erreur lors de la mise à jour du test: " + error.message,
+    });
+  }
+}
+
 module.exports = {
   createHistoryKRI,
   getAllHistoriqueKri,
   getAllHistoriqueByIdKeyIndicator,
+  updateHistoryKRI,
 };

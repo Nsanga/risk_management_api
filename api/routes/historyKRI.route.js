@@ -12,6 +12,7 @@ const historyKRIRoutes = (app) => {
     "/getHistoriqueKRIByIdKeyIndicator",
     historiqueKRIController.getAllHistoriqueByIdKeyIndicator
   );
+  router.post('/updateHistoriqueKRI/:id', historiqueKRIController.updateHistoryKRI);
 };
 
 module.exports = historyKRIRoutes;
