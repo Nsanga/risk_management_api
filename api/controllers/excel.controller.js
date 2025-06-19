@@ -83,7 +83,7 @@ exports.getSpecificRiskOrControl = async (req, res) => {
   }
 
   try {
-    const result = await getSpecificRiskOrControl({ idRisk, idControl });
+    const result = await excelService.getSpecificRiskOrControl({ idRisk, idControl });
 
     if (!result) {
       return res.status(404).json({
