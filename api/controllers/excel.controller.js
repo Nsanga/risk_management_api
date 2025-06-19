@@ -3,6 +3,8 @@ const ExcelService = require("../services/excel.service"); // Assurez-vous que c
 const EntityRiskControl = require("../models/entityRiskControl.model");
 const keyIndicatorModel = require("../models/keyIndicator.model");
 
+const excelService = new ExcelService();
+
 // Contrôleur pour uploader et sauvegarder un fichier Excel
 exports.extractDataFromExcel = (req, res) => {
   const file = req.file; // Obtenir le fichier téléchargé
@@ -40,8 +42,6 @@ exports.getEntityRiskControlsByEntityName = async (req, res) => {
       message: "Le nom de l'entité est requis dans le corps de la requête.",
     });
   }
-
-  const excelService = new ExcelService();
 
   try {
     // Appel à la méthode pour récupérer les risques et contrôles de l'entité
