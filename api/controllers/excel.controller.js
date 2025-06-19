@@ -72,6 +72,41 @@ exports.getEntityRiskControlsByEntityName = async (req, res) => {
   }
 };
 
+exports.getSpecificRiskOrControl = async (req, res) => {
+  const { idRisk, idControl } = req.query;
+
+  if (!idRisk && !idControl) {
+    return res.status(400).json({
+      success: false,
+      message: "Veuillez fournir un 'idRisk' ou un 'idControl' dans la requête.",
+    });
+  }
+
+  try {
+    const result = await getSpecificRiskOrControl({ idRisk, idControl });
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: "Aucun risque ou contrôle trouvé avec cet identifiant.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      type: result.type,
+      entity: result.entity,
+      data: result.data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des données.",
+      error: error.message,
+    });
+  }
+};
+
 // Contrôleur pour récupérer les risques et contrôles d’une entité par ID
 exports.getEntityRiskControlById = async (req, res) => {
   const { entityRefId } = req.params;

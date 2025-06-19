@@ -16,6 +16,7 @@ const excelRoutes = (app) => {
   );
 
   router.post("/get-entity", excelController.getEntityRiskControlsByEntityName);
+  router.get("/specific-risk-or-control", excelController.getSpecificRiskOrControl);
 
   // Récupérer les données pour une entité spécifique
   router.get("/entity/show", excelController.getEntityRiskControlById);

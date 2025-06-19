@@ -264,6 +264,71 @@ class ExcelService {
     }
   }
 
+  async getSpecificRiskOrControl({ idRisk, idControl }) {
+    try {
+      const allEntities = await EntityRiskControl.find()
+        .populate("entity")
+        .exec();
+  
+      for (const entityDoc of allEntities) {
+        // Recherche du risque si idRisk est fourni
+        if (idRisk) {
+          const foundRisk = entityDoc.risks.find(
+            (risk) => risk._id.toString() === idRisk
+          );
+  
+          if (foundRisk) {
+            return {
+              type: "risk",
+              entity: {
+                referenceId: entityDoc.entity.referenceId,
+                description: entityDoc.entity.description,
+                ram: entityDoc.entity.ram,
+                location: entityDoc.entity.location,
+                businessLine: entityDoc.entity.businessLine,
+              },
+              data: foundRisk,
+            };
+          }
+        }
+  
+        // Recherche du contrôle si idControl est fourni
+        if (idControl) {
+          const foundControl = entityDoc.controls.find(
+            (control) => control._id.toString() === idControl
+          );
+  
+          if (foundControl) {
+            const historyControl = await historyModel.find({
+              idControl: foundControl._id,
+            });
+  
+            return {
+              type: "control",
+              entity: {
+                referenceId: entityDoc.entity.referenceId,
+                description: entityDoc.entity.description,
+                ram: entityDoc.entity.ram,
+                location: entityDoc.entity.location,
+                businessLine: entityDoc.entity.businessLine,
+              },
+              data: {
+                ...foundControl.toObject(),
+                historyControl,
+              },
+            };
+          }
+        }
+      }
+  
+      // Si aucun risque ou contrôle trouvé
+      return null;
+    } catch (error) {
+      console.error("Erreur dans getSpecificRiskOrControl:", error.message);
+      throw new Error("Impossible de récupérer le risque ou le contrôle.");
+    }
+  }
+
   getNextReference(array, reference, key) {
     const extractNumber = (ref) => parseInt(ref.replace(/[^\d]/g, ""));
 
