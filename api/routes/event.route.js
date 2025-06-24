@@ -19,6 +19,7 @@ const eventRoutes = (app) => {
   router.delete("/delete/:id", eventController.deleteEvent);
   router.get("/one/:id", eventController.getEventById);
   router.get("/all", eventController.getAllEvents);
+  router.post("/getRapport", eventController.getDataRapportEvent);
   router.get("/:id", eventController.getEventByEntity);
 };
 

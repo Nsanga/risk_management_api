@@ -23,6 +23,10 @@ async function getAllEvents(req, res) {
   return await eventService.getAllEvents(req, res);
 }
 
+async function getDataRapportEvent(req, res) {
+  return await eventService.getDataRapportEvent(req, res);
+}
+
 module.exports = {
   createEvent,
   getEventById,
@@ -30,4 +34,5 @@ module.exports = {
   deleteEvent,
   getAllEvents,
   getEventByEntity,
+  getDataRapportEvent,
 };

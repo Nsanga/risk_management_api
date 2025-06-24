@@ -4,6 +4,7 @@ const Event = require("../models/event.model");
 const ResponseService = require("./response.service");
 const nodemailer = require("nodemailer");
 const logger = require("../helpers/logger");
+const mongoose = require("mongoose");
 
 const transporter = nodemailer.createTransport({
   service: "gmail", // Utilisez le service de messagerie de votre choix
@@ -175,28 +176,28 @@ async function updateEvent(req, res) {
     if (entityOfOrigin) updatedData.details.entityOfOrigin = entityOfOrigin._id;
 
     // if (updatedData.details.notify) {
-      const emails = [ownerProfile.email, nomineeProfile.email];
+    const emails = [ownerProfile.email, nomineeProfile.email];
 
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: emails.join(", "),
-        subject: "Notification de Création d'Événement",
-        html: `Un nouvel événement a été créé.<br><br>
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: emails.join(", "),
+      subject: "Notification de Création d'Événement",
+      html: `Un nouvel événement a été créé.<br><br>
         <strong>Détails de l'événement:</strong><br>
         Référence: EVT${updatedData.num_ref}<br>
         Titre: ${updatedData.details.description}<br>
         Date: ${updatedData.details.event_date}<br>
         <br>
         <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
-      };
+    };
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          logger.error("Error sending email:", error);
-        } else {
-          logger.info("Email sent:", info.response);
-        }
-      });
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        logger.error("Error sending email:", error);
+      } else {
+        logger.info("Email sent:", info.response);
+      }
+    });
     // }
 
     return ResponseService.success(res, {
@@ -261,6 +262,57 @@ async function getAllEvents(req, res) {
   }
 }
 
+async function getDataRapportEvent(req, res) {
+  const { targetEntityId, startDate, endDate } = req.body;
+
+  try {
+    const entityObjectIds = targetEntityId.map(
+      (id) => new mongoose.Types.ObjectId(id)
+    );
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    const events = await Event.find();
+
+    const filteredEvents = events.filter((event) => {
+      const created = new Date(event.createdAt);
+
+      const isEntityMatch =
+        entityObjectIds.some((id) =>
+          id.equals(event.details.entityOfDetection)
+        ) ||
+        entityObjectIds.some((id) => id.equals(event.details.entityOfOrigin));
+
+      const isDateMatch = created >= start && created <= end;
+
+      // 🔁 Remplace ceci :
+      // return isEntityMatch && isDateMatch;
+
+      // ✅ Par ceci :
+      return isEntityMatch || isDateMatch;
+    });
+
+    return res.json({
+      success: true,
+      message: "Tous les évènements ont été récupérés avec succès.",
+      data: filteredEvents,
+      total: filteredEvents.length,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des événements :", error);
+    return res.status(500).json({
+      success: false,
+      message:
+        "Une erreur est survenue lors de la récupération des événements.",
+      error: error.message,
+    });
+  }
+}
+
+module.exports = { getDataRapportEvent };
+
 module.exports = {
   createEvent,
   getEventById,
@@ -268,4 +320,5 @@ module.exports = {
   deleteEvent,
   getAllEvents,
   getEventByEntity,
+  getDataRapportEvent,
 };
