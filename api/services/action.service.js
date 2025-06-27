@@ -15,6 +15,43 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const compareWithThreshold = (val, threshold) => {
+  if (!threshold || val == null) return false;
+  const numVal = Number(val);
+  if (Number.isNaN(numVal)) return false;
+
+  // ----- Intervalle combiné
+  if (/<=?[0-9.]+>?[0-9.]+/.test(threshold)) {
+    const [upperStr, lowerStr] = threshold.split(/>|</).filter(Boolean);
+    const upper = Number(upperStr.replace("=", ""));
+    const lower = Number(lowerStr);
+    const upperOK = threshold.includes("<=") ? numVal <= upper : numVal < upper;
+    const lowerOK = threshold.includes(">") ? numVal > lower : numVal >= lower;
+    return upperOK && lowerOK;
+  }
+
+  // ----- Opérateurs simples
+  if (threshold.startsWith(">=")) return numVal >= Number(threshold.slice(2));
+  if (threshold.startsWith("<=")) return numVal <= Number(threshold.slice(2));
+  if (threshold.startsWith(">")) return numVal > Number(threshold.slice(1));
+  if (threshold.startsWith("<")) return numVal < Number(threshold.slice(1));
+
+  // ----- Valeur exacte
+  return numVal === Number(threshold);
+};
+
+/** Renvoie {"Escalade"|"Alerte"|"Tolérance"|"OK"|"N/A"} + couleur Chakra UI */
+const getKriStatus = (moyenne, tol, seuil, escal) => {
+  if (moyenne == null) return { kriStatus: "N/A", kriColor: "gray.600" };
+  if (compareWithThreshold(moyenne, escal))
+    return { kriStatus: "Critique", kriColor: "red.400" };
+  if (compareWithThreshold(moyenne, seuil))
+    return { kriStatus: "Intermediare", kriColor: "orange.300" };
+  if (compareWithThreshold(moyenne, tol))
+    return { kriStatus: "Stable", kriColor: "green.400" };
+  return { kriStatus: "OK", kriColor: "green.500" };
+};
+
 async function generateReference() {
   try {
     const lastAction = await Action.findOne().sort({ createdAt: -1 });
@@ -210,12 +247,12 @@ async function getDataRapport(req, res) {
           .populate("entity");
 
         if (entityData && Array.isArray(entityData.dataKeyIndicators)) {
-          // Extraire tous les IDs d'indicateurs
+          // 1. Tous les IDs d’indicateurs
           const indicatorIds = entityData.dataKeyIndicators.map(
             (item) => item._id
           );
 
-          // Récupérer tous les historiques liés à ces indicateurs
+          // 2. Historiques et actions
           const histories = await historyKRIModel.find({
             idKeyIndicator: { $in: indicatorIds },
           });
@@ -224,30 +261,47 @@ async function getDataRapport(req, res) {
             idKeyIndicator: { $in: indicatorIds },
           });
 
-          // Grouper les historiques par ID d'indicateur
+          // 3. Grouper par indicateur
           const historyMap = histories.reduce((acc, hist) => {
             const key = hist.idKeyIndicator.toString();
-            if (!acc[key]) acc[key] = [];
-            acc[key] = acc[key] || [];
-            acc[key].push(hist);
+            (acc[key] ||= []).push(hist);
             return acc;
           }, {});
 
-          const actionMap = actions.reduce((acc, hist) => {
-            const key = hist.idKeyIndicator.toString();
-            if (!acc[key]) acc[key] = [];
-            acc[key] = acc[key] || [];
-            acc[key].push(hist);
+          const actionMap = actions.reduce((acc, act) => {
+            const key = act.idKeyIndicator.toString();
+            (acc[key] ||= []).push(act);
             return acc;
           }, {});
 
+          // 4. Construire les indicateurs enrichis avec la moyenne
           const enrichedIndicators = entityData.dataKeyIndicators.map(
-            (indicator) => ({
-              ...(indicator.toObject?.() ?? indicator),
-              entitie: entityData.entity,
-              history: historyMap[indicator._id.toString()] || [],
-              actions: actionMap[indicator._id.toString()] || [],
-            })
+            (indicator) => {
+              const idStr = indicator._id.toString();
+              const histList = historyMap[idStr] || [];
+
+              // calcul de la moyenne des champs `value`
+              const moyenneValue =
+                histList.length > 0
+                  ? histList.reduce((sum, h) => sum + Number(h.value || 0), 0) /
+                    histList.length
+                  : null; // ou 0 si tu préfères
+
+              const { kriStatus, kriColor } = getKriStatus(
+                moyenneValue,
+                indicator.toleranceKeyIndicator,
+                indicator.seuilKeyIndicator,
+                indicator.escaladeKeyIndicator
+              );
+              return {
+                ...(indicator.toObject?.() ?? indicator),
+                entitie: entityData.entity,
+                history: histList,
+                actions: actionMap[idStr] || [],
+                moyenneValue, // <- champ ajouté
+                kriStatus,
+              };
+            }
           );
 
           filteredControls.push(...enrichedIndicators);
