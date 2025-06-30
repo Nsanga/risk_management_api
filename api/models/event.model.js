@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const financialsSchema = new mongoose.Schema({
   Direct: { type: Number, default: 0 },
   'Amendes réglementaires': { type: Number, default: 0 },
-  'Dépréciation d’actif': { type: Number, default: 0 },
+  'Dépréciation d\'actif': { type: Number, default: 0 },
   Other: { type: Number, default: 0 },
 }, { _id: false });
 
@@ -17,25 +17,35 @@ const additionnalInfoSchema = new Schema(
 );
 
 const eventSchema = new Schema({
-  num_ref: {
-    type: String,
-  },
+  // Référence et identification
+  num_ref: { type: String },
+  
+  // Détails de l'événement
   details: {
+    // Dates importantes
     event_date: Date,
     event_time: String,
     detection_date: Date,
     approved_date: Date,
     closed_date: Date,
     effective_date: Date,
+    
+    // Information d'enregistrement
     recorded_by: String,
     recorded_date: Date,
+    
+    // Information financière basique
     rate: String,
     total_currencies: String,
     increment_currency: String,
     total_losses: String,
+    
+    // Description et cause
     description: String,
     descriptionDetailled: String,
     cause: String,
+    
+    // Responsables
     owner: {
       type: Schema.Types.ObjectId,
       ref: "UserProfile",
@@ -53,12 +63,16 @@ const eventSchema = new Schema({
       default: null,
     },
     reviewer_date: Date,
+    
+    // Métadonnées
     title: String,
     activeEvent: Boolean,
     excludeFundLosses: Boolean,
     notify: Boolean,
     externalEvent: Boolean,
     externalRef: String,
+    
+    // Entités concernées
     entityOfDetection: {
       type: Schema.Types.ObjectId,
       ref: "Entity",
@@ -71,15 +85,22 @@ const eventSchema = new Schema({
       required: true,
     },
     subentityOfOrigin: String,
+    
+    // Gestion d'état
     RAG: String,
     targetClosureDate: String,
-    document: [String], // To handle both single URL and array of URLs
+    
+    // Documents associés
+    document: [String], // Pour gérer une URL unique ou un tableau d'URLs
   },
+  
+  // Commentaire
   commentary: {
     comment: String,
   },
+  
+  // Données financières détaillées
   financials: {
-    title: { type: String, required: true }, // pour identifier ce tableau
     createdAt: { type: Date, default: Date.now },
     currency: { type: String, default: 'USD', enum: ['USD', 'EUR', 'XAF'] },
     totalConverted: { type: Number, default: 0 },
@@ -89,11 +110,15 @@ const eventSchema = new Schema({
       'Actual Recovery': financialsSchema,
       'Expected Recovery': financialsSchema,
       'Recovery Expenses': financialsSchema,
-      'Insurance Recovery': financialsSchema,
+      'Insurance Recovery': financialsSchema, 
       'Near Miss': financialsSchema,
     },
   },
+  
+  // Informations supplémentaires
   additionnalInfo: [additionnalInfoSchema],
+  
+  // Métadonnées du document
   createdAt: {
     type: Date,
     default: Date.now,
