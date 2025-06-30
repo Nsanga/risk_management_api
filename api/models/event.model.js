@@ -1,14 +1,12 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const financialsSchema = new Schema(
-  {
-    id: Number,
-    name: String,
-    values: [Number],
-  },
-  { _id: false }
-);
+const financialsSchema = new mongoose.Schema({
+  Direct: { type: Number, default: 0 },
+  'Amendes réglementaires': { type: Number, default: 0 },
+  'Dépréciation d’actif': { type: Number, default: 0 },
+  Other: { type: Number, default: 0 },
+}, { _id: false });
 
 const additionnalInfoSchema = new Schema(
   {
@@ -80,7 +78,21 @@ const eventSchema = new Schema({
   commentary: {
     comment: String,
   },
-  financials: [financialsSchema],
+  financials: {
+    title: { type: String, required: true }, // pour identifier ce tableau
+    createdAt: { type: Date, default: Date.now },
+    currency: { type: String, default: 'USD', enum: ['USD', 'EUR', 'XAF'] },
+    totalConverted: { type: Number, default: 0 },
+    data: {
+      'Actual Loss': financialsSchema,
+      'Potential Loss': financialsSchema,
+      'Actual Recovery': financialsSchema,
+      'Expected Recovery': financialsSchema,
+      'Recovery Expenses': financialsSchema,
+      'Insurance Recovery': financialsSchema,
+      'Near Miss': financialsSchema,
+    },
+  },
   additionnalInfo: [additionnalInfoSchema],
   createdAt: {
     type: Date,
