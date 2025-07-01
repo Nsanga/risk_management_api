@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const financialsSchema = new mongoose.Schema({
+  Total: { type: Number, default: 0 },
   Direct: { type: Number, default: 0 },
   'Amendes réglementaires': { type: Number, default: 0 },
   'Dépréciation d\'actif': { type: Number, default: 0 },
