@@ -142,43 +142,7 @@ async function updateEvent(req, res) {
     const eventId = req.params.id;
     const updatedData = req.body;
 
-    // Créer un objet de mise à jour contenant uniquement les champs fournis
-    const updateFields = {};
-    
-    // Mettre à jour les champs de base s'ils sont présents dans la requête
-    if (updatedData.num_ref !== undefined) updateFields.num_ref = updatedData.num_ref;
-    if (updatedData.status !== undefined) updateFields.status = updatedData.status;
-    
-    // Traiter les champs imbriqués dans details
-    if (updatedData.details) {
-      updateFields.details = updateFields.details || {};
-      
-      if (updatedData.details.description !== undefined) updateFields.details.description = updatedData.details.description;
-      if (updatedData.details.event_date !== undefined) updateFields.details.event_date = updatedData.details.event_date;
-      if (updatedData.details.owner !== undefined) {
-        const ownerProfile = await UserProfile.findOne({ _id: updatedData.details.owner });
-        if (ownerProfile) updateFields.details.owner = ownerProfile._id;
-      }
-      if (updatedData.details.nominee !== undefined) {
-        const nomineeProfile = await UserProfile.findOne({ _id: updatedData.details.nominee });
-        if (nomineeProfile) updateFields.details.nominee = nomineeProfile._id;
-      }
-      if (updatedData.details.reviewer !== undefined) {
-        const reviewerProfile = await UserProfile.findOne({ _id: updatedData.details.reviewer });
-        if (reviewerProfile) updateFields.details.reviewer = reviewerProfile._id;
-      }
-      if (updatedData.details.entityOfDetection !== undefined) {
-        const entityOfDetection = await Entity.findById(updatedData.details.entityOfDetection);
-        if (entityOfDetection) updateFields.details.entityOfDetection = entityOfDetection._id;
-      }
-      if (updatedData.details.entityOfOrigin !== undefined) {
-        const entityOfOrigin = await Entity.findById(updatedData.details.entityOfOrigin);
-        if (entityOfOrigin) updateFields.details.entityOfOrigin = entityOfOrigin._id;
-      }
-      if (updatedData.details.notify !== undefined) updateFields.details.notify = updatedData.details.notify;
-    }
-
-    const event = await Event.findByIdAndUpdate(eventId, { $set: updateFields }, {
+    const event = await Event.findByIdAndUpdate(eventId, updatedData, {
       new: true,
     });
 
@@ -186,36 +150,55 @@ async function updateEvent(req, res) {
       return ResponseService.notFound(res, { message: "Event not found" });
     }
 
-    // Envoyer l'email seulement si notify est true et présent dans la requête
-    if (updatedData.details?.notify) {
-      const ownerProfile = await UserProfile.findById(event.details.owner);
-      const nomineeProfile = await UserProfile.findById(event.details.nominee);
-      
-      if (ownerProfile && nomineeProfile) {
-        const emails = [ownerProfile.email, nomineeProfile.email];
+    // Convertir les emails en ObjectId
+    const ownerProfile = await UserProfile.findOne({
+      _id: updatedData.details.owner,
+    });
+    const nomineeProfile = await UserProfile.findOne({
+      _id: updatedData.details.nominee,
+    });
+    const reviewerProfile = await UserProfile.findOne({
+      _id: updatedData.details.reviewer,
+    });
+    const entityOfDetection = await Entity.findById(
+      updatedData.details.entityOfDetection
+    );
+    const entityOfOrigin = await Entity.findById(
+      updatedData.details.entityOfOrigin
+    );
 
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
-          to: emails.join(", "),
-          subject: "Notification de Mise à Jour d'Événement",
-          html: `Un événement a été mis à jour.<br><br>
-            <strong>Détails de l'événement:</strong><br>
-            Référence: EVT${event.num_ref}<br>
-            Titre: ${event.details.description}<br>
-            Date: ${event.details.event_date}<br>
-            <br>
-            <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
-        };
+    // Vérifiez si les profils et entités existent avant d'assigner leurs ObjectIds
+    if (ownerProfile) updatedData.details.owner = ownerProfile._id;
+    if (nomineeProfile) updatedData.details.nominee = nomineeProfile._id;
+    if (reviewerProfile) updatedData.details.reviewer = reviewerProfile._id;
+    if (entityOfDetection)
+      updatedData.details.entityOfDetection = entityOfDetection._id;
+    if (entityOfOrigin) updatedData.details.entityOfOrigin = entityOfOrigin._id;
 
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            logger.error("Error sending email:", error);
-          } else {
-            logger.info("Email sent:", info.response);
-          }
-        });
+    // if (updatedData.details.notify) {
+    const emails = [ownerProfile.email, nomineeProfile.email];
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: emails.join(", "),
+      subject: "Notification de Création d'Événement",
+      html: `Un nouvel événement a été créé.<br><br>
+        <strong>Détails de l'événement:</strong><br>
+        Référence: EVT${updatedData.num_ref}<br>
+        Titre: ${updatedData.details.description}<br>
+        Date: ${updatedData.details.event_date}<br>
+        <br>
+        <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        logger.error("Error sending email:", error);
+      } else {
+        logger.info("Email sent:", info.response);
       }
-    }
+    });
+    // }
 
     return ResponseService.success(res, {
       message: "Event updated successfully",
