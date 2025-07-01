@@ -12,6 +12,7 @@ const financialsSchema = new mongoose.Schema({
 const additionnalInfoSchema = new Schema(
   {
     category: String,
+    topLevel: string,
     description: String,
   },
   { _id: false }
