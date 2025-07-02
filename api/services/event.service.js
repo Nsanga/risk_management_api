@@ -332,43 +332,120 @@ async function getAllEvents(req, res) {
   }
 }
 
+// async function getDataRapportEvent(req, res) {
+//   const { targetEntityId, startDate, endDate } = req.body;
+
+//   try {
+//     const entityObjectIds = targetEntityId.map(
+//       (id) => new mongoose.Types.ObjectId(id)
+//     );
+
+//     const start = new Date(startDate);
+//     const end = new Date(endDate);
+//     end.setHours(23, 59, 59, 999);
+
+//     const events = await Event.find();
+
+//     const filteredEvents = events.filter((event) => {
+//       const created = new Date(event.createdAt);
+
+//       const isEntityMatch =
+//         entityObjectIds.some((id) =>
+//           id.equals(event.details.entityOfDetection)
+//         ) ||
+//         entityObjectIds.some((id) => id.equals(event.details.entityOfOrigin));
+
+//       const isDateMatch = created >= start && created <= end;
+
+//       return isEntityMatch || isDateMatch;
+//     });
+
+//     return res.json({
+//       success: true,
+//       message: "Tous les évènements ont été récupérés avec succès.",
+//       data: filteredEvents,
+//       total: filteredEvents.length,
+//     });
+//   } catch (error) {
+//     console.error("Erreur lors de la récupération des événements :", error);
+//     return res.status(500).json({
+//       success: false,
+//       message:
+//         "Une erreur est survenue lors de la récupération des événements.",
+//       error: error.message,
+//     });
+//   }
+// }
+
 async function getDataRapportEvent(req, res) {
-  const { targetEntityId, startDate, endDate } = req.body;
+  const { targetEntityId = [], startDate, endDate } = req.body;
 
   try {
+    /* ---------- 1. Préparation des critères ---------- */
     const entityObjectIds = targetEntityId.map(
       (id) => new mongoose.Types.ObjectId(id)
     );
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+    if (end) end.setHours(23, 59, 59, 999);
 
-    const events = await Event.find();
+    // Critère entité
+    const entityCriteria =
+      entityObjectIds.length > 0
+        ? {
+            $or: [
+              { "details.entityOfDetection": { $in: entityObjectIds } },
+              { "details.entityOfOrigin": { $in: entityObjectIds } },
+            ],
+          }
+        : null;
 
-    const filteredEvents = events.filter((event) => {
-      const created = new Date(event.createdAt);
+    // Critère date de création
+    const dateCriteria =
+      start && end ? { createdAt: { $gte: start, $lte: end } } : null;
 
-      const isEntityMatch =
-        entityObjectIds.some((id) =>
-          id.equals(event.details.entityOfDetection)
-        ) ||
-        entityObjectIds.some((id) => id.equals(event.details.entityOfOrigin));
+    // Fusion (OR) des critères présents
+    const finalQuery =
+      entityCriteria && dateCriteria
+        ? { $or: [entityCriteria, dateCriteria] }
+        : entityCriteria || dateCriteria || {}; // aucun critère → tout
 
-      const isDateMatch = created >= start && created <= end;
+    /* ---------- 2. Requête Mongo avec populate ---------- */
+    const events = await Event.find(finalQuery)
+      .populate({
+        path: "details.entityOfDetection",
+        select: "referenceId description",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.entityOfOrigin",
+        select: "referenceId description",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.owner",
+        select: "name surname",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.nominee",
+        select: "name surname",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.reviewer",
+        select: "name surname",
+        strictPopulate: true,
+      })
+      .lean(); // objets JS plats, plus léger
 
-      // 🔁 Remplace ceci :
-      // return isEntityMatch && isDateMatch;
-
-      // ✅ Par ceci :
-      return isEntityMatch || isDateMatch;
-    });
-
+    /* ---------- 3. Réponse ---------- */
     return res.json({
       success: true,
       message: "Tous les évènements ont été récupérés avec succès.",
-      data: filteredEvents,
-      total: filteredEvents.length,
+      data: events,
+      total: events.length,
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des événements :", error);

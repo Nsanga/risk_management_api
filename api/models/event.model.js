@@ -21,7 +21,7 @@ const additionnalInfoSchema = new Schema(
 const eventSchema = new Schema({
   // Référence et identification
   num_ref: { type: String },
-  
+
   // Détails de l'événement
   details: {
     // Dates importantes
@@ -31,7 +31,7 @@ const eventSchema = new Schema({
     approved_date: Date,
     closed_date: Date,
     effective_date: Date,
-    
+
     // Information d'enregistrement
     recorded_by: String,
     recorded_date: Date,
@@ -40,7 +40,7 @@ const eventSchema = new Schema({
     description: String,
     descriptionDetailled: String,
     cause: String,
-    
+
     // Responsables
     owner: {
       type: Schema.Types.ObjectId,
@@ -59,7 +59,7 @@ const eventSchema = new Schema({
       default: null,
     },
     reviewer_date: Date,
-    
+
     // Métadonnées
     title: String,
     activeEvent: Boolean,
@@ -67,7 +67,7 @@ const eventSchema = new Schema({
     notify: Boolean,
     externalEvent: Boolean,
     externalRef: String,
-    
+
     // Entités concernées
     entityOfDetection: {
       type: Schema.Types.ObjectId,
@@ -81,20 +81,20 @@ const eventSchema = new Schema({
       required: true,
     },
     subentityOfOrigin: String,
-    
+
     // Gestion d'état
     RAG: String,
     targetClosureDate: Date,
-    
+
     // Documents associés
     document: [String], // Pour gérer une URL unique ou un tableau d'URLs
   },
-  
+
   // Commentaire
   commentary: {
     comment: String,
   },
-  
+
   // Données financières détaillées
   financials: {
     currency: { type: String, default: 'USD', enum: ['USD', 'EUR', 'XAF'] },
@@ -105,14 +105,14 @@ const eventSchema = new Schema({
       actualRecovery: financialsSchema,
       expectedRecovery: financialsSchema,
       recoveryExpenses: financialsSchema,
-      insuranceRecovery: financialsSchema, 
+      insuranceRecovery: financialsSchema,
       nearMiss: financialsSchema,
     },
   },
-  
+
   // Informations supplémentaires
   additionnalInfo: [additionnalInfoSchema],
-  
+
   // Métadonnées du document
   createdAt: {
     type: Date,
@@ -122,7 +122,9 @@ const eventSchema = new Schema({
     type: Boolean,
     default: false,
   },
-});
+},
+  { timestamps: true }
+);
 
 const Event = mongoose.model("Event", eventSchema);
 
