@@ -142,58 +142,112 @@ async function updateEvent(req, res) {
     const eventId = req.params.id;
     const updatedData = req.body;
 
-    // Créer un objet de mise à jour contenant uniquement les champs fournis
-    const updateFields = {};
-    
-    // Mettre à jour les champs de base s'ils sont présents dans la requête
-    if (updatedData.num_ref !== undefined) updateFields.num_ref = updatedData.num_ref;
-    if (updatedData.approved !== undefined) updateFields.approved = updatedData.approved;
-    
-    // Traiter les champs imbriqués dans details
-    if (updatedData.details) {
-      updateFields.details = updateFields.details || {};
-      
-      if (updatedData.details.description !== undefined) updateFields.details.description = updatedData.details.description;
-      if (updatedData.details.event_date !== undefined) updateFields.details.event_date = updatedData.details.event_date;
-      if (updatedData.details.owner !== undefined) {
-        const ownerProfile = await UserProfile.findOne({ _id: updatedData.details.owner });
-        if (ownerProfile) updateFields.details.owner = ownerProfile._id;
-      }
-      if (updatedData.details.nominee !== undefined) {
-        const nomineeProfile = await UserProfile.findOne({ _id: updatedData.details.nominee });
-        if (nomineeProfile) updateFields.details.nominee = nomineeProfile._id;
-      }
-      if (updatedData.details.reviewer !== undefined) {
-        const reviewerProfile = await UserProfile.findOne({ _id: updatedData.details.reviewer });
-        if (reviewerProfile) updateFields.details.reviewer = reviewerProfile._id;
-      }
-      if (updatedData.details.entityOfDetection !== undefined) {
-        const entityOfDetection = await Entity.findById(updatedData.details.entityOfDetection);
-        if (entityOfDetection) updateFields.details.entityOfDetection = entityOfDetection._id;
-      }
-      if (updatedData.details.entityOfOrigin !== undefined) {
-        const entityOfOrigin = await Entity.findById(updatedData.details.entityOfOrigin);
-        if (entityOfOrigin) updateFields.details.entityOfOrigin = entityOfOrigin._id;
-      }
-      if (updatedData.details.notify !== undefined) updateFields.details.notify = updatedData.details.notify;
-    }
-
-    const event = await Event.findByIdAndUpdate(eventId, { $set: updateFields }, {
-      new: true,
-    });
-
+    // Récupérer l'événement existant
+    const event = await Event.findById(eventId);
     if (!event) {
       return ResponseService.notFound(res, { message: "Event not found" });
     }
 
-    // Envoyer l'email seulement si notify est true et présent dans la requête
+    // Mettre à jour les champs de premier niveau
+    if (updatedData.num_ref !== undefined) event.num_ref = updatedData.num_ref;
+    if (updatedData.approved !== undefined) event.approved = updatedData.approved;
+
+    // Mettre à jour details
+    if (updatedData.details) {
+      const details = updatedData.details;
+
+      // Champs simples
+      if (details.description !== undefined) event.details.description = details.description;
+      if (details.descriptionDetailled !== undefined) event.details.descriptionDetailled = details.descriptionDetailled;
+      if (details.event_date !== undefined) event.details.event_date = details.event_date;
+      if (details.event_time !== undefined) event.details.event_time = details.event_time;
+      if (details.detection_date !== undefined) event.details.detection_date = details.detection_date;
+      if (details.approved_date !== undefined) event.details.approved_date = details.approved_date;
+      if (details.closed_date !== undefined) event.details.closed_date = details.closed_date;
+      if (details.effective_date !== undefined) event.details.effective_date = details.effective_date;
+      if (details.recorded_by !== undefined) event.details.recorded_by = details.recorded_by;
+      if (details.recorded_date !== undefined) event.details.recorded_date = details.recorded_date;
+      if (details.total_currencies !== undefined) event.details.total_currencies = details.total_currencies;
+      if (details.increment_currency !== undefined) event.details.increment_currency = details.increment_currency;
+      if (details.total_losses !== undefined) event.details.total_losses = details.total_losses;
+      if (details.cause !== undefined) event.details.cause = details.cause;
+      if (details.title !== undefined) event.details.title = details.title;
+      if (details.activeEvent !== undefined) event.details.activeEvent = details.activeEvent;
+      if (details.excludeFundLosses !== undefined) event.details.excludeFundLosses = details.excludeFundLosses;
+      if (details.notify !== undefined) event.details.notify = details.notify;
+      if (details.externalEvent !== undefined) event.details.externalEvent = details.externalEvent;
+      if (details.externalRef !== undefined) event.details.externalRef = details.externalRef;
+      if (details.subentityOfDetection !== undefined) event.details.subentityOfDetection = details.subentityOfDetection;
+      if (details.subentityOfOrigin !== undefined) event.details.subentityOfOrigin = details.subentityOfOrigin;
+      if (details.RAG !== undefined) event.details.RAG = details.RAG;
+      if (details.targetClosureDate !== undefined) event.details.targetClosureDate = details.targetClosureDate;
+      if (details.document !== undefined) event.details.document = details.document;
+
+      // Références : Owner, Nominee, Reviewer
+      if (details.owner !== undefined) {
+        const ownerProfile = await UserProfile.findById(details.owner);
+        if (!ownerProfile) {
+          return ResponseService.badRequest(res, { message: "Invalid owner ID" });
+        }
+        event.details.owner = ownerProfile._id;
+      }
+      if (details.nominee !== undefined) {
+        const nomineeProfile = await UserProfile.findById(details.nominee);
+        if (!nomineeProfile) {
+          return ResponseService.badRequest(res, { message: "Invalid nominee ID" });
+        }
+        event.details.nominee = nomineeProfile._id;
+      }
+      if (details.reviewer !== undefined) {
+        const reviewerProfile = await UserProfile.findById(details.reviewer);
+        if (!reviewerProfile) {
+          return ResponseService.badRequest(res, { message: "Invalid reviewer ID" });
+        }
+        event.details.reviewer = reviewerProfile._id;
+      }
+
+      // Références : Entities
+      if (details.entityOfDetection !== undefined) {
+        const entityDetection = await Entity.findById(details.entityOfDetection);
+        if (!entityDetection) {
+          return ResponseService.badRequest(res, { message: "Invalid entityOfDetection ID" });
+        }
+        event.details.entityOfDetection = entityDetection._id;
+      }
+      if (details.entityOfOrigin !== undefined) {
+        const entityOrigin = await Entity.findById(details.entityOfOrigin);
+        if (!entityOrigin) {
+          return ResponseService.badRequest(res, { message: "Invalid entityOfOrigin ID" });
+        }
+        event.details.entityOfOrigin = entityOrigin._id;
+      }
+    }
+
+    // Mettre à jour commentary
+    if (updatedData.commentary !== undefined) {
+      event.commentary = updatedData.commentary;
+    }
+
+    // Mettre à jour financials
+    if (updatedData.financials !== undefined) {
+      Object.assign(event.financials, updatedData.financials);
+    }
+
+    // Mettre à jour additionnalInfo
+    if (updatedData.additionnalInfo !== undefined) {
+      event.additionnalInfo = updatedData.additionnalInfo;
+    }
+
+    // Sauvegarder l'événement mis à jour
+    await event.save();
+
+    // Envoyer l'email si notify est true
     if (updatedData.details?.notify) {
       const ownerProfile = await UserProfile.findById(event.details.owner);
       const nomineeProfile = await UserProfile.findById(event.details.nominee);
-      
+
       if (ownerProfile && nomineeProfile) {
         const emails = [ownerProfile.email, nomineeProfile.email];
-
         const mailOptions = {
           from: process.env.EMAIL_USER,
           to: emails.join(", "),
@@ -202,8 +256,7 @@ async function updateEvent(req, res) {
             <strong>Détails de l'événement:</strong><br>
             Référence: EVT${event.num_ref}<br>
             Titre: ${event.details.description}<br>
-            Date: ${event.details.event_date}<br>
-            <br>
+            Date: ${event.details.event_date}<br><br>
             <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
         };
 

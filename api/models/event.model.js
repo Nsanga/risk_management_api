@@ -2,11 +2,11 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const financialsSchema = new mongoose.Schema({
-  Total: { type: Number, default: 0 },
-  Direct: { type: Number, default: 0 },
-  'Amendes réglementaires': { type: Number, default: 0 },
-  'Dépréciation d\'actif': { type: Number, default: 0 },
-  Other: { type: Number, default: 0 },
+  total: { type: Number, default: 0 },
+  direct: { type: Number, default: 0 },
+  regulatoryFines: { type: Number, default: 0 },
+  assetImpairment: { type: Number, default: 0 },
+  other: { type: Number, default: 0 },
 }, { _id: false });
 
 const additionnalInfoSchema = new Schema(
@@ -35,13 +35,7 @@ const eventSchema = new Schema({
     // Information d'enregistrement
     recorded_by: String,
     recorded_date: Date,
-    
-    // Information financière basique
-    rate: String,
-    total_currencies: String,
-    increment_currency: String,
-    total_losses: String,
-    
+
     // Description et cause
     description: String,
     descriptionDetailled: String,
@@ -90,7 +84,7 @@ const eventSchema = new Schema({
     
     // Gestion d'état
     RAG: String,
-    targetClosureDate: String,
+    targetClosureDate: Date,
     
     // Documents associés
     document: [String], // Pour gérer une URL unique ou un tableau d'URLs
@@ -103,17 +97,16 @@ const eventSchema = new Schema({
   
   // Données financières détaillées
   financials: {
-    createdAt: { type: Date, default: Date.now },
     currency: { type: String, default: 'USD', enum: ['USD', 'EUR', 'XAF'] },
     totalConverted: { type: Number, default: 0 },
     data: {
-      'Actual Loss': financialsSchema,
-      'Potential Loss': financialsSchema,
-      'Actual Recovery': financialsSchema,
-      'Expected Recovery': financialsSchema,
-      'Recovery Expenses': financialsSchema,
-      'Insurance Recovery': financialsSchema, 
-      'Near Miss': financialsSchema,
+      actualLoss: financialsSchema,
+      potentialLoss: financialsSchema,
+      actualRecovery: financialsSchema,
+      expectedRecovery: financialsSchema,
+      recoveryExpenses: financialsSchema,
+      insuranceRecovery: financialsSchema, 
+      nearMiss: financialsSchema,
     },
   },
   
