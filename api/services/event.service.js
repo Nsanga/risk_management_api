@@ -144,43 +144,65 @@ async function updateEvent(req, res) {
 
     // Créer un objet de mise à jour contenant uniquement les champs fournis
     const updateFields = {};
-    
+
     // Mettre à jour les champs de base s'ils sont présents dans la requête
-    if (updatedData.num_ref !== undefined) updateFields.num_ref = updatedData.num_ref;
-    if (updatedData.approved !== undefined) updateFields.approved = updatedData.approved;
-    
+    if (updatedData.num_ref !== undefined)
+      updateFields.num_ref = updatedData.num_ref;
+    if (updatedData.approved !== undefined)
+      updateFields.approved = updatedData.approved;
+
     // Traiter les champs imbriqués dans details
     if (updatedData.details) {
       updateFields.details = updateFields.details || {};
-      
-      if (updatedData.details.description !== undefined) updateFields.details.description = updatedData.details.description;
-      if (updatedData.details.event_date !== undefined) updateFields.details.event_date = updatedData.details.event_date;
+
+      if (updatedData.details.description !== undefined)
+        updateFields.details.description = updatedData.details.description;
+      if (updatedData.details.event_date !== undefined)
+        updateFields.details.event_date = updatedData.details.event_date;
       if (updatedData.details.owner !== undefined) {
-        const ownerProfile = await UserProfile.findOne({ _id: updatedData.details.owner });
+        const ownerProfile = await UserProfile.findOne({
+          _id: updatedData.details.owner,
+        });
         if (ownerProfile) updateFields.details.owner = ownerProfile._id;
       }
       if (updatedData.details.nominee !== undefined) {
-        const nomineeProfile = await UserProfile.findOne({ _id: updatedData.details.nominee });
+        const nomineeProfile = await UserProfile.findOne({
+          _id: updatedData.details.nominee,
+        });
         if (nomineeProfile) updateFields.details.nominee = nomineeProfile._id;
       }
       if (updatedData.details.reviewer !== undefined) {
-        const reviewerProfile = await UserProfile.findOne({ _id: updatedData.details.reviewer });
-        if (reviewerProfile) updateFields.details.reviewer = reviewerProfile._id;
+        const reviewerProfile = await UserProfile.findOne({
+          _id: updatedData.details.reviewer,
+        });
+        if (reviewerProfile)
+          updateFields.details.reviewer = reviewerProfile._id;
       }
       if (updatedData.details.entityOfDetection !== undefined) {
-        const entityOfDetection = await Entity.findById(updatedData.details.entityOfDetection);
-        if (entityOfDetection) updateFields.details.entityOfDetection = entityOfDetection._id;
+        const entityOfDetection = await Entity.findById(
+          updatedData.details.entityOfDetection
+        );
+        if (entityOfDetection)
+          updateFields.details.entityOfDetection = entityOfDetection._id;
       }
       if (updatedData.details.entityOfOrigin !== undefined) {
-        const entityOfOrigin = await Entity.findById(updatedData.details.entityOfOrigin);
-        if (entityOfOrigin) updateFields.details.entityOfOrigin = entityOfOrigin._id;
+        const entityOfOrigin = await Entity.findById(
+          updatedData.details.entityOfOrigin
+        );
+        if (entityOfOrigin)
+          updateFields.details.entityOfOrigin = entityOfOrigin._id;
       }
-      if (updatedData.details.notify !== undefined) updateFields.details.notify = updatedData.details.notify;
+      if (updatedData.details.notify !== undefined)
+        updateFields.details.notify = updatedData.details.notify;
     }
 
-    const event = await Event.findByIdAndUpdate(eventId, { $set: updateFields }, {
-      new: true,
-    });
+    const event = await Event.findByIdAndUpdate(
+      eventId,
+      { $set: updateFields },
+      {
+        new: true,
+      }
+    );
 
     if (!event) {
       return ResponseService.notFound(res, { message: "Event not found" });
@@ -190,7 +212,7 @@ async function updateEvent(req, res) {
     if (updatedData.details?.notify) {
       const ownerProfile = await UserProfile.findById(event.details.owner);
       const nomineeProfile = await UserProfile.findById(event.details.nominee);
-      
+
       if (ownerProfile && nomineeProfile) {
         const emails = [ownerProfile.email, nomineeProfile.email];
 
@@ -279,43 +301,120 @@ async function getAllEvents(req, res) {
   }
 }
 
+// async function getDataRapportEvent(req, res) {
+//   const { targetEntityId, startDate, endDate } = req.body;
+
+//   try {
+//     const entityObjectIds = targetEntityId.map(
+//       (id) => new mongoose.Types.ObjectId(id)
+//     );
+
+//     const start = new Date(startDate);
+//     const end = new Date(endDate);
+//     end.setHours(23, 59, 59, 999);
+
+//     const events = await Event.find();
+
+//     const filteredEvents = events.filter((event) => {
+//       const created = new Date(event.createdAt);
+
+//       const isEntityMatch =
+//         entityObjectIds.some((id) =>
+//           id.equals(event.details.entityOfDetection)
+//         ) ||
+//         entityObjectIds.some((id) => id.equals(event.details.entityOfOrigin));
+
+//       const isDateMatch = created >= start && created <= end;
+
+//       return isEntityMatch || isDateMatch;
+//     });
+
+//     return res.json({
+//       success: true,
+//       message: "Tous les évènements ont été récupérés avec succès.",
+//       data: filteredEvents,
+//       total: filteredEvents.length,
+//     });
+//   } catch (error) {
+//     console.error("Erreur lors de la récupération des événements :", error);
+//     return res.status(500).json({
+//       success: false,
+//       message:
+//         "Une erreur est survenue lors de la récupération des événements.",
+//       error: error.message,
+//     });
+//   }
+// }
+
 async function getDataRapportEvent(req, res) {
-  const { targetEntityId, startDate, endDate } = req.body;
+  const { targetEntityId = [], startDate, endDate } = req.body;
 
   try {
+    /* ---------- 1. Préparation des critères ---------- */
     const entityObjectIds = targetEntityId.map(
       (id) => new mongoose.Types.ObjectId(id)
     );
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+    if (end) end.setHours(23, 59, 59, 999);
 
-    const events = await Event.find();
+    // Critère entité
+    const entityCriteria =
+      entityObjectIds.length > 0
+        ? {
+            $or: [
+              { "details.entityOfDetection": { $in: entityObjectIds } },
+              { "details.entityOfOrigin": { $in: entityObjectIds } },
+            ],
+          }
+        : null;
 
-    const filteredEvents = events.filter((event) => {
-      const created = new Date(event.createdAt);
+    // Critère date de création
+    const dateCriteria =
+      start && end ? { createdAt: { $gte: start, $lte: end } } : null;
 
-      const isEntityMatch =
-        entityObjectIds.some((id) =>
-          id.equals(event.details.entityOfDetection)
-        ) ||
-        entityObjectIds.some((id) => id.equals(event.details.entityOfOrigin));
+    // Fusion (OR) des critères présents
+    const finalQuery =
+      entityCriteria && dateCriteria
+        ? { $or: [entityCriteria, dateCriteria] }
+        : entityCriteria || dateCriteria || {}; // aucun critère → tout
 
-      const isDateMatch = created >= start && created <= end;
+    /* ---------- 2. Requête Mongo avec populate ---------- */
+    const events = await Event.find(finalQuery)
+      .populate({
+        path: "details.entityOfDetection",
+        select: "referenceId description",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.entityOfOrigin",
+        select: "referenceId description",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.owner",
+        select: "name surname",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.nominee",
+        select: "name surname",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.reviewer",
+        select: "name surname",
+        strictPopulate: true,
+      })
+      .lean(); // objets JS plats, plus léger
 
-      // 🔁 Remplace ceci :
-      // return isEntityMatch && isDateMatch;
-
-      // ✅ Par ceci :
-      return isEntityMatch || isDateMatch;
-    });
-
+    /* ---------- 3. Réponse ---------- */
     return res.json({
       success: true,
       message: "Tous les évènements ont été récupérés avec succès.",
-      data: filteredEvents,
-      total: filteredEvents.length,
+      data: events,
+      total: events.length,
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des événements :", error);
