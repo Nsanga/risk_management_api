@@ -103,7 +103,33 @@ async function createEvent(req, res) {
 async function getEventById(req, res) {
   try {
     const eventId = req.params.id;
-    const event = await Event.findById(eventId);
+    const event = await Event.findById(eventId)
+      .populate({
+        path: "details.entityOfDetection",
+        select: "referenceId description",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.entityOfOrigin",
+        select: "referenceId description",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.owner",
+        select: "name surname",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.nominee",
+        select: "name surname",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.reviewer",
+        select: "name surname",
+        strictPopulate: true,
+      });
+      
     if (!event) {
       return ResponseService.notFound(res, { message: "Événement non trouvé" });
     }
@@ -394,11 +420,11 @@ async function getDataRapportEvent(req, res) {
     const entityCriteria =
       entityObjectIds.length > 0
         ? {
-            $or: [
-              { "details.entityOfDetection": { $in: entityObjectIds } },
-              { "details.entityOfOrigin": { $in: entityObjectIds } },
-            ],
-          }
+          $or: [
+            { "details.entityOfDetection": { $in: entityObjectIds } },
+            { "details.entityOfOrigin": { $in: entityObjectIds } },
+          ],
+        }
         : null;
 
     // Critère date de création
