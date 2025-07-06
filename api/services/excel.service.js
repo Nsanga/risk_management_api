@@ -30,10 +30,10 @@ class ExcelService {
       const workbook = XLSX.read(this.file.buffer, { type: "buffer" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      const data = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
 
       await EntityRiskControl.deleteMany({});
-      console.log("Anciennes données supprimées avec succès.");
+      // console.log("Anciennes données supprimées avec succès.");
 
       const riskTableStartIndex =
         data.findIndex((row) => row[0] === "TOP Risks") + 2;
@@ -86,13 +86,14 @@ class ExcelService {
           riskImpact: row[11],
           total: row[12],
           riskLevel: row[13],
-          riskIndicatorDescription: row[24],
-          riskMesure: row[25],
-          frequenceCaptureRisk: row[26],
-          calculMethodRisk: row[27],
-          riskTolerence: row[28],
-          riskSeuil: row[29],
-          riskEscalade: row[30],
+          evaluationDate: row[22],
+          riskIndicatorDescription: row[23],
+          riskMesure: row[24],
+          frequenceCaptureRisk: row[25],
+          calculMethodRisk: row[26],
+          riskTolerence: row[27],
+          riskSeuil: row[28],
+          riskEscalade: row[29],
           ownerRisk: "Database administrator",
           nomineeRisk: "Database administrator",
           reviewerRisk: "Database administrator",
@@ -106,12 +107,15 @@ class ExcelService {
           controlRating: row[17],
           residualRiskLevel: row[18],
           preventiveDetectiveControl: row[19],
-          frequence: row[20],
-          monitoringCycle: row[21],
-          documentSources: row[22],
-          status: row[29],
+          monitoringCycle: row[20],
+          documentSources: row[21],
+          frequence: row[25],
+          // monitoringCycle: row[21],
+          // documentSources: row[22],
+          // status: row[29],
 
           // library: row[28],
+          treshold: row[30],
           ownerControl: "Database administrator",
           nomineeControl: "Database administrator",
           reviewerControl: "Database administrator",
@@ -154,7 +158,7 @@ class ExcelService {
           controls,
         })
       );
-
+      // console.log("Données sauvegardées dans la base de données avec succès.", result.risks);
       await EntityRiskControl.insertMany(result);
 
       const resultKeyIndicator = Object.values(groupedKeyIndicator).map(
@@ -269,14 +273,14 @@ class ExcelService {
       const allEntities = await EntityRiskControl.find()
         .populate("entity")
         .exec();
-  
+
       for (const entityDoc of allEntities) {
         // Recherche du risque si idRisk est fourni
         if (idRisk) {
           const foundRisk = entityDoc.risks.find(
             (risk) => risk._id.toString() === idRisk
           );
-  
+
           if (foundRisk) {
             return {
               type: "risk",
@@ -291,18 +295,18 @@ class ExcelService {
             };
           }
         }
-  
+
         // Recherche du contrôle si idControl est fourni
         if (idControl) {
           const foundControl = entityDoc.controls.find(
             (control) => control._id.toString() === idControl
           );
-  
+
           if (foundControl) {
             const historyControl = await historyModel.find({
               idControl: foundControl._id,
             });
-  
+
             return {
               type: "control",
               entity: {
@@ -320,7 +324,7 @@ class ExcelService {
           }
         }
       }
-  
+
       // Si aucun risque ou contrôle trouvé
       return null;
     } catch (error) {
@@ -406,10 +410,10 @@ class ExcelService {
         const alreadyExists = targetEntityRiskControl[`${type}s`].some(
           (existingItem) =>
             existingItem[
-              `${type === "risk" ? "description" : "controlDescription"}`
+            `${type === "risk" ? "description" : "controlDescription"}`
             ] ===
             itemToCopy[
-              `${type === "risk" ? "description" : "controlDescription"}`
+            `${type === "risk" ? "description" : "controlDescription"}`
             ]
         );
 
@@ -426,10 +430,10 @@ class ExcelService {
           iterationCount > 1
             ? ++refNumber
             : this.getNextReference(
-                items,
-                itemToCopy.reference.toString(),
-                type === "risk" ? "risks" : "controls"
-              );
+              items,
+              itemToCopy.reference.toString(),
+              type === "risk" ? "risks" : "controls"
+            );
 
         const codeRef = refNumber.toString().padStart(4, "0");
 
@@ -442,26 +446,26 @@ class ExcelService {
         const copiedItem =
           type === "risk"
             ? {
-                ...itemToCopy.toObject(),
-                reference: newReference,
-                // businessFunction: targetEntity.description,
-                departmentFunction: targetEntity.description,
-                reference: `RSK${codeRef}`,
-                ownerRisk: "Database administrator",
-                nomineeRisk: "Database administrator",
-                reviewerRisk: "Database administrator",
-                _id: new mongoose.Types.ObjectId(),
-              }
+              ...itemToCopy.toObject(),
+              reference: newReference,
+              // businessFunction: targetEntity.description,
+              departmentFunction: targetEntity.description,
+              reference: `RSK${codeRef}`,
+              ownerRisk: "Database administrator",
+              nomineeRisk: "Database administrator",
+              reviewerRisk: "Database administrator",
+              _id: new mongoose.Types.ObjectId(),
+            }
             : {
-                ...itemToCopy.toObject(),
-                reference: newReference,
-                // businessFunction: targetEntity.description,
-                departmentFunction: targetEntity.description,
-                ownerControl: "Database administrator",
-                nomineeControl: "Database administrator",
-                reviewerControl: "Database administrator",
-                _id: new mongoose.Types.ObjectId(),
-              };
+              ...itemToCopy.toObject(),
+              reference: newReference,
+              // businessFunction: targetEntity.description,
+              departmentFunction: targetEntity.description,
+              ownerControl: "Database administrator",
+              nomineeControl: "Database administrator",
+              reviewerControl: "Database administrator",
+              _id: new mongoose.Types.ObjectId(),
+            };
 
         targetEntityRiskControl[`${type}s`].push(copiedItem);
         copiedCount++;
@@ -531,9 +535,8 @@ class ExcelService {
 
       return {
         success: true,
-        message: `Tous les ${
-          type === "risk" ? "risques" : "contrôles"
-        } valides ont été copiés.`,
+        message: `Tous les ${type === "risk" ? "risques" : "contrôles"
+          } valides ont été copiés.`,
         data: targetEntityRiskControl,
       };
     } catch (error) {
@@ -596,8 +599,7 @@ class ExcelService {
 
           if (!item) {
             console.error(
-              `${
-                type === "risk" ? "Risque" : "Contrôle"
+              `${type === "risk" ? "Risque" : "Contrôle"
               } introuvable pour l'ID ${itemId}.`
             );
             errorItems.push(itemId);
@@ -607,8 +609,7 @@ class ExcelService {
           const itemToMove = item[`${type}s`].id(itemId);
           if (!itemToMove) {
             console.error(
-              `Élément ${
-                type === "risk" ? "risque" : "contrôle"
+              `Élément ${type === "risk" ? "risque" : "contrôle"
               } non trouvé pour l'ID ${itemId}.`
             );
             errorItems.push(itemId);
@@ -620,8 +621,7 @@ class ExcelService {
           );
           if (alreadyExists) {
             console.log(
-              `${
-                type === "risk" ? "Risque" : "Contrôle"
+              `${type === "risk" ? "Risque" : "Contrôle"
               } déjà existant dans l'entité cible.`
             );
             errorItems.push(itemId);
@@ -646,20 +646,20 @@ class ExcelService {
             ...(isTrash
               ? {}
               : {
-                  // reference: `RSK${codeRef}`,
-                  reference: newReference,
-                  ...(isRisk
-                    ? {
-                        ownerRisk: "Database administrator",
-                        nomineeRisk: "Database administrator",
-                        reviewerRisk: "Database administrator",
-                      }
-                    : {
-                        ownerControl: "Database administrator",
-                        nomineeControl: "Database administrator",
-                        reviewerControl: "Database administrator",
-                      }),
-                }),
+                // reference: `RSK${codeRef}`,
+                reference: newReference,
+                ...(isRisk
+                  ? {
+                    ownerRisk: "Database administrator",
+                    nomineeRisk: "Database administrator",
+                    reviewerRisk: "Database administrator",
+                  }
+                  : {
+                    ownerControl: "Database administrator",
+                    nomineeControl: "Database administrator",
+                    reviewerControl: "Database administrator",
+                  }),
+              }),
           };
 
           // const movedItem =
@@ -693,26 +693,26 @@ class ExcelService {
             const movedControl =
               targetEntity.description === "Corbeille "
                 ? {
-                    ...controlToMove.toObject(),
-                    ownerControl: "Database administrator",
-                    nomineeControl: "Database administrator",
-                    reviewerControl: "Database administrator",
-                    businessFunction: targetEntity.description,
-                    _id: new mongoose.Types.ObjectId(),
-                  }
+                  ...controlToMove.toObject(),
+                  ownerControl: "Database administrator",
+                  nomineeControl: "Database administrator",
+                  reviewerControl: "Database administrator",
+                  businessFunction: targetEntity.description,
+                  _id: new mongoose.Types.ObjectId(),
+                }
                 : {
-                    ...controlToMove.toObject(),
-                    ownerControl: "Database administrator",
-                    nomineeControl: "Database administrator",
-                    reviewerControl: "Database administrator",
-                    businessFunction: targetEntity.description,
-                    reference: `CTR${String(++controlCounter).padStart(
-                      5,
-                      "0"
-                    )}`,
-                    // reference: this.generateRandomReference("CTR", Date.now()),
-                    _id: new mongoose.Types.ObjectId(),
-                  };
+                  ...controlToMove.toObject(),
+                  ownerControl: "Database administrator",
+                  nomineeControl: "Database administrator",
+                  reviewerControl: "Database administrator",
+                  businessFunction: targetEntity.description,
+                  reference: `CTR${String(++controlCounter).padStart(
+                    5,
+                    "0"
+                  )}`,
+                  // reference: this.generateRandomReference("CTR", Date.now()),
+                  _id: new mongoose.Types.ObjectId(),
+                };
 
             const controlExists = targetEntityRiskControl.controls.some(
               (existingControl) =>
@@ -732,23 +732,23 @@ class ExcelService {
             const movedRisk =
               targetEntity.description === "Corbeille "
                 ? {
-                    ...riskToMove.toObject(),
-                    departmentFunction: targetEntity.description,
-                    ownerRisk: "Database administrator",
-                    nomineeRisk: "Database administrator",
-                    reviewerRisk: "Database administrator",
-                    _id: new mongoose.Types.ObjectId(),
-                  }
+                  ...riskToMove.toObject(),
+                  departmentFunction: targetEntity.description,
+                  ownerRisk: "Database administrator",
+                  nomineeRisk: "Database administrator",
+                  reviewerRisk: "Database administrator",
+                  _id: new mongoose.Types.ObjectId(),
+                }
                 : {
-                    ...riskToMove.toObject(),
-                    reference: `RSK${String(++riskCounter).padStart(5, "0")}`,
-                    ownerRisk: "Database administrator",
-                    nomineeRisk: "Database administrator",
-                    reviewerRisk: "Database administrator",
-                    departmentFunction: targetEntity.description,
-                    // reference: this.generateRandomReference("CTR", Date.now()),
-                    _id: new mongoose.Types.ObjectId(),
-                  };
+                  ...riskToMove.toObject(),
+                  reference: `RSK${String(++riskCounter).padStart(5, "0")}`,
+                  ownerRisk: "Database administrator",
+                  nomineeRisk: "Database administrator",
+                  reviewerRisk: "Database administrator",
+                  departmentFunction: targetEntity.description,
+                  // reference: this.generateRandomReference("CTR", Date.now()),
+                  _id: new mongoose.Types.ObjectId(),
+                };
 
             const riskExists = targetEntityRiskControl.risks.some(
               (existingRisk) =>
@@ -778,9 +778,8 @@ class ExcelService {
 
       return {
         success: true,
-        message: `Tous les ${
-          type === "risk" ? "risques" : "contrôles"
-        } ont été déplacés avec succès.`,
+        message: `Tous les ${type === "risk" ? "risques" : "contrôles"
+          } ont été déplacés avec succès.`,
         data: targetEntityRiskControl,
         errorItems,
       };

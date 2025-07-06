@@ -29,6 +29,7 @@ const riskSchema = new Schema({
   activeRisk: { type: Boolean, required: false, default: false },
   ownerEmail: { type: Boolean, required: false, default: false },
   remindOn: { type: String, require: false },
+  evaluationDate: { type: String, require: false },
 });
 
 const controlSchema = new Schema({
@@ -52,6 +53,7 @@ const controlSchema = new Schema({
   lastOperation: { type: String, required: false },
   nextOperation: { type: String, required: false },
   frequence: { type: String, required: false },
+  treshold: { type: String, required: false },
   nextAssessMent: { type: String, required: false, default: "" },
   history: {
     type: Schema.Types.ObjectId,
