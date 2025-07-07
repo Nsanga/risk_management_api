@@ -18,11 +18,11 @@ const dataKeyIndicatorSchema = new mongoose.Schema({
   nomineeKeyIndicator: { type: String },
   reviewerKeyIndicator: { type: String },
   activeIndicator: { type: Boolean, default: true },
+  treshold: { type: String, required: false },
   thresholdPercentage: { type: Boolean, default: true },
   remindOn: { type: String },
   reviewDate: { type: String },
   target: { type: String },
-  treshold: { type: String, required: false },
   status: { type: String, default: "active" },
 });
 

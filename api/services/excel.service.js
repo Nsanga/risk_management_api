@@ -131,7 +131,7 @@ class ExcelService {
           toleranceKeyIndicator: row[27],
           seuilKeyIndicator: row[28],
           escaladeKeyIndicator: row[29],
-          treshold: row[30],
+          treshold: row[30] || "Target - higher value is worse",
           ownerKeyIndicator: "Database administrator",
           nomineeKeyIndicator: "Database administrator",
           reviewerKeyIndicator: "Database administrator",
