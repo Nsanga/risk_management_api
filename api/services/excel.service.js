@@ -115,7 +115,6 @@ class ExcelService {
           // status: row[29],
 
           // library: row[28],
-          treshold: row[30],
           ownerControl: "Database administrator",
           nomineeControl: "Database administrator",
           reviewerControl: "Database administrator",
@@ -132,6 +131,7 @@ class ExcelService {
           toleranceKeyIndicator: row[27],
           seuilKeyIndicator: row[28],
           escaladeKeyIndicator: row[29],
+          treshold: row[30],
           ownerKeyIndicator: "Database administrator",
           nomineeKeyIndicator: "Database administrator",
           reviewerKeyIndicator: "Database administrator",
