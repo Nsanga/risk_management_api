@@ -86,7 +86,7 @@ class ExcelService {
           riskImpact: row[11],
           total: row[12],
           riskLevel: row[13],
-          evaluationDate: row[22],
+          evaluationDate: row[22] || '1/1/2025',
           riskIndicatorDescription: row[23],
           riskMesure: row[24],
           frequenceCaptureRisk: row[25],
