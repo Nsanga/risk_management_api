@@ -22,7 +22,7 @@ const dataKeyIndicatorSchema = new mongoose.Schema({
   remindOn: { type: String },
   reviewDate: { type: String },
   target: { type: String },
-  threshold: { type: String },
+  treshold: { type: String, required: false },
   status: { type: String, default: "active" },
 });
 

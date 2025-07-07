@@ -53,7 +53,6 @@ const controlSchema = new Schema({
   lastOperation: { type: String, required: false },
   nextOperation: { type: String, required: false },
   frequence: { type: String, required: false },
-  treshold: { type: String, required: false },
   nextAssessMent: { type: String, required: false, default: "" },
   history: {
     type: Schema.Types.ObjectId,
