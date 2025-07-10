@@ -284,7 +284,7 @@ async function getDataRapport(req, res) {
               const moyenneValue =
                 histList.length > 0
                   ? histList.reduce((sum, h) => sum + Number(h.value || 0), 0) /
-                    histList.length
+                    3
                   : null; // ou 0 si tu préfères
 
               const { kriStatus, kriColor } = getKriStatus(
