@@ -29,7 +29,7 @@ const calculateRemindOnDate = (frequency, lastOperationDate) => {
     );
   }
 
-  return nextDate.toISOString().split("T")[0]; // Format YYYY-MM-DD
+  return nextDate?.toISOString()?.split("T")[0]; // Format YYYY-MM-DD
 };
 
 const generateReference = async () => {
