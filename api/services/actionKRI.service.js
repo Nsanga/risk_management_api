@@ -1,4 +1,4 @@
-const HistoriqueKRI = require("../models/actionKRI.model");
+const ActionsKRI = require("../models/actionKRI.model");
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 
 async function generateReference() {
   try {
-    const lastAction = await HistoriqueKRI.findOne().sort({ createdAt: -1 });
+    const lastAction = await ActionsKRI.findOne().sort({ createdAt: -1 });
     let newReference = "001";
 
     if (lastAction && lastAction.reference) {
@@ -30,7 +30,7 @@ async function generateReference() {
 async function createActionKRI(req, res) {
   try {
     const reference = await generateReference();
-    const newAction = new HistoriqueKRI({ ...req.body, reference });
+    const newAction = new ActionsKRI({ ...req.body, reference });
     const savedAction = await newAction.save();
 
     const emails = [
@@ -74,7 +74,7 @@ async function createActionKRI(req, res) {
 
 async function getAllActionByIdKeyIndicator(req, res) {
   try {
-    const actions = await HistoriqueKRI.find({
+    const actions = await ActionsKRI.find({
       idKeyIndicator: req.body.idKeyIndicator,
     });
     // res.status(200).json(actions);
@@ -92,7 +92,7 @@ async function getAllActionByIdKeyIndicator(req, res) {
 
 async function getAllActionKRI(req, res) {
   try {
-    const actions = await HistoriqueKRI.find();
+    const actions = await ActionsKRI.find();
     res.status(200).json({
       statut: 200,
       message: "Action reucpérée avec succès",
@@ -105,8 +105,38 @@ async function getAllActionKRI(req, res) {
   }
 }
 
+async function updateActionKRI(req, res) {
+  try {
+    const { id } = req.params;
+
+    const updated = await ActionsKRI.findByIdAndUpdate(
+      id,
+      {
+        ...req.body,
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Action KRI non trouvé." });
+    }
+
+    res.status(200).json({
+      statut: 200,
+      message: "Action KRI mis à jour avec succès",
+      data: updated,
+    });
+  } catch (error) {
+    res.status(500).json({
+      statut: 500,
+      error: "Erreur lors de la mise à jour du test: " + error.message,
+    });
+  }
+}
+
 module.exports = {
   getAllActionByIdKeyIndicator,
   createActionKRI,
   getAllActionKRI,
+  updateActionKRI,
 };

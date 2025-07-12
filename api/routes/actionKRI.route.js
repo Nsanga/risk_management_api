@@ -12,6 +12,8 @@ const actionKRIRoutes = (app) => {
     "/getActionByIdKeyIndicator",
     actionKRIController.getAllActionByIdKeyIndicator
   );
+
+  router.put("/updateActionKRI/:id", actionKRIController.updateActionKRI);
 };
 
 module.exports = actionKRIRoutes;
