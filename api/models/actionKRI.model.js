@@ -34,6 +34,11 @@ const actionKRISchema = new mongoose.Schema(
       ref: "Entity",
       required: false,
     },
+    idHistoryKRI: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "kRI_History",
+      required: false,
+    },
   },
   { timestamps: true }
 );
