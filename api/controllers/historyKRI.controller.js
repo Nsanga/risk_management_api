@@ -13,7 +13,7 @@ async function getAllHistoriqueByIdKeyIndicator(req, res) {
 }
 
 async function updateHistoryKRI(req, res) {
-  await historiqueKRIService.updateHistoryKRI(req, res);
+  return await historiqueKRIservice.updateHistoryKRI(req, res);
 }
 
 module.exports = {
