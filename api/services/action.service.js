@@ -354,6 +354,22 @@ async function updateAction(req, res) {
   }
 }
 
+async function getActionByHistory(req, res) {
+  try {
+    const actions = await Action.find({ idHistory: req.body.idHistory });
+    // res.status(200).json(actions);
+    res.status(200).json({
+      statut: 200,
+      message: "Action liée à l'historique",
+      data: actions,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la récupération de l'historique: " + error.message,
+    });
+  }
+}
+
 module.exports = {
   getAllAction,
   createAction,
@@ -362,4 +378,5 @@ module.exports = {
   getAllActionByReference,
   getDataRapport,
   updateAction,
+  getActionByHistory,
 };

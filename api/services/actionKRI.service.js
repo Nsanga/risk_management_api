@@ -134,9 +134,28 @@ async function updateActionKRI(req, res) {
   }
 }
 
+async function getActionByHistory(req, res) {
+  try {
+    const actions = await ActionsKRI.find({
+      idHistoryKRI: req.body.idHistoryKRI,
+    });
+    // res.status(200).json(actions);
+    res.status(200).json({
+      statut: 200,
+      message: "Action liée au KRI historique",
+      data: actions,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la récupération de l'historique: " + error.message,
+    });
+  }
+}
+
 module.exports = {
   getAllActionByIdKeyIndicator,
   createActionKRI,
   getAllActionKRI,
   updateActionKRI,
+  getActionByHistory,
 };

@@ -27,6 +27,10 @@ async function updateAction(req, res) {
   return await actionService.updateAction(req, res);
 }
 
+async function getActionByHistory(req, res) {
+  return await actionService.getActionByHistory(req, res);
+}
+
 module.exports = {
   createAction,
   getAllAction,
@@ -35,4 +39,5 @@ module.exports = {
   getAllActionByReference,
   getDataRapport,
   updateAction,
+  getActionByHistory
 };

@@ -16,9 +16,14 @@ async function updateActionKRI(req, res) {
   await actionKRIService.updateActionKRI(req, res);
 }
 
+async function getActionByHistory(req, res) {
+  await actionKRIService.getActionByHistory(req, res);
+}
+
 module.exports = {
   getAllActionByIdKeyIndicator,
   createActionKRI,
   getAllActionKRI,
   updateActionKRI,
+  getActionByHistory,
 };

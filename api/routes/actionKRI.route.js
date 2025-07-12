@@ -13,6 +13,8 @@ const actionKRIRoutes = (app) => {
     actionKRIController.getAllActionByIdKeyIndicator
   );
 
+  router.post("/getActionByHistoryKRI", actionKRIController.getActionByHistory);
+
   router.put("/updateActionKRI/:id", actionKRIController.updateActionKRI);
 };
 

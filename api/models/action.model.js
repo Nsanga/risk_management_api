@@ -19,6 +19,11 @@ var actionSchema = new mongoose.Schema(
       ref: "Entity",
       required: false,
     },
+    idHistory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "history",
+      required: false,
+    },
   },
   { timestamps: true }
 );
