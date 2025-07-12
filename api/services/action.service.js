@@ -325,6 +325,35 @@ async function getDataRapport(req, res) {
   }
 }
 
+async function updateAction(req, res) {
+  try {
+    const { id } = req.params;
+
+    const updated = await Action.findByIdAndUpdate(
+      id,
+      {
+        ...req.body,
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Action non trouvé." });
+    }
+
+    res.status(200).json({
+      statut: 200,
+      message: "Action mis à jour avec succès",
+      data: updated,
+    });
+  } catch (error) {
+    res.status(500).json({
+      statut: 500,
+      error: "Erreur lors de la mise à jour du test: " + error.message,
+    });
+  }
+}
+
 module.exports = {
   getAllAction,
   createAction,
@@ -332,4 +361,5 @@ module.exports = {
   getAllActionByControl,
   getAllActionByReference,
   getDataRapport,
+  updateAction,
 };

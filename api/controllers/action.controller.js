@@ -23,6 +23,10 @@ async function getDataRapport(req, res) {
   return await actionService.getDataRapport(req, res);
 }
 
+async function updateAction(req, res) {
+  return await actionService.updateAction(req, res);
+}
+
 module.exports = {
   createAction,
   getAllAction,
@@ -30,4 +34,5 @@ module.exports = {
   getAllActionByEntity,
   getAllActionByReference,
   getDataRapport,
+  updateAction,
 };
