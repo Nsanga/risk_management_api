@@ -71,7 +71,7 @@ async function createEvent(req, res) {
     const emails = [ownerProfile.email, nomineeProfile.email];
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: emails.join(", "),
+      to: emails?.join(", "),
       subject: "Notification de Création d'Événement",
       html: `Un nouvel événement a été créé.<br><br>
         <strong>Détails de l'événement:</strong><br>
@@ -129,7 +129,7 @@ async function getEventById(req, res) {
         select: "name surname",
         strictPopulate: true,
       });
-      
+
     if (!event) {
       return ResponseService.notFound(res, { message: "Événement non trouvé" });
     }
@@ -176,74 +176,108 @@ async function updateEvent(req, res) {
 
     // Mettre à jour les champs de premier niveau
     if (updatedData.num_ref !== undefined) event.num_ref = updatedData.num_ref;
-    if (updatedData.approved !== undefined) event.approved = updatedData.approved;
+    if (updatedData.approved !== undefined)
+      event.approved = updatedData.approved;
 
     // Mettre à jour details
     if (updatedData.details) {
       const details = updatedData.details;
 
       // Champs simples
-      if (details.description !== undefined) event.details.description = details.description;
-      if (details.descriptionDetailled !== undefined) event.details.descriptionDetailled = details.descriptionDetailled;
-      if (details.event_date !== undefined) event.details.event_date = details.event_date;
-      if (details.event_time !== undefined) event.details.event_time = details.event_time;
-      if (details.detection_date !== undefined) event.details.detection_date = details.detection_date;
-      if (details.approved_date !== undefined) event.details.approved_date = details.approved_date;
-      if (details.closed_date !== undefined) event.details.closed_date = details.closed_date;
-      if (details.effective_date !== undefined) event.details.effective_date = details.effective_date;
-      if (details.recorded_by !== undefined) event.details.recorded_by = details.recorded_by;
-      if (details.recorded_date !== undefined) event.details.recorded_date = details.recorded_date;
-      if (details.total_currencies !== undefined) event.details.total_currencies = details.total_currencies;
-      if (details.increment_currency !== undefined) event.details.increment_currency = details.increment_currency;
-      if (details.total_losses !== undefined) event.details.total_losses = details.total_losses;
+      if (details.description !== undefined)
+        event.details.description = details.description;
+      if (details.descriptionDetailled !== undefined)
+        event.details.descriptionDetailled = details.descriptionDetailled;
+      if (details.event_date !== undefined)
+        event.details.event_date = details.event_date;
+      if (details.event_time !== undefined)
+        event.details.event_time = details.event_time;
+      if (details.detection_date !== undefined)
+        event.details.detection_date = details.detection_date;
+      if (details.approved_date !== undefined)
+        event.details.approved_date = details.approved_date;
+      if (details.closed_date !== undefined)
+        event.details.closed_date = details.closed_date;
+      if (details.effective_date !== undefined)
+        event.details.effective_date = details.effective_date;
+      if (details.recorded_by !== undefined)
+        event.details.recorded_by = details.recorded_by;
+      if (details.recorded_date !== undefined)
+        event.details.recorded_date = details.recorded_date;
+      if (details.total_currencies !== undefined)
+        event.details.total_currencies = details.total_currencies;
+      if (details.increment_currency !== undefined)
+        event.details.increment_currency = details.increment_currency;
+      if (details.total_losses !== undefined)
+        event.details.total_losses = details.total_losses;
       if (details.cause !== undefined) event.details.cause = details.cause;
       if (details.title !== undefined) event.details.title = details.title;
-      if (details.activeEvent !== undefined) event.details.activeEvent = details.activeEvent;
-      if (details.excludeFundLosses !== undefined) event.details.excludeFundLosses = details.excludeFundLosses;
+      if (details.activeEvent !== undefined)
+        event.details.activeEvent = details.activeEvent;
+      if (details.excludeFundLosses !== undefined)
+        event.details.excludeFundLosses = details.excludeFundLosses;
       if (details.notify !== undefined) event.details.notify = details.notify;
-      if (details.externalEvent !== undefined) event.details.externalEvent = details.externalEvent;
-      if (details.externalRef !== undefined) event.details.externalRef = details.externalRef;
-      if (details.subentityOfDetection !== undefined) event.details.subentityOfDetection = details.subentityOfDetection;
-      if (details.subentityOfOrigin !== undefined) event.details.subentityOfOrigin = details.subentityOfOrigin;
+      if (details.externalEvent !== undefined)
+        event.details.externalEvent = details.externalEvent;
+      if (details.externalRef !== undefined)
+        event.details.externalRef = details.externalRef;
+      if (details.subentityOfDetection !== undefined)
+        event.details.subentityOfDetection = details.subentityOfDetection;
+      if (details.subentityOfOrigin !== undefined)
+        event.details.subentityOfOrigin = details.subentityOfOrigin;
       if (details.RAG !== undefined) event.details.RAG = details.RAG;
-      if (details.targetClosureDate !== undefined) event.details.targetClosureDate = details.targetClosureDate;
-      if (details.document !== undefined) event.details.document = details.document;
+      if (details.targetClosureDate !== undefined)
+        event.details.targetClosureDate = details.targetClosureDate;
+      if (details.document !== undefined)
+        event.details.document = details.document;
 
       // Références : Owner, Nominee, Reviewer
       if (details.owner !== undefined) {
         const ownerProfile = await UserProfile.findById(details.owner);
         if (!ownerProfile) {
-          return ResponseService.badRequest(res, { message: "Invalid owner ID" });
+          return ResponseService.badRequest(res, {
+            message: "Invalid owner ID",
+          });
         }
         event.details.owner = ownerProfile._id;
       }
       if (details.nominee !== undefined) {
         const nomineeProfile = await UserProfile.findById(details.nominee);
         if (!nomineeProfile) {
-          return ResponseService.badRequest(res, { message: "Invalid nominee ID" });
+          return ResponseService.badRequest(res, {
+            message: "Invalid nominee ID",
+          });
         }
         event.details.nominee = nomineeProfile._id;
       }
       if (details.reviewer !== undefined) {
         const reviewerProfile = await UserProfile.findById(details.reviewer);
         if (!reviewerProfile) {
-          return ResponseService.badRequest(res, { message: "Invalid reviewer ID" });
+          return ResponseService.badRequest(res, {
+            message: "Invalid reviewer ID",
+          });
         }
         event.details.reviewer = reviewerProfile._id;
       }
 
       // Références : Entities
       if (details.entityOfDetection !== undefined) {
-        const entityDetection = await Entity.findById(details.entityOfDetection);
+        const entityDetection = await Entity.findById(
+          details.entityOfDetection
+        );
         if (!entityDetection) {
-          return ResponseService.badRequest(res, { message: "Invalid entityOfDetection ID" });
+          return ResponseService.badRequest(res, {
+            message: "Invalid entityOfDetection ID",
+          });
         }
         event.details.entityOfDetection = entityDetection._id;
       }
       if (details.entityOfOrigin !== undefined) {
         const entityOrigin = await Entity.findById(details.entityOfOrigin);
         if (!entityOrigin) {
-          return ResponseService.badRequest(res, { message: "Invalid entityOfOrigin ID" });
+          return ResponseService.badRequest(res, {
+            message: "Invalid entityOfOrigin ID",
+          });
         }
         event.details.entityOfOrigin = entityOrigin._id;
       }
@@ -358,50 +392,6 @@ async function getAllEvents(req, res) {
   }
 }
 
-// async function getDataRapportEvent(req, res) {
-//   const { targetEntityId, startDate, endDate } = req.body;
-
-//   try {
-//     const entityObjectIds = targetEntityId.map(
-//       (id) => new mongoose.Types.ObjectId(id)
-//     );
-
-//     const start = new Date(startDate);
-//     const end = new Date(endDate);
-//     end.setHours(23, 59, 59, 999);
-
-//     const events = await Event.find();
-
-//     const filteredEvents = events.filter((event) => {
-//       const created = new Date(event.createdAt);
-
-//       const isEntityMatch =
-//         entityObjectIds.some((id) =>
-//           id.equals(event.details.entityOfDetection)
-//         ) ||
-//         entityObjectIds.some((id) => id.equals(event.details.entityOfOrigin));
-
-//       const isDateMatch = created >= start && created <= end;
-
-//       return isEntityMatch || isDateMatch;
-//     });
-
-//     return res.json({
-//       success: true,
-//       message: "Tous les évènements ont été récupérés avec succès.",
-//       data: filteredEvents,
-//       total: filteredEvents.length,
-//     });
-//   } catch (error) {
-//     console.error("Erreur lors de la récupération des événements :", error);
-//     return res.status(500).json({
-//       success: false,
-//       message:
-//         "Une erreur est survenue lors de la récupération des événements.",
-//       error: error.message,
-//     });
-//   }
-// }
 
 async function getDataRapportEvent(req, res) {
   const { targetEntityId = [], startDate, endDate } = req.body;
@@ -416,29 +406,19 @@ async function getDataRapportEvent(req, res) {
     const end = endDate ? new Date(endDate) : null;
     if (end) end.setHours(23, 59, 59, 999);
 
-    // Critère entité
+    // 1. Critère entité obligatoire si fourni
     const entityCriteria =
       entityObjectIds.length > 0
         ? {
-          $or: [
-            { "details.entityOfDetection": { $in: entityObjectIds } },
-            { "details.entityOfOrigin": { $in: entityObjectIds } },
-          ],
-        }
-        : null;
-
-    // Critère date de création
-    const dateCriteria =
-      start && end ? { createdAt: { $gte: start, $lte: end } } : null;
-
-    // Fusion (OR) des critères présents
-    const finalQuery =
-      entityCriteria && dateCriteria
-        ? { $or: [entityCriteria, dateCriteria] }
-        : entityCriteria || dateCriteria || {}; // aucun critère → tout
+            $or: [
+              { "details.entityOfDetection": { $in: entityObjectIds } },
+              { "details.entityOfOrigin": { $in: entityObjectIds } },
+            ],
+          }
+        : {};
 
     /* ---------- 2. Requête Mongo avec populate ---------- */
-    const events = await Event.find(finalQuery)
+    const events = await Event.find(entityCriteria)
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -464,14 +444,23 @@ async function getDataRapportEvent(req, res) {
         select: "name surname",
         strictPopulate: true,
       })
-      .lean(); // objets JS plats, plus léger
+      .lean();
 
-    /* ---------- 3. Réponse ---------- */
+    /* ---------- 3. Filtrage par date (post-traitement) ---------- */
+    const filteredEvents =
+      start && end
+        ? events.filter((e) => {
+            const created = new Date(e.createdAt);
+            return created >= start && created <= end;
+          })
+        : events;
+
+    /* ---------- 4. Réponse ---------- */
     return res.json({
       success: true,
-      message: "Tous les évènements ont été récupérés avec succès.",
-      data: events,
-      total: events.length,
+      message: "Les événements ont été récupérés avec succès.",
+      data: filteredEvents,
+      total: filteredEvents.length,
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des événements :", error);
