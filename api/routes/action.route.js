@@ -10,7 +10,7 @@ const actionRoutes = (app) => {
   router.post("/getRapport", actionController.getDataRapport);
   router.get("/getAction", actionController.getAllAction);
   router.post("/byEntitity", actionController.getAllActionByEntity);
-    router.post("/byHistory", actionController.getActionByHistory);
+  router.post("/byHistory", actionController.getActionByHistory);
   router.post("/byControl", actionController.getAllActionByControl);
   router.post("/byReference", actionController.getAllActionByReference);
   router.put("/updateAction/:id", actionController.updateAction);
