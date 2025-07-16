@@ -20,6 +20,7 @@ const eventRoutes = (app) => {
   router.get("/one/:id", eventController.getEventById);
   router.get("/all", eventController.getAllEvents);
   router.post("/getRapport", eventController.getDataRapportEvent);
+  router.post("/getIncidentRapport", eventController.getRapportIncident);
   router.get("/:id", eventController.getEventByEntity);
 };
 

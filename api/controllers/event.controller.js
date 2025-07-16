@@ -27,6 +27,10 @@ async function getDataRapportEvent(req, res) {
   return await eventService.getDataRapportEvent(req, res);
 }
 
+async function getRapportIncident(req, res) {
+  return await eventService.getRapportIncident(req, res);
+}
+
 module.exports = {
   createEvent,
   getEventById,
@@ -35,4 +39,5 @@ module.exports = {
   getAllEvents,
   getEventByEntity,
   getDataRapportEvent,
+  getRapportIncident,
 };

@@ -392,7 +392,6 @@ async function getAllEvents(req, res) {
   }
 }
 
-
 async function getDataRapportEvent(req, res) {
   const { targetEntityId = [], startDate, endDate } = req.body;
 
@@ -473,7 +472,100 @@ async function getDataRapportEvent(req, res) {
   }
 }
 
-module.exports = { getDataRapportEvent };
+async function getRapportIncident(req, res) {
+  const { targetEntityId = [] } = req.body;
+
+  try {
+    /* ---------- 1. Préparation des critères ---------- */
+    const entityObjectIds = targetEntityId.map(
+      (id) => new mongoose.Types.ObjectId(id)
+    );
+
+    const now = new Date();
+    const year = now.getFullYear(); // ex: 2025
+    const month = now.getMonth() + 1; // ex: 7 (juillet) - on ajoute 1 car getMonth() retourne un index de 0 à 11
+    const monthName = new Intl.DateTimeFormat("fr-FR", {
+      month: "long",
+    }).format(now);
+
+    // 1. Critère entité obligatoire si fourni
+    const entityCriteria =
+      entityObjectIds.length > 0
+        ? {
+            $or: [
+              { "details.entityOfDetection": { $in: entityObjectIds } },
+              { "details.entityOfOrigin": { $in: entityObjectIds } },
+            ],
+          }
+        : {};
+
+    /* ---------- 2. Requête Mongo avec populate ---------- */
+    const events = await Event.find(entityCriteria)
+      .populate({
+        path: "details.entityOfDetection",
+        select: "referenceId description",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.entityOfOrigin",
+        select: "referenceId description",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.owner",
+        select: "name surname",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.nominee",
+        select: "name surname",
+        strictPopulate: true,
+      })
+      .populate({
+        path: "details.reviewer",
+        select: "name surname",
+        strictPopulate: true,
+      })
+      .lean();
+
+    /* ---------- 3. Filtrage par date (post-traitement) ---------- */
+    /* ---------- 3. Filtrage par date (mois en cours) ---------- */
+    const filteredEvents = events.filter((e) => {
+      const createdAt = new Date(e.createdAt);
+      return (
+        createdAt.getFullYear() === year && createdAt.getMonth() + 1 === month // +1 car getMonth() commence à 0
+      );
+    });
+
+    const allEvent = await Event.find();
+
+    const infoSupp = {
+      totalEvents: allEvent?.length,
+      totalEventsMonth: filteredEvents.length,
+      year,
+      month,
+      monthName,
+    };
+
+    /* ---------- 4. Réponse ---------- */
+    return res.json({
+      success: true,
+      message: `Les événements du mois de ${monthName} ${year} ont été récupérés avec succès.`,
+      data: filteredEvents,
+      infoSupp: infoSupp,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des événements :", error);
+    return res.status(500).json({
+      success: false,
+      message:
+        "Une erreur est survenue lors de la récupération des événements.",
+      error: error.message,
+    });
+  }
+}
+
+// module.exports = { getDataRapportEvent };
 
 module.exports = {
   createEvent,
@@ -483,4 +575,5 @@ module.exports = {
   getAllEvents,
   getEventByEntity,
   getDataRapportEvent,
+  getRapportIncident,
 };
