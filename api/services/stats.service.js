@@ -89,29 +89,20 @@ async function getStatistics(req, res) {
       totalKRI: allControls?.length,
     };
 
-    // const aLllEvent = await Event.find();
-    // const allFinancials = aLllEvent.flatMap((item) => item?.financials?.data);
+    const aLllEvent = await Event.find();
+    const allFinancials = aLllEvent.flatMap((item) => item?.financials?.data);
 
-    // const allActualLoss = allFinancials
-    //   .map((item) => item["Actual Loss"] || item.actualLoss)
-    //   .filter(Boolean)
-    //   .map((actualLoss) =>
-    //     Object.fromEntries(
-    //       Object.entries(actualLoss).filter(([_, value]) => value !== null)
-    //     )
-    //   );
+    const allTotalActualLoss = allFinancials
+      .map((item) => item.actualLoss.total)
+      .filter(Boolean);
 
-    // const actualLossSums = allActualLoss.map((loss, index) => {
-    //   const sum = Object.values(loss).reduce((acc, val) => {
-    //     const num = Number(val);
-    //     return acc + (isNaN(num) ? 0 : num);
-    //   }, 0);
-
-    //   return { index, sum };
-    // });
+    const totalActualLoss = allTotalActualLoss.reduce(
+      (acc, val) => acc + val,
+      0
+    );
 
     return ResponseService.success(res, {
-      events: { byStatus: eventsByStatus },
+      events: { byStatus: eventsByStatus, totalPerteSave: totalActualLoss },
       indicators: indicatorsStats,
       actions: actionsStats,
       risks: riskStats,

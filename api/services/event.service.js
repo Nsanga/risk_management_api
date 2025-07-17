@@ -1,10 +1,10 @@
 const UserProfile = require("../models/userProfile.model");
-const Entity = require("../models/entity.model");
 const Event = require("../models/event.model");
 const ResponseService = require("./response.service");
 const nodemailer = require("nodemailer");
 const logger = require("../helpers/logger");
 const mongoose = require("mongoose");
+const Entity = require("../models/entity.model");
 
 const transporter = nodemailer.createTransport({
   service: "gmail", // Utilisez le service de messagerie de votre choix
@@ -530,14 +530,36 @@ async function getRapportIncident(req, res) {
 
     /* ---------- 3. Filtrage par date (post-traitement) ---------- */
     /* ---------- 3. Filtrage par date (mois en cours) ---------- */
+    // 1. Fonction utilitaire pour calculer la somme des pertes à partir d'une liste d'événements
+    const calculateTotalActualLoss = (events) => {
+      return events
+        .flatMap((item) => item?.financials?.data || [])
+        .map((item) => item?.actualLoss?.total)
+        .filter((val) => typeof val === "number" && !isNaN(val))
+        .reduce((acc, val) => acc + val, 0);
+    };
+
+    // 2. Sélection des événements du mois courant
     const filteredEvents = events.filter((e) => {
       const createdAt = new Date(e.createdAt);
       return (
-        createdAt.getFullYear() === year && createdAt.getMonth() + 1 === month // +1 car getMonth() commence à 0
+        createdAt.getFullYear() === year && createdAt.getMonth() + 1 === month
       );
     });
 
+    // 3. Récupération de toutes les entités concernées
+    const entities = await Entity.find({ _id: { $in: entityObjectIds } });
     const allEvent = await Event.find();
+
+    // 4. Calcul des pertes
+    const perteMonth = calculateTotalActualLoss(filteredEvents);
+    const allPertes = calculateTotalActualLoss(await Event.find());
+
+    // 5. Regroupement
+    const inforPertes = {
+      perteMonth,
+      allPertes,
+    };
 
     const infoSupp = {
       totalEvents: allEvent?.length,
@@ -545,6 +567,8 @@ async function getRapportIncident(req, res) {
       year,
       month,
       monthName,
+      inforPertes,
+      entities,
     };
 
     /* ---------- 4. Réponse ---------- */
