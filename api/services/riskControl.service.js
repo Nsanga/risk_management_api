@@ -35,11 +35,12 @@ async function getRiskControlById(req, res) {
 
 async function updateRiskControl(req, res) {
   try {
+    const tenantId = req.tenantId;
     const riskControlId = req.params.id;
     const updatedData = req.body;
 
     // Mettre à jour le RiskControl
-    const riskControl = await RiskControl.findByIdAndUpdate(riskControlId, updatedData, { new: true });
+    const riskControl = await RiskControl.findByIdAndUpdate(riskControlId, tenantId, updatedData, { new: true });
 
     if (!riskControl) {
       return ResponseService.notFound(res, { message: 'RiskControl non trouvé' });
@@ -54,10 +55,11 @@ async function updateRiskControl(req, res) {
 
 async function deleteRiskControl(req, res) {
   try {
+    const tenantId = req.tenantId;
     const riskControlId = req.params.id;
 
     // Supprimer un RiskControl par son ID
-    const riskControl = await RiskControl.findByIdAndDelete(riskControlId);
+    const riskControl = await RiskControl.findByIdAndDelete({riskControlId, tenantId});
     if (!riskControl) {
       return ResponseService.notFound(res, { message: 'RiskControl non trouvé' });
     }
@@ -72,7 +74,8 @@ async function deleteRiskControl(req, res) {
 async function getAllRiskControls(req, res) {
   try {
     // Récupérer tous les RiskControls
-    const riskControls = await RiskControl.find();
+    const tenantId = req.tenantId;
+    const riskControls = await RiskControl.find({tenantId});
     return ResponseService.success(res, { riskControls });
   } catch (error) {
     console.error('Erreur lors de la récupération des RiskControls:', error);

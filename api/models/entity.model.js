@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const entitySchema = new Schema({
+  tenantId: { type: String, required: true },
   referenceId: {
     type: String,
     unique: true,

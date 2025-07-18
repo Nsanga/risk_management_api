@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const userGroupSchema = new Schema({
+  tenantId: { type: String, required: true },
   groupName: {
     type: String,
     required: true

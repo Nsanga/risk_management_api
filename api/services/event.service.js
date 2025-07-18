@@ -16,11 +16,15 @@ const transporter = nodemailer.createTransport({
 
 let currentNumber = 1; // Point de départ à 00001
 
-async function generateReferenceNumber() {
+async function generateReferenceNumber(tenantId) {
   try {
-    const lastAction = await Event.findOne().sort({ createdAt: -1 });
-    let newReference = "00001";
+    if (!tenantId) {
+      throw new Error("Le tenantId est requis pour générer une référence.");
+    }
 
+    const lastAction = await Event.findOne({ tenantId }).sort({ createdAt: -1 });
+
+    let newReference = "00001";
     if (lastAction && lastAction.num_ref) {
       const lastReference = parseInt(lastAction.num_ref, 10);
       newReference = String(lastReference + 1).padStart(5, "0");
@@ -29,35 +33,50 @@ async function generateReferenceNumber() {
     return newReference;
   } catch (error) {
     throw new Error(
-      "Erreur lors de la génération de la référence: " + error.message
+      "Erreur lors de la génération de la référence : " + error.message
     );
   }
 }
 
 async function createEvent(req, res) {
   try {
+    const tenantId = req.tenantId; // ✅ récupération du tenant courant
     const eventData = req.body;
+    const num_ref = await generateReferenceNumber(tenantId);
 
-    // eventData.num_ref = await generateReferenceNumber();
-    const num_ref = await generateReferenceNumber();
-    // Convertir les emails en ObjectId
+    // Recherche sécurisée des utilisateurs et entités par tenant
     const ownerProfile = await UserProfile.findOne({
       _id: eventData.details.owner,
+      tenantId,
     });
+
     const nomineeProfile = await UserProfile.findOne({
       _id: eventData.details.nominee,
+      tenantId,
     });
+
     const reviewerProfile = await UserProfile.findOne({
       _id: eventData.details.reviewer,
+      tenantId,
     });
-    const entityOfDetection = await Entity.findById(
-      eventData.details.entityOfDetection
-    );
-    const entityOfOrigin = await Entity.findById(
-      eventData.details.entityOfOrigin
-    );
 
-    // Vérifiez si les profils et entités existent avant d'assigner leurs ObjectIds
+    const entityOfDetection = await Entity.findOne({
+      _id: eventData.details.entityOfDetection,
+      tenantId,
+    });
+
+    const entityOfOrigin = await Entity.findOne({
+      _id: eventData.details.entityOfOrigin,
+      tenantId,
+    });
+
+    // Vérifie si les entités et profils existent
+    if (!ownerProfile || !nomineeProfile) {
+      return ResponseService.badRequest(res, {
+        message: "Owner or Nominee not found for this tenant.",
+      });
+    }
+
     if (ownerProfile) eventData.details.owner = ownerProfile._id;
     if (nomineeProfile) eventData.details.nominee = nomineeProfile._id;
     if (reviewerProfile) eventData.details.reviewer = reviewerProfile._id;
@@ -65,28 +84,34 @@ async function createEvent(req, res) {
       eventData.details.entityOfDetection = entityOfDetection._id;
     if (entityOfOrigin) eventData.details.entityOfOrigin = entityOfOrigin._id;
 
-    const newEvent = new Event({ ...eventData, num_ref });
+    // ✅ Ajout du tenantId dans le document
+    const newEvent = new Event({
+      ...eventData,
+      tenantId,
+      num_ref,
+    });
+
     await newEvent.save();
 
+    // Envoi d'email
     const emails = [ownerProfile.email, nomineeProfile.email];
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: emails?.join(", "),
+      to: emails.join(", "),
       subject: "Notification de Création d'Événement",
       html: `Un nouvel événement a été créé.<br><br>
         <strong>Détails de l'événement:</strong><br>
         Référence: EVT${num_ref}<br>
         Titre: ${eventData.details.description}<br>
-        Date: ${eventData.details.event_date}<br>
-        <br>
+        Date: ${eventData.details.event_date}<br><br>
         <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        logger.error("Error sending email:", error);
+        logger.error("Erreur lors de l'envoi de l'email :", error);
       } else {
-        logger.info("Email sent:", info.response);
+        logger.info("Email envoyé :", info.response);
       }
     });
 
@@ -95,15 +120,18 @@ async function createEvent(req, res) {
       event: newEvent,
     });
   } catch (error) {
-    logger.error("Error creating event:", error);
+    logger.error("Erreur lors de la création de l'événement :", error);
     return ResponseService.internalServerError(res, { error: error.message });
   }
 }
 
 async function getEventById(req, res) {
   try {
+    const tenantId = req.tenantId; // 👈 Récupération du tenant courant
     const eventId = req.params.id;
-    const event = await Event.findById(eventId)
+
+    // On cherche l'événement par _id ET tenantId
+    const event = await Event.findOne({ _id: eventId, tenantId })
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -131,8 +159,11 @@ async function getEventById(req, res) {
       });
 
     if (!event) {
-      return ResponseService.notFound(res, { message: "Événement non trouvé" });
+      return ResponseService.notFound(res, {
+        message: "Événement non trouvé ou non accessible pour ce tenant.",
+      });
     }
+
     return ResponseService.success(res, { event });
   } catch (error) {
     console.error("Erreur lors de la récupération de l'événement:", error);
@@ -142,17 +173,21 @@ async function getEventById(req, res) {
 
 async function getEventByEntity(req, res) {
   try {
-    const eventId = req.params.id;
+    const tenantId = req.tenantId;
+    const entityId = req.params.id;
+
+    // On filtre aussi par tenantId pour s'assurer de l'isolation
     const events = await Event.find({
+      tenantId,
       $or: [
-        { "details.entityOfDetection": eventId },
-        { "details.entityOfOrigin": eventId },
+        { "details.entityOfDetection": entityId },
+        { "details.entityOfOrigin": entityId },
       ],
     });
 
     if (!events || events.length === 0) {
       return ResponseService.notFound(res, {
-        message: "Aucun événement trouvé",
+        message: "Aucun événement trouvé pour cette entité dans ce tenant.",
       });
     }
 
@@ -165,149 +200,76 @@ async function getEventByEntity(req, res) {
 
 async function updateEvent(req, res) {
   try {
+    const tenantId = req.tenantId;
     const eventId = req.params.id;
     const updatedData = req.body;
 
-    // Récupérer l'événement existant
-    const event = await Event.findById(eventId);
+    // 🔐 Récupérer l'événement en filtrant aussi par tenant
+    const event = await Event.findOne({ _id: eventId, tenantId });
     if (!event) {
       return ResponseService.notFound(res, { message: "Event not found" });
     }
 
-    // Mettre à jour les champs de premier niveau
-    if (updatedData.num_ref !== undefined) event.num_ref = updatedData.num_ref;
-    if (updatedData.approved !== undefined)
-      event.approved = updatedData.approved;
+    // ✅ Mise à jour simple de champs de premier niveau
+    const topFields = ['num_ref', 'approved', 'commentary', 'additionnalInfo'];
+    topFields.forEach(field => {
+      if (updatedData[field] !== undefined) event[field] = updatedData[field];
+    });
 
-    // Mettre à jour details
+    if (updatedData.financials !== undefined) {
+      event.financials = { ...event.financials, ...updatedData.financials };
+    }
+
+    // ✅ Mise à jour des détails
     if (updatedData.details) {
       const details = updatedData.details;
+      const simpleDetailFields = [
+        'description', 'descriptionDetailled', 'event_date', 'event_time',
+        'detection_date', 'approved_date', 'closed_date', 'effective_date',
+        'recorded_by', 'recorded_date', 'total_currencies', 'increment_currency',
+        'total_losses', 'cause', 'title', 'activeEvent', 'excludeFundLosses',
+        'notify', 'externalEvent', 'externalRef', 'subentityOfDetection',
+        'subentityOfOrigin', 'RAG', 'targetClosureDate', 'document'
+      ];
 
-      // Champs simples
-      if (details.description !== undefined)
-        event.details.description = details.description;
-      if (details.descriptionDetailled !== undefined)
-        event.details.descriptionDetailled = details.descriptionDetailled;
-      if (details.event_date !== undefined)
-        event.details.event_date = details.event_date;
-      if (details.event_time !== undefined)
-        event.details.event_time = details.event_time;
-      if (details.detection_date !== undefined)
-        event.details.detection_date = details.detection_date;
-      if (details.approved_date !== undefined)
-        event.details.approved_date = details.approved_date;
-      if (details.closed_date !== undefined)
-        event.details.closed_date = details.closed_date;
-      if (details.effective_date !== undefined)
-        event.details.effective_date = details.effective_date;
-      if (details.recorded_by !== undefined)
-        event.details.recorded_by = details.recorded_by;
-      if (details.recorded_date !== undefined)
-        event.details.recorded_date = details.recorded_date;
-      if (details.total_currencies !== undefined)
-        event.details.total_currencies = details.total_currencies;
-      if (details.increment_currency !== undefined)
-        event.details.increment_currency = details.increment_currency;
-      if (details.total_losses !== undefined)
-        event.details.total_losses = details.total_losses;
-      if (details.cause !== undefined) event.details.cause = details.cause;
-      if (details.title !== undefined) event.details.title = details.title;
-      if (details.activeEvent !== undefined)
-        event.details.activeEvent = details.activeEvent;
-      if (details.excludeFundLosses !== undefined)
-        event.details.excludeFundLosses = details.excludeFundLosses;
-      if (details.notify !== undefined) event.details.notify = details.notify;
-      if (details.externalEvent !== undefined)
-        event.details.externalEvent = details.externalEvent;
-      if (details.externalRef !== undefined)
-        event.details.externalRef = details.externalRef;
-      if (details.subentityOfDetection !== undefined)
-        event.details.subentityOfDetection = details.subentityOfDetection;
-      if (details.subentityOfOrigin !== undefined)
-        event.details.subentityOfOrigin = details.subentityOfOrigin;
-      if (details.RAG !== undefined) event.details.RAG = details.RAG;
-      if (details.targetClosureDate !== undefined)
-        event.details.targetClosureDate = details.targetClosureDate;
-      if (details.document !== undefined)
-        event.details.document = details.document;
+      simpleDetailFields.forEach(field => {
+        if (details[field] !== undefined) {
+          event.details[field] = details[field];
+        }
+      });
 
-      // Références : Owner, Nominee, Reviewer
-      if (details.owner !== undefined) {
-        const ownerProfile = await UserProfile.findById(details.owner);
-        if (!ownerProfile) {
-          return ResponseService.badRequest(res, {
-            message: "Invalid owner ID",
-          });
-        }
-        event.details.owner = ownerProfile._id;
-      }
-      if (details.nominee !== undefined) {
-        const nomineeProfile = await UserProfile.findById(details.nominee);
-        if (!nomineeProfile) {
-          return ResponseService.badRequest(res, {
-            message: "Invalid nominee ID",
-          });
-        }
-        event.details.nominee = nomineeProfile._id;
-      }
-      if (details.reviewer !== undefined) {
-        const reviewerProfile = await UserProfile.findById(details.reviewer);
-        if (!reviewerProfile) {
-          return ResponseService.badRequest(res, {
-            message: "Invalid reviewer ID",
-          });
-        }
-        event.details.reviewer = reviewerProfile._id;
-      }
+      // 🔁 Références (toujours filtrées par tenantId)
+      const referenceFields = [
+        { key: 'owner', model: UserProfile },
+        { key: 'nominee', model: UserProfile },
+        { key: 'reviewer', model: UserProfile },
+        { key: 'entityOfDetection', model: Entity },
+        { key: 'entityOfOrigin', model: Entity }
+      ];
 
-      // Références : Entities
-      if (details.entityOfDetection !== undefined) {
-        const entityDetection = await Entity.findById(
-          details.entityOfDetection
-        );
-        if (!entityDetection) {
-          return ResponseService.badRequest(res, {
-            message: "Invalid entityOfDetection ID",
-          });
+      for (const { key, model } of referenceFields) {
+        if (details[key] !== undefined) {
+          const doc = await model.findOne({ _id: details[key], tenantId });
+          if (!doc) {
+            return ResponseService.badRequest(res, { message: `Invalid ${key} ID` });
+          }
+          event.details[key] = doc._id;
         }
-        event.details.entityOfDetection = entityDetection._id;
-      }
-      if (details.entityOfOrigin !== undefined) {
-        const entityOrigin = await Entity.findById(details.entityOfOrigin);
-        if (!entityOrigin) {
-          return ResponseService.badRequest(res, {
-            message: "Invalid entityOfOrigin ID",
-          });
-        }
-        event.details.entityOfOrigin = entityOrigin._id;
       }
     }
 
-    // Mettre à jour commentary
-    if (updatedData.commentary !== undefined) {
-      event.commentary = updatedData.commentary;
-    }
-
-    // Mettre à jour financials
-    if (updatedData.financials !== undefined) {
-      Object.assign(event.financials, updatedData.financials);
-    }
-
-    // Mettre à jour additionnalInfo
-    if (updatedData.additionnalInfo !== undefined) {
-      event.additionnalInfo = updatedData.additionnalInfo;
-    }
-
-    // Sauvegarder l'événement mis à jour
+    // ✅ Sauvegarde
     await event.save();
 
-    // Envoyer l'email si notify est true
+    // ✅ Envoi de notification si demandé
     if (updatedData.details?.notify) {
-      const ownerProfile = await UserProfile.findById(event.details.owner);
-      const nomineeProfile = await UserProfile.findById(event.details.nominee);
+      const [owner, nominee] = await Promise.all([
+        UserProfile.findOne({ _id: event.details.owner, tenantId }),
+        UserProfile.findOne({ _id: event.details.nominee, tenantId }),
+      ]);
 
-      if (ownerProfile && nomineeProfile) {
-        const emails = [ownerProfile.email, nomineeProfile.email];
+      if (owner && nominee) {
+        const emails = [owner.email, nominee.email];
         const mailOptions = {
           from: process.env.EMAIL_USER,
           to: emails.join(", "),
@@ -317,14 +279,14 @@ async function updateEvent(req, res) {
             Référence: EVT${event.num_ref}<br>
             Titre: ${event.details.description}<br>
             Date: ${event.details.event_date}<br><br>
-            <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
+            <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`
         };
 
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
-            logger.error("Error sending email:", error);
+            logger.error("Erreur lors de l'envoi de l'email :", error);
           } else {
-            logger.info("Email sent:", info.response);
+            logger.info("Email envoyé :", info.response);
           }
         });
       }
@@ -334,19 +296,27 @@ async function updateEvent(req, res) {
       message: "Event updated successfully",
       event,
     });
+
   } catch (error) {
-    logger.error("Error updating event:", error);
+    logger.error("Erreur lors de la mise à jour de l'événement:", error);
     return ResponseService.internalServerError(res, { error: error.message });
   }
 }
 
 async function deleteEvent(req, res) {
   try {
+    const tenantId = req.tenantId;
     const eventId = req.params.id;
-    const event = await Event.findByIdAndDelete(eventId);
+
+    // 🔐 Suppression sécurisée avec tenantId
+    const event = await Event.findOneAndDelete({ _id: eventId, tenantId });
+
     if (!event) {
-      return ResponseService.notFound(res, { message: "Événement non trouvé" });
+      return ResponseService.notFound(res, {
+        message: "Événement non trouvé ou non accessible pour ce tenant.",
+      });
     }
+
     return ResponseService.success(res, {
       message: "Événement supprimé avec succès",
     });
@@ -358,7 +328,10 @@ async function deleteEvent(req, res) {
 
 async function getAllEvents(req, res) {
   try {
-    const events = await Event.find()
+    const tenantId = req.tenantId;
+
+    // 🔐 Ne retourne que les événements du tenant courant
+    const events = await Event.find({ tenantId })
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -393,6 +366,7 @@ async function getAllEvents(req, res) {
 }
 
 async function getDataRapportEvent(req, res) {
+  const tenantId = req.tenantId;
   const { targetEntityId = [], startDate, endDate } = req.body;
 
   try {
@@ -409,15 +383,15 @@ async function getDataRapportEvent(req, res) {
     const entityCriteria =
       entityObjectIds.length > 0
         ? {
-            $or: [
-              { "details.entityOfDetection": { $in: entityObjectIds } },
-              { "details.entityOfOrigin": { $in: entityObjectIds } },
-            ],
-          }
+          $or: [
+            { "details.entityOfDetection": { $in: entityObjectIds } },
+            { "details.entityOfOrigin": { $in: entityObjectIds } },
+          ],
+        }
         : {};
 
     /* ---------- 2. Requête Mongo avec populate ---------- */
-    const events = await Event.find(entityCriteria)
+    const events = await Event.find({ entityCriteria, tenantId })
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -449,9 +423,9 @@ async function getDataRapportEvent(req, res) {
     const filteredEvents =
       start && end
         ? events.filter((e) => {
-            const created = new Date(e.createdAt);
-            return created >= start && created <= end;
-          })
+          const created = new Date(e.createdAt);
+          return created >= start && created <= end;
+        })
         : events;
 
     /* ---------- 4. Réponse ---------- */
@@ -473,6 +447,7 @@ async function getDataRapportEvent(req, res) {
 }
 
 async function getRapportIncident(req, res) {
+  const tenantId = req.tenantId;
   const { targetEntityId = [] } = req.body;
 
   try {
@@ -492,15 +467,15 @@ async function getRapportIncident(req, res) {
     const entityCriteria =
       entityObjectIds.length > 0
         ? {
-            $or: [
-              { "details.entityOfDetection": { $in: entityObjectIds } },
-              { "details.entityOfOrigin": { $in: entityObjectIds } },
-            ],
-          }
+          $or: [
+            { "details.entityOfDetection": { $in: entityObjectIds } },
+            { "details.entityOfOrigin": { $in: entityObjectIds } },
+          ],
+        }
         : {};
 
     /* ---------- 2. Requête Mongo avec populate ---------- */
-    const events = await Event.find(entityCriteria)
+    const events = await Event.find({ entityCriteria, tenantId })
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -548,12 +523,12 @@ async function getRapportIncident(req, res) {
     });
 
     // 3. Récupération de toutes les entités concernées
-    const entities = await Entity.find({ _id: { $in: entityObjectIds } });
-    const allEvent = await Event.find();
+    const entities = await Entity.find({ _id: { $in: entityObjectIds }, tenantId });
+    const allEvent = await Event.find({ tenantId });
 
     // 4. Calcul des pertes
     const perteMonth = calculateTotalActualLoss(filteredEvents);
-    const allPertes = calculateTotalActualLoss(await Event.find());
+    const allPertes = calculateTotalActualLoss(await Event.find({ tenantId }));
 
     // 5. Regroupement
     const inforPertes = {

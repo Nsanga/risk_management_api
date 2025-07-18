@@ -6,6 +6,7 @@ const userRoles = ["admin", "user", "inputeurs", "validated", "superAdmin"];
 
 const userProfileSchema = new Schema(
   {
+    tenantId: { type: String, required: true },
     userId: {
       type: String,
       required: true,

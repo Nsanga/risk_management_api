@@ -52,9 +52,9 @@ const getKriStatus = (moyenne, tol, seuil, escal) => {
   return { kriStatus: "OK", kriColor: "green.500" };
 };
 
-async function generateReference() {
+async function generateReference(tenantId) {
   try {
-    const lastAction = await Action.findOne().sort({ createdAt: -1 });
+    const lastAction = await Action.findOne({tenantId}).sort({ createdAt: -1 });
     let newReference = "001";
 
     if (lastAction && lastAction.reference) {
@@ -72,8 +72,9 @@ async function generateReference() {
 
 async function createAction(req, res) {
   try {
-    const reference = await generateReference();
-    const newAction = new Action({ ...req.body, reference });
+    const tenantId = req.tenantId;
+    const reference = await generateReference(tenantId);
+    const newAction = new Action({ ...req.body, reference, tenantId });
     const savedAction = await newAction.save();
 
     if (req.body.emailProprio) {
@@ -112,7 +113,8 @@ async function createAction(req, res) {
 
 async function getAllActionByEntity(req, res) {
   try {
-    const actions = await Action.find({ idEntity: req.body.idEntity });
+    const tenantId = req.tenantId;
+    const actions = await Action.find({ idEntity: req.body.idEntity, tenantId });
     // res.status(200).json(actions);
     res.status(200).json({
       statut: 200,
@@ -128,7 +130,8 @@ async function getAllActionByEntity(req, res) {
 
 async function getAllActionByControl(req, res) {
   try {
-    const actions = await Action.find({ idControl: req.body.idControl });
+    const tenantId = req.tenantId;
+    const actions = await Action.find({ idControl: req.body.idControl, tenantId });
     // res.status(200).json(actions);
     res.status(200).json({
       statut: 200,
@@ -144,8 +147,10 @@ async function getAllActionByControl(req, res) {
 
 async function getAllActionByReference(req, res) {
   try {
+    const tenantId = req.tenantId;
     const actions = await Action.find({
       reference: req.body.reference,
+      tenantId
     });
     // res.status(200).json(actions);
     res.status(200).json({
@@ -162,7 +167,8 @@ async function getAllActionByReference(req, res) {
 
 async function getAllAction(req, res) {
   try {
-    const actions = await Action.find();
+    const tenantId = req.tenantId;
+    const actions = await Action.find({tenantId});
     res.status(200).json({
       statut: 200,
       message: "Action reucpérée avec succès",
@@ -176,6 +182,7 @@ async function getAllAction(req, res) {
 }
 
 async function getDataRapport(req, res) {
+  const tenantId = req.tenantId;
   const { sesion, targetEntityId, type } = req.body;
   try {
     // if (!sesion || !targetEntityId || !type) {
@@ -190,6 +197,7 @@ async function getDataRapport(req, res) {
       for (const itemId of targetEntityId) {
         const entityData = await EntityRiskControl.findOne({
           entity: itemId,
+          tenantId,
         }).populate("entity");
 
         if (entityData && entityData.controls && entityData.risks) {
@@ -197,6 +205,7 @@ async function getDataRapport(req, res) {
 
           const histories = await historySchema.find({
             idControl: { $in: indicatorIds },
+            tenantId
           });
 
           const actions = await actionSchema.find({
@@ -243,7 +252,7 @@ async function getDataRapport(req, res) {
     } else {
       for (const itemId of targetEntityId) {
         const entityData = await keyIndicatorSchema
-          .findOne({ entity: itemId })
+          .findOne({ entity: itemId, tenantId })
           .populate("entity");
 
         if (entityData && Array.isArray(entityData.dataKeyIndicators)) {
@@ -255,10 +264,12 @@ async function getDataRapport(req, res) {
           // 2. Historiques et actions
           const histories = await historyKRIModel.find({
             idKeyIndicator: { $in: indicatorIds },
+            tenantId
           });
 
           const actions = await actionKRIModel.find({
             idKeyIndicator: { $in: indicatorIds },
+            tenantId
           });
 
           // 3. Grouper par indicateur
@@ -327,12 +338,14 @@ async function getDataRapport(req, res) {
 
 async function updateAction(req, res) {
   try {
+    const tenantId = req.tenantId;
     const { id } = req.params;
 
     const updated = await Action.findByIdAndUpdate(
       id,
       {
         ...req.body,
+        tenantId
       },
       { new: true }
     );
@@ -356,7 +369,8 @@ async function updateAction(req, res) {
 
 async function getActionByHistory(req, res) {
   try {
-    const actions = await Action.find({ idHistory: req.body.idHistory });
+    const tenantId = req.tenantId;
+    const actions = await Action.find({ idHistory: req.body.idHistory, tenantId });
     // res.status(200).json(actions);
     res.status(200).json({
       statut: 200,

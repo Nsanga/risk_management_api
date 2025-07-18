@@ -33,6 +33,7 @@ const controlSchema = new Schema({
 
 // Schéma principal combinant les risques et les contrôles
 const riskControlSchema = new Schema({
+  tenantId: { type: String, required: true },
   risks: [riskSchema],
   controls: [controlSchema]
 });
