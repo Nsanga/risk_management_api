@@ -10,13 +10,7 @@ const entityRiskControlSchema = require("../models/entityRiskControl.model");
 
 async function getStatistics(req, res) {
   try {
-
-    // 1. Compter les événements par statut
-    const eventsByStatus = await Event.aggregate([
-      { $group: { _id: "$status", count: { $sum: 1 } } }
-    ]);
-
-    // 2. Stats sur les indicateurs clés
+    // 1. Stats sur les indicateurs clés
     const indicators = await KeyIndicator.find();
     const indicatorsStats = {
       total: indicators.length,
@@ -29,7 +23,7 @@ async function getStatistics(req, res) {
         ) / indicators.length,
     };
 
-    // 3. Stats sur les actions
+    // 2. Stats sur les actions
     const actions = await Action.find();
     const actionsStats = {
       total: actions.length,
@@ -39,7 +33,7 @@ async function getStatistics(req, res) {
       ).length,
     };
 
-    // 4. Risques couverts (en prenant entityId du requête)
+    // 3. Risques couverts (en prenant entityId du requête)
     const entityRiskControls = await EntityRiskControl.find({
       entity: req.params.entityId
     });
@@ -52,7 +46,7 @@ async function getStatistics(req, res) {
         ) / entityRiskControls.length,
     };
 
-    // 5. Nouveau: Stats des profils
+    // 4. Nouveau: Stats des profils
     const profiles = await UserProfile.find().populate({
       path: "entity",
       select: "referenceId description",
@@ -90,8 +84,30 @@ async function getStatistics(req, res) {
       totalKRI: allControls?.length,
     };
 
-    const allEvent = await Event.find();
-    const allFinancials = allEvent.map(item => item?.financials).filter(Boolean);
+    const allEvents = await Event.find();
+    const allFinancials = allEvents.map(item => item?.financials).filter(Boolean);
+
+    // Calcul des totaux pour chaque catégorie
+    const getFinancialTotal = (events) => {
+      return events
+        .map(event => event?.financials?.totalConverted || 0)
+        .reduce((acc, val) => acc + val, 0);
+    };
+
+    // Stats par statut d'approbation
+    const approvedEvents = allEvents.filter(event => event.approved === true);
+    const rejectedEvents = allEvents.filter(event => event.approved === false);
+
+    const eventsByStatus = {
+      approved: {
+        count: approvedEvents.length,
+        totalAmount: getFinancialTotal(approvedEvents)
+      },
+      rejected: {
+        count: rejectedEvents.length,
+        totalAmount: getFinancialTotal(rejectedEvents)
+      },
+    };
 
     const allTotalConverted = allFinancials
       .map(item => item.totalConverted || 0) // Utilise 0 si totalConverted est undefined/null
@@ -104,8 +120,19 @@ async function getStatistics(req, res) {
 
     return ResponseService.success(res, {
       events: {
-        byStatus: eventsByStatus,
-        totalPerteSave: totalConverted, 
+        byStatus: [
+          {
+            _id: 'approved',
+            count: eventsByStatus.approved.count,
+            totalAmount: eventsByStatus.approved.totalAmount
+          },
+          {
+            _id: 'rejected',
+            count: eventsByStatus.rejected.count,
+            totalAmount: eventsByStatus.rejected.totalAmount
+          },
+        ],
+        totalPerteSave: totalConverted,
         currency: "XAF"
       },
       indicators: indicatorsStats,
