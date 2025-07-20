@@ -10,7 +10,7 @@ const entityRiskControlSchema = require("../models/entityRiskControl.model");
 
 async function getStatistics(req, res) {
   try {
-    
+
     // 1. Compter les événements par statut
     const eventsByStatus = await Event.aggregate([
       { $group: { _id: "$status", count: { $sum: 1 } } }
@@ -90,20 +90,23 @@ async function getStatistics(req, res) {
       totalKRI: allControls?.length,
     };
 
-    const aLllEvent = await Event.find();
-    const allFinancials = aLllEvent.flatMap((item) => item?.financials?.data);
+    const allEvent = await Event.find();
+    const allFinancials = allEvent.map(item => item?.financials).filter(Boolean);
 
-    const allTotalActualLoss = allFinancials
-      .map((item) => item.actualLoss.total)
-      .filter(Boolean);
+    const allTotalConverted = allFinancials
+      .map(item => item.totalConverted || 0) // Utilise 0 si totalConverted est undefined/null
+      .filter(total => !isNaN(total)); // Filtre les valeurs non numériques (sécurité)
 
-    const totalActualLoss = allTotalActualLoss.reduce(
+    const totalConverted = allTotalConverted.reduce(
       (acc, val) => acc + val,
       0
     );
 
     return ResponseService.success(res, {
-      events: { byStatus: eventsByStatus, totalPerteSave: totalActualLoss },
+      events: {
+        byStatus: eventsByStatus,
+        totalPerteSave: totalConverted // J'ai renommé en totalPerteSave pour correspondre à votre structure
+      },
       indicators: indicatorsStats,
       actions: actionsStats,
       risks: riskStats,
