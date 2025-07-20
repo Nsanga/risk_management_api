@@ -9,9 +9,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-async function generateReference(tenantId) {
+async function generateReference() {
   try {
-    const lastAction = await ActionsKRI.findOne({tenantId}).sort({ createdAt: -1 });
+    const lastAction = await ActionsKRI.findOne().sort({ createdAt: -1 });
     let newReference = "001";
 
     if (lastAction && lastAction.reference) {
@@ -29,9 +29,8 @@ async function generateReference(tenantId) {
 
 async function createActionKRI(req, res) {
   try {
-    const tenantId = req.tenantId;
-    const reference = await generateReference(tenantId);
-    const newAction = new ActionsKRI({ ...req.body, reference, tenantId });
+    const reference = await generateReference();
+    const newAction = new ActionsKRI({ ...req.body, reference });
     const savedAction = await newAction.save();
 
     const emails = [
@@ -75,10 +74,9 @@ async function createActionKRI(req, res) {
 
 async function getAllActionByIdKeyIndicator(req, res) {
   try {
-    const tenantId = req.tenantId;
     const actions = await ActionsKRI.find({
       idKeyIndicator: req.body.idKeyIndicator,
-      tenantId
+      
     });
     // res.status(200).json(actions);
     res.status(200).json({
@@ -95,8 +93,7 @@ async function getAllActionByIdKeyIndicator(req, res) {
 
 async function getAllActionKRI(req, res) {
   try {
-    const tenantId = req.tenantId;
-    const actions = await ActionsKRI.find({tenantId});
+    const actions = await ActionsKRI.find();
     res.status(200).json({
       statut: 200,
       message: "Action reucpérée avec succès",
@@ -111,14 +108,13 @@ async function getAllActionKRI(req, res) {
 
 async function updateActionKRI(req, res) {
   try {
-    const tenantId = req.tenantId;
     const { id } = req.params;
 
     const updated = await ActionsKRI.findByIdAndUpdate(
       id,
       {
         ...req.body,
-        tenantId
+        
       },
       { new: true }
     );
@@ -142,10 +138,9 @@ async function updateActionKRI(req, res) {
 
 async function getActionByHistory(req, res) {
   try {
-    const tenantId = req.tenantId;
     const actions = await ActionsKRI.find({
       idHistoryKRI: req.body.idHistoryKRI,
-      tenantId
+      
     });
     // res.status(200).json(actions);
     res.status(200).json({

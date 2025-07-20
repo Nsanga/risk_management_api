@@ -10,15 +10,14 @@ const entityRiskControlSchema = require("../models/entityRiskControl.model");
 
 async function getStatistics(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     // 1. Compter les événements par statut
     const eventsByStatus = await Event.aggregate([
-      { $group: { _id: "$status", count: { $sum: 1 } } },
-      tenantId
+      { $group: { _id: "$status", count: { $sum: 1 } } }
     ]);
 
     // 2. Stats sur les indicateurs clés
-    const indicators = await KeyIndicator.find({tenantId});
+    const indicators = await KeyIndicator.find();
     const indicatorsStats = {
       total: indicators.length,
       achieved: indicators.filter((i) => i.currentValue >= i.targetValue)
@@ -31,7 +30,7 @@ async function getStatistics(req, res) {
     };
 
     // 3. Stats sur les actions
-    const actions = await Action.find({tenantId});
+    const actions = await Action.find();
     const actionsStats = {
       total: actions.length,
       completed: actions.filter((a) => a.status === "Terminé").length,
@@ -42,8 +41,7 @@ async function getStatistics(req, res) {
 
     // 4. Risques couverts (en prenant entityId du requête)
     const entityRiskControls = await EntityRiskControl.find({
-      entity: req.params.entityId,
-      tenantId
+      entity: req.params.entityId
     });
     const riskStats = {
       totalControls: entityRiskControls.length,
@@ -55,7 +53,7 @@ async function getStatistics(req, res) {
     };
 
     // 5. Nouveau: Stats des profils
-    const profiles = await UserProfile.find({tenantId}).populate({
+    const profiles = await UserProfile.find().populate({
       path: "entity",
       select: "referenceId description",
     });
@@ -74,8 +72,8 @@ async function getStatistics(req, res) {
     };
 
     const [totalAction, totalActionKRI] = await Promise.all([
-      actionModel.find({tenantId}),
-      actionKRIModel.find({tenantId}),
+      actionModel.find(),
+      actionKRIModel.find(),
     ]);
 
     const statAction = {
@@ -84,7 +82,7 @@ async function getStatistics(req, res) {
       allAction: totalAction.length + totalActionKRI.length,
     };
 
-    const entityRiskControl = await entityRiskControlSchema.find({tenantId});
+    const entityRiskControl = await entityRiskControlSchema.find();
     const allControls = entityRiskControl.flatMap((item) => item.controls);
 
     const statKriOrRcsa = {
@@ -92,7 +90,7 @@ async function getStatistics(req, res) {
       totalKRI: allControls?.length,
     };
 
-    const aLllEvent = await Event.find({tenantId});
+    const aLllEvent = await Event.find();
     const allFinancials = aLllEvent.flatMap((item) => item?.financials?.data);
 
     const allTotalActualLoss = allFinancials

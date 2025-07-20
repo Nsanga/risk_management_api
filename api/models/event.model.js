@@ -19,8 +19,6 @@ const additionnalInfoSchema = new Schema(
 );
 
 const eventSchema = new Schema({
-  tenantId: { type: String},
-
   // Référence et identification
   num_ref: { type: String },
 

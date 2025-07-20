@@ -7,7 +7,6 @@ const cookieParser = require("cookie-parser");
 const dbConnect = require('./api/config/dbConnect');
 const http = require('http');
 const cors = require('cors');
-const tenantMiddleware = require('./api/middlewares/tenant.middleware');
 
 // Connection to MongoDB
 dbConnect();
@@ -42,7 +41,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(tenantMiddleware);
 
 // Preflight handling (OPTIONS requests)
 // app.options('*', (req, res) => {

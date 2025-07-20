@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const actionKRISchema = new mongoose.Schema(
   {
-    tenantId: { type: String},
+    
     reference: { type: String },
     originatingRiskRef: { type: String, required: false },
     actionState: { type: String, required: false },

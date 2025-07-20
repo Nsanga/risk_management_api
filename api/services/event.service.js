@@ -16,13 +16,10 @@ const transporter = nodemailer.createTransport({
 
 let currentNumber = 1; // Point de départ à 00001
 
-async function generateReferenceNumber(tenantId) {
+async function generateReferenceNumber() {
   try {
-    if (!tenantId) {
-      throw new Error("Le tenantId est requis pour générer une référence.");
-    }
 
-    const lastAction = await Event.findOne({ tenantId }).sort({ createdAt: -1 });
+    const lastAction = await Event.findOne().sort({ createdAt: -1 });
 
     let newReference = "00001";
     if (lastAction && lastAction.num_ref) {
@@ -40,34 +37,34 @@ async function generateReferenceNumber(tenantId) {
 
 async function createEvent(req, res) {
   try {
-    const tenantId = req.tenantId; // ✅ récupération du tenant courant
+     // ✅ récupération du tenant courant
     const eventData = req.body;
-    const num_ref = await generateReferenceNumber(tenantId);
+    const num_ref = await generateReferenceNumber();
 
     // Recherche sécurisée des utilisateurs et entités par tenant
     const ownerProfile = await UserProfile.findOne({
       _id: eventData.details.owner,
-      tenantId,
+      
     });
 
     const nomineeProfile = await UserProfile.findOne({
       _id: eventData.details.nominee,
-      tenantId,
+      
     });
 
     const reviewerProfile = await UserProfile.findOne({
       _id: eventData.details.reviewer,
-      tenantId,
+      
     });
 
     const entityOfDetection = await Entity.findOne({
       _id: eventData.details.entityOfDetection,
-      tenantId,
+      
     });
 
     const entityOfOrigin = await Entity.findOne({
       _id: eventData.details.entityOfOrigin,
-      tenantId,
+      
     });
 
     // Vérifie si les entités et profils existent
@@ -84,10 +81,8 @@ async function createEvent(req, res) {
       eventData.details.entityOfDetection = entityOfDetection._id;
     if (entityOfOrigin) eventData.details.entityOfOrigin = entityOfOrigin._id;
 
-    // ✅ Ajout du tenantId dans le document
     const newEvent = new Event({
       ...eventData,
-      tenantId,
       num_ref,
     });
 
@@ -129,11 +124,10 @@ async function createEvent(req, res) {
 
 async function getEventById(req, res) {
   try {
-    const tenantId = req.tenantId; // 👈 Récupération du tenant courant
+     // 👈 Récupération du tenant courant
     const eventId = req.params.id;
 
-    // On cherche l'événement par _id ET tenantId
-    const event = await Event.findOne({ _id: eventId, tenantId })
+    const event = await Event.findOne({ _id: eventId })
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -175,12 +169,11 @@ async function getEventById(req, res) {
 
 async function getEventByEntity(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const entityId = req.params.id;
 
-    // On filtre aussi par tenantId pour s'assurer de l'isolation
     const events = await Event.find({
-      tenantId,
+      
       $or: [
         { "details.entityOfDetection": entityId },
         { "details.entityOfOrigin": entityId },
@@ -202,12 +195,12 @@ async function getEventByEntity(req, res) {
 
 async function updateEvent(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const eventId = req.params.id;
     const updatedData = req.body;
 
     // 🔐 Récupérer l'événement en filtrant aussi par tenant
-    const event = await Event.findOne({ _id: eventId, tenantId });
+    const event = await Event.findOne({ _id: eventId });
     if (!event) {
       return ResponseService.notFound(res, { message: "Event not found" });
     }
@@ -240,7 +233,6 @@ async function updateEvent(req, res) {
         }
       });
 
-      // 🔁 Références (toujours filtrées par tenantId)
       const referenceFields = [
         { key: 'owner', model: UserProfile },
         { key: 'nominee', model: UserProfile },
@@ -251,7 +243,7 @@ async function updateEvent(req, res) {
 
       for (const { key, model } of referenceFields) {
         if (details[key] !== undefined) {
-          const doc = await model.findOne({ _id: details[key], tenantId });
+          const doc = await model.findOne({ _id: details[key] });
           if (!doc) {
             return ResponseService.badRequest(res, { message: `Invalid ${key} ID` });
           }
@@ -266,8 +258,8 @@ async function updateEvent(req, res) {
     // ✅ Envoi de notification si demandé
     if (updatedData.details?.notify) {
       const [owner, nominee] = await Promise.all([
-        UserProfile.findOne({ _id: event.details.owner, tenantId }),
-        UserProfile.findOne({ _id: event.details.nominee, tenantId }),
+        UserProfile.findOne({ _id: event.details.owner }),
+        UserProfile.findOne({ _id: event.details.nominee }),
       ]);
 
       if (owner && nominee) {
@@ -307,11 +299,10 @@ async function updateEvent(req, res) {
 
 async function deleteEvent(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const eventId = req.params.id;
 
-    // 🔐 Suppression sécurisée avec tenantId
-    const event = await Event.findOneAndDelete({ _id: eventId, tenantId });
+    const event = await Event.findOneAndDelete({ _id: eventId });
 
     if (!event) {
       return ResponseService.notFound(res, {
@@ -330,10 +321,10 @@ async function deleteEvent(req, res) {
 
 async function getAllEvents(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
 
     // 🔐 Ne retourne que les événements du tenant courant
-    const events = await Event.find({ tenantId })
+    const events = await Event.find()
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -368,7 +359,7 @@ async function getAllEvents(req, res) {
 }
 
 async function getDataRapportEvent(req, res) {
-  const tenantId = req.tenantId;
+  
   const { targetEntityId = [], startDate, endDate } = req.body;
 
   try {
@@ -393,7 +384,7 @@ async function getDataRapportEvent(req, res) {
         : {};
 
     /* ---------- 2. Requête Mongo avec populate ---------- */
-    const events = await Event.find({ entityCriteria, tenantId })
+    const events = await Event.find({ entityCriteria })
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -449,7 +440,7 @@ async function getDataRapportEvent(req, res) {
 }
 
 async function getRapportIncident(req, res) {
-  const tenantId = req.tenantId;
+  
   const { targetEntityId = [] } = req.body;
 
   try {
@@ -477,7 +468,7 @@ async function getRapportIncident(req, res) {
         : {};
 
     /* ---------- 2. Requête Mongo avec populate ---------- */
-    const events = await Event.find({ entityCriteria, tenantId })
+    const events = await Event.find({ entityCriteria })
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -525,12 +516,12 @@ async function getRapportIncident(req, res) {
     });
 
     // 3. Récupération de toutes les entités concernées
-    const entities = await Entity.find({ _id: { $in: entityObjectIds }, tenantId });
-    const allEvent = await Event.find({ tenantId });
+    const entities = await Entity.find({ _id: { $in: entityObjectIds } });
+    const allEvent = await Event.find();
 
     // 4. Calcul des pertes
     const perteMonth = calculateTotalActualLoss(filteredEvents);
-    const allPertes = calculateTotalActualLoss(await Event.find({ tenantId }));
+    const allPertes = calculateTotalActualLoss(await Event.find());
 
     // 5. Regroupement
     const inforPertes = {

@@ -3,10 +3,10 @@ const ResponseService = require('./response.service');
 
 async function createUserGroup(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const userGroupData = req.body;
 
-    const newUserGroup = new UserGroup({ userGroupData, tenantId });
+    const newUserGroup = new UserGroup({ userGroupData });
     await newUserGroup.save();
 
     return ResponseService.created(res, { message: 'user group created successfully', newUserGroup });
@@ -18,9 +18,9 @@ async function createUserGroup(req, res) {
 
 async function getUserGroupById(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const userGroupId = req.params.id;
-    const userGroup = await UserGroup.findById({ userGroupId, tenantId });
+    const userGroup = await UserGroup.findById({ userGroupId });
     if (!userGroup) {
       return ResponseService.notFound(res, { message: 'Groupe utilisateur non trouvé' });
     }
@@ -33,11 +33,11 @@ async function getUserGroupById(req, res) {
 
 async function updateUserGroup(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const userGroupId = req.params.id;
     const updatedData = req.body;
 
-    const userGroup = await UserGroup.findByIdAndUpdate(userGroupId, tenantId, updatedData, { new: true });
+    const userGroup = await UserGroup.findByIdAndUpdate(userGroupId,  updatedData, { new: true });
 
     if (!userGroup) {
       return ResponseService.notFound(res, { message: 'UserGroup not found' });
@@ -52,9 +52,9 @@ async function updateUserGroup(req, res) {
 
 async function deleteUserGroup(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const userGroupId = req.params.id;
-    const userGroup = await UserGroup.findByIdAndDelete(userGroupId, tenantId);
+    const userGroup = await UserGroup.findByIdAndDelete(userGroupId);
     if (!userGroup) {
       return ResponseService.notFound(res, { message: 'Groupe utilisateur non trouvé' });
     }
@@ -67,8 +67,8 @@ async function deleteUserGroup(req, res) {
 
 async function getAllUserGroups(req, res) {
   try {
-    const tenantId = req.tenantId;
-    const userGroups = await UserGroup.find({ tenantId });
+    
+    const userGroups = await UserGroup.find();
     return ResponseService.success(res, { userGroups });
   } catch (error) {
     console.error('Erreur lors de la récupération des Groupes utilisateurs:', error);

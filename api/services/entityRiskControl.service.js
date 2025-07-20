@@ -17,7 +17,7 @@ function generateReferenceNumber(currentNumber) {
 
 async function createEntityRiskControl(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const entityRiskControlData = req.body;
     const { entity } = entityRiskControlData; // Extraire l'entité des données
 
@@ -37,7 +37,7 @@ async function createEntityRiskControl(req, res) {
     entityRiskControlData.ref = ref; // Ajout du champ ref unique pour ce contrôle
 
     // Créer et sauvegarder un nouveau RiskControl même si un contrôle pour la même entité existe
-    const newEntityRiskControl = new EntityRiskControl({ entityRiskControlData, tenantId });
+    const newEntityRiskControl = new EntityRiskControl({ entityRiskControlData });
     await newEntityRiskControl.save();
 
     return ResponseService.created(res, { message: 'RiskControl créé avec succès', newEntityRiskControl });
@@ -50,11 +50,11 @@ async function createEntityRiskControl(req, res) {
 
 async function getEntityRiskControlById(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const entityRiskControlId = req.params.id;
 
     // Récupérer un RiskControl par son ID
-    const entityRiskControl = await EntityRiskControl.findById({ entityRiskControlId, tenantId });
+    const entityRiskControl = await EntityRiskControl.findById({ entityRiskControlId });
     if (!entityRiskControl) {
       return ResponseService.notFound(res, { message: 'RiskControl non trouvé' });
     }
@@ -68,7 +68,7 @@ async function getEntityRiskControlById(req, res) {
 
 async function updateEntityRiskControl(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const entityRiskControlId = req.params.id;
     let updatedData = req.body;
 
@@ -92,7 +92,7 @@ async function updateEntityRiskControl(req, res) {
     }
 
     // Mettre à jour l'EntityRiskControl avec les nouvelles données
-    const entityRiskControl = await EntityRiskControl.findByIdAndUpdate(entityRiskControlId, tenantId, updatedData, { new: true });
+    const entityRiskControl = await EntityRiskControl.findByIdAndUpdate(entityRiskControlId,  updatedData, { new: true });
 
     if (!entityRiskControl) {
       return ResponseService.notFound(res, { message: 'EntityRiskControl non trouvé' });
@@ -108,11 +108,11 @@ async function updateEntityRiskControl(req, res) {
 
 async function deleteEntityRiskControl(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const entityRiskControlId = req.params.id;
 
     // Supprimer un RiskControl par son ID
-    const entityRiskControl = await EntityRiskControl.findByIdAndDelete({ entityRiskControlId, tenantId });
+    const entityRiskControl = await EntityRiskControl.findByIdAndDelete({ entityRiskControlId });
     if (!entityRiskControl) {
       return ResponseService.notFound(res, { message: 'EntityRiskControl non trouvé' });
     }
@@ -126,10 +126,10 @@ async function deleteEntityRiskControl(req, res) {
 
 async function getAllEntityRiskControls(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     // Récupérer tous les EntityRiskControl
     const entityRiskControl = await EntityRiskControl
-      .find({ entity: entityId, tenantId })
+      .find({ entity: entityId })
       .populate({
         path: 'riskControl',
         populate: {

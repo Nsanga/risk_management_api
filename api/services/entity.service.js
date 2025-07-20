@@ -3,9 +3,9 @@ const ResponseService = require('./response.service');
 
 async function createEntity(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     // Obtenir le dernier entity enregistré pour calculer le prochain referenceId
-    const lastEntity = await Entity.findOne({tenantId}).sort({ referenceId: -1 }).exec();
+    const lastEntity = await Entity.findOne().sort({ referenceId: -1 }).exec();
 
     // Calculer le prochain numéro de référence
     let nextReferenceId = '00001';
@@ -18,7 +18,7 @@ async function createEntity(req, res) {
     // Ajouter le referenceId à l'objet entityData
     const entityData = {
       ...req.body,
-      tenantId,
+      
       referenceId: nextReferenceId
     };
 
@@ -36,9 +36,9 @@ async function createEntity(req, res) {
 
 async function getEntityById(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const entityId = req.params.id;
-    const entity = await Entity.findById(entityId, tenantId);
+    const entity = await Entity.findById(entityId);
     if (!entity) {
       return ResponseService.notFound(res, { message: 'Événement non trouvé' });
     }
@@ -51,11 +51,11 @@ async function getEntityById(req, res) {
 
 async function updateEntity(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const entityId = req.params.id;
     const updatedData = req.body;
 
-    const entity = await Entity.findByIdAndUpdate(entityId, tenantId, updatedData, { new: true });
+    const entity = await Entity.findByIdAndUpdate(entityId,  updatedData, { new: true });
 
     if (!entity) {
       return ResponseService.notFound(res, { message: 'Entity not found' });
@@ -70,9 +70,9 @@ async function updateEntity(req, res) {
 
 async function deleteEntity(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const entityId = req.params.id;
-    const entity = await Entity.findByIdAndDelete({entityId, tenantId});
+    const entity = await Entity.findByIdAndDelete({entityId});
     if (!entity) {
       return ResponseService.notFound(res, { message: 'Entité non trouvé' });
     }
@@ -85,9 +85,9 @@ async function deleteEntity(req, res) {
 
 async function getAllEntities(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     // Recherche des entités et peuplement du champ 'owner' avec les données de UserProfile
-    const entities = await Entity.find({tenantId})
+    const entities = await Entity.find()
       .populate({
         path: 'owner',  // Le champ que vous voulez peupler
         select: 'name surname'  // Les champs à inclure dans la réponse

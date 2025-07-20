@@ -14,11 +14,11 @@ const transporter = nodemailer.createTransport({
 
 async function createProfile(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const email = req.body.email;
 
     // 🔐 Vérifie si le profil existe déjà pour ce tenant
-    const existingUser = await UserProfile.findOne({ email, tenantId });
+    const existingUser = await UserProfile.findOne({ email });
 
     if (existingUser) {
       return ResponseService.internalServerError(res, {
@@ -28,13 +28,12 @@ async function createProfile(req, res) {
 
     const profileData = req.body;
     profileData.password = process.env.DEFAULT_PASSWORD;
-    profileData.tenantId = tenantId; // ✅ Ajout du tenantId au profil
 
     // 🔐 Vérifie que l'entité appartient bien à ce tenant
     if (profileData.entity) {
       const entity = await Entity.findOne({
         _id: profileData.entity,
-        tenantId,
+        
       });
 
       if (!entity) {
@@ -80,9 +79,9 @@ async function createProfile(req, res) {
 
 async function getProfileById(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const profileId = req.params.id;
-    const profile = await UserProfile.findById({profileId, tenantId});
+    const profile = await UserProfile.findById({profileId});
     if (!profile) {
       return ResponseService.notFound(res, { message: "Profil non trouvé" });
     }
@@ -95,12 +94,12 @@ async function getProfileById(req, res) {
 
 async function updateProfile(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const profileId = req.params.id;
     const updatedData = req.body;
 
     // Récupérer le profil avant mise à jour pour comparer le champ `activeUser`
-    const currentProfile = await UserProfile.findById({profileId, tenantId});
+    const currentProfile = await UserProfile.findById({profileId});
 
     if (!currentProfile) {
       return ResponseService.notFound(res, { message: "Profile not found" });
@@ -109,7 +108,7 @@ async function updateProfile(req, res) {
     // Mettre à jour le profil
     const profile = await UserProfile.findByIdAndUpdate(
       profileId,
-      tenantId,
+      
       updatedData,
       { new: true }
     );
@@ -150,9 +149,9 @@ async function updateProfile(req, res) {
 
 async function deleteProfile(req, res) {
   try {
-    const tenantId = req.tenantId;
+    
     const profileId = req.params.id;
-    const profile = await UserProfile.findByIdAndDelete({profileId, tenantId});
+    const profile = await UserProfile.findByIdAndDelete({profileId});
     if (!profile) {
       return ResponseService.notFound(res, { message: "Profil non trouvé" });
     }
@@ -167,8 +166,8 @@ async function deleteProfile(req, res) {
 
 async function getAllProfiles(req, res) {
   try {
-    const tenantId = req.tenantId;
-    const profiles = await UserProfile.find({tenantId}).populate({
+    
+    const profiles = await UserProfile.find().populate({
       path: "entity",
       select: "referenceId description",
       strictPopulate: true,
