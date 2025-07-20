@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 var historyKRI = new mongoose.Schema(
   {
-    tenantId: { type: String, required: true },
+    tenantId: { type: String},
     avage: { type: String, required: false },
     period: { type: String, required: false },
     time: { type: String, required: false },

@@ -93,27 +93,29 @@ async function createEvent(req, res) {
 
     await newEvent.save();
 
-    // Envoi d'email
-    const emails = [ownerProfile.email, nomineeProfile.email];
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: emails.join(", "),
-      subject: "Notification de Création d'Événement",
-      html: `Un nouvel événement a été créé.<br><br>
+    if (eventData.details?.notify && eventData.approved) {
+      // Envoi d'email
+      const emails = [ownerProfile.email, nomineeProfile.email];
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: emails.join(", "),
+        subject: "Notification de Création d'Événement",
+        html: `Un nouvel événement a été créé.<br><br>
         <strong>Détails de l'événement:</strong><br>
         Référence: EVT${num_ref}<br>
         Titre: ${eventData.details.description}<br>
         Date: ${eventData.details.event_date}<br><br>
         <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
-    };
+      };
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        logger.error("Erreur lors de l'envoi de l'email :", error);
-      } else {
-        logger.info("Email envoyé :", info.response);
-      }
-    });
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          logger.error("Erreur lors de l'envoi de l'email :", error);
+        } else {
+          logger.info("Email envoyé :", info.response);
+        }
+      });
+    }
 
     return ResponseService.created(res, {
       message: "Event created successfully",

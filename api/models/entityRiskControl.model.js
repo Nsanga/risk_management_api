@@ -63,7 +63,7 @@ const controlSchema = new Schema({
 
 const entityRiskControlSchema = new Schema(
   {
-    tenantId: { type: String, required: true },
+    tenantId: { type: String},
     entity: {
       type: Schema.Types.ObjectId,
       ref: "Entity",

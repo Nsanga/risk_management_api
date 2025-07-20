@@ -19,7 +19,7 @@ const additionnalInfoSchema = new Schema(
 );
 
 const eventSchema = new Schema({
-  tenantId: { type: String, required: true },
+  tenantId: { type: String},
 
   // Référence et identification
   num_ref: { type: String },
@@ -99,7 +99,7 @@ const eventSchema = new Schema({
 
   // Données financières détaillées
   financials: {
-    currency: { type: String, default: 'USD', enum: ['USD', 'EUR', 'XAF'] },
+    currency: { type: String, default: 'XAF', enum: ['USD', 'EUR', 'XAF'] },
     totalConverted: { type: Number, default: 0 },
     data: {
       actualLoss: financialsSchema,
