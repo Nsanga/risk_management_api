@@ -212,7 +212,14 @@ async function updateEvent(req, res) {
     });
 
     if (updatedData.financials !== undefined) {
-      event.financials = { ...event.financials, ...updatedData.financials };
+      event.financials = {
+        currency: updatedData.financials.currency || event.financials?.currency || 'XAF',
+        totalConverted: updatedData.financials.totalConverted || event.financials?.totalConverted || 0,
+        data: {
+          ...event.financials?.data,
+          ...updatedData.financials.data
+        }
+      };
     }
 
     // ✅ Mise à jour des détails
@@ -236,18 +243,20 @@ async function updateEvent(req, res) {
       const referenceFields = [
         { key: 'owner', model: UserProfile },
         { key: 'nominee', model: UserProfile },
-        { key: 'reviewer', model: UserProfile },
+        { key: 'reviewer', model: UserProfile, optional: true },
         { key: 'entityOfDetection', model: Entity },
         { key: 'entityOfOrigin', model: Entity }
       ];
-
-      for (const { key, model } of referenceFields) {
-        if (details[key] !== undefined) {
+      
+      for (const { key, model, optional } of referenceFields) {
+        if (details[key] === null && optional) {
+          event.details[key] = null;
+        } else if (details[key] !== undefined && details[key] !== null) {
           const doc = await model.findOne({ _id: details[key] });
-          if (!doc) {
-            return ResponseService.badRequest(res, { message: `Invalid ${key} ID` });
-          }
+          if (!doc) return ResponseService.badRequest(res, { message: `Invalid ${key} ID` });
           event.details[key] = doc._id;
+        } else if (!optional) {
+          return ResponseService.badRequest(res, { message: `${key} is required` });
         }
       }
     }
