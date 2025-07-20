@@ -105,7 +105,8 @@ async function getStatistics(req, res) {
     return ResponseService.success(res, {
       events: {
         byStatus: eventsByStatus,
-        totalPerteSave: totalConverted // J'ai renommé en totalPerteSave pour correspondre à votre structure
+        totalPerteSave: totalConverted, 
+        currency: "XAF"
       },
       indicators: indicatorsStats,
       actions: actionsStats,
