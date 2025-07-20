@@ -256,7 +256,7 @@ async function updateEvent(req, res) {
     await event.save();
 
     // ✅ Envoi de notification si demandé
-    if (updatedData.details?.notify) {
+    if (updatedData.details?.notify && updatedData.approved) {
       const [owner, nominee] = await Promise.all([
         UserProfile.findOne({ _id: event.details.owner }),
         UserProfile.findOne({ _id: event.details.nominee }),
