@@ -526,7 +526,7 @@ async function getRapportIncident(req, res) {
 
     // 3. Récupération de toutes les entités concernées
     const entities = await Entity.find({ _id: { $in: entityObjectIds } });
-    const allEvent = await Event.find();
+    const allEvents = await Event.find();
 
     // 4. Calcul des pertes
     const perteMonth = calculateTotalActualLoss(filteredEvents);
@@ -539,7 +539,7 @@ async function getRapportIncident(req, res) {
     };
 
     const infoSupp = {
-      totalEvents: allEvent?.length,
+      totalEvents: allEvents?.length,
       totalEventsMonth: filteredEvents.length,
       year,
       month,
