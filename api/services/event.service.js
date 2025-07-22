@@ -18,7 +18,6 @@ let currentNumber = 1; // Point de départ à 00001
 
 async function generateReferenceNumber() {
   try {
-
     const lastAction = await Event.findOne().sort({ createdAt: -1 });
 
     let newReference = "00001";
@@ -37,34 +36,29 @@ async function generateReferenceNumber() {
 
 async function createEvent(req, res) {
   try {
-     // ✅ récupération du tenant courant
+    // ✅ récupération du tenant courant
     const eventData = req.body;
     const num_ref = await generateReferenceNumber();
 
     // Recherche sécurisée des utilisateurs et entités par tenant
     const ownerProfile = await UserProfile.findOne({
       _id: eventData.details.owner,
-      
     });
 
     const nomineeProfile = await UserProfile.findOne({
       _id: eventData.details.nominee,
-      
     });
 
     const reviewerProfile = await UserProfile.findOne({
       _id: eventData.details.reviewer,
-      
     });
 
     const entityOfDetection = await Entity.findOne({
       _id: eventData.details.entityOfDetection,
-      
     });
 
     const entityOfOrigin = await Entity.findOne({
       _id: eventData.details.entityOfOrigin,
-      
     });
 
     // Vérifie si les entités et profils existent
@@ -124,7 +118,7 @@ async function createEvent(req, res) {
 
 async function getEventById(req, res) {
   try {
-     // 👈 Récupération du tenant courant
+    // 👈 Récupération du tenant courant
     const eventId = req.params.id;
 
     const event = await Event.findOne({ _id: eventId })
@@ -169,11 +163,9 @@ async function getEventById(req, res) {
 
 async function getEventByEntity(req, res) {
   try {
-    
     const entityId = req.params.id;
 
     const events = await Event.find({
-      
       $or: [
         { "details.entityOfDetection": entityId },
         { "details.entityOfOrigin": entityId },
@@ -195,7 +187,6 @@ async function getEventByEntity(req, res) {
 
 async function updateEvent(req, res) {
   try {
-    
     const eventId = req.params.id;
     const updatedData = req.body;
 
@@ -206,19 +197,25 @@ async function updateEvent(req, res) {
     }
 
     // ✅ Mise à jour simple de champs de premier niveau
-    const topFields = ['num_ref', 'approved', 'commentary', 'additionnalInfo'];
-    topFields.forEach(field => {
+    const topFields = ["num_ref", "approved", "commentary", "additionnalInfo"];
+    topFields.forEach((field) => {
       if (updatedData[field] !== undefined) event[field] = updatedData[field];
     });
 
     if (updatedData.financials !== undefined) {
       event.financials = {
-        currency: updatedData.financials.currency || event.financials?.currency || 'XAF',
-        totalConverted: updatedData.financials.totalConverted || event.financials?.totalConverted || 0,
+        currency:
+          updatedData.financials.currency ||
+          event.financials?.currency ||
+          "XAF",
+        totalConverted:
+          updatedData.financials.totalConverted ||
+          event.financials?.totalConverted ||
+          0,
         data: {
           ...event.financials?.data,
-          ...updatedData.financials.data
-        }
+          ...updatedData.financials.data,
+        },
       };
     }
 
@@ -226,37 +223,61 @@ async function updateEvent(req, res) {
     if (updatedData.details) {
       const details = updatedData.details;
       const simpleDetailFields = [
-        'description', 'descriptionDetailled', 'event_date', 'event_time',
-        'detection_date', 'approved_date', 'closed_date', 'effective_date',
-        'recorded_by', 'recorded_date', 'total_currencies', 'increment_currency',
-        'total_losses', 'cause', 'title', 'activeEvent', 'excludeFundLosses',
-        'notify', 'externalEvent', 'externalRef', 'subentityOfDetection',
-        'subentityOfOrigin', 'RAG', 'targetClosureDate', 'document'
+        "description",
+        "descriptionDetailled",
+        "event_date",
+        "event_time",
+        "detection_date",
+        "approved_date",
+        "closed_date",
+        "effective_date",
+        "recorded_by",
+        "recorded_date",
+        "total_currencies",
+        "increment_currency",
+        "total_losses",
+        "cause",
+        "title",
+        "activeEvent",
+        "excludeFundLosses",
+        "notify",
+        "externalEvent",
+        "externalRef",
+        "subentityOfDetection",
+        "subentityOfOrigin",
+        "RAG",
+        "targetClosureDate",
+        "document",
       ];
 
-      simpleDetailFields.forEach(field => {
+      simpleDetailFields.forEach((field) => {
         if (details[field] !== undefined) {
           event.details[field] = details[field];
         }
       });
 
       const referenceFields = [
-        { key: 'owner', model: UserProfile },
-        { key: 'nominee', model: UserProfile },
-        { key: 'reviewer', model: UserProfile, optional: true },
-        { key: 'entityOfDetection', model: Entity },
-        { key: 'entityOfOrigin', model: Entity }
+        { key: "owner", model: UserProfile },
+        { key: "nominee", model: UserProfile },
+        { key: "reviewer", model: UserProfile, optional: true },
+        { key: "entityOfDetection", model: Entity },
+        { key: "entityOfOrigin", model: Entity },
       ];
-      
+
       for (const { key, model, optional } of referenceFields) {
         if (details[key] === null && optional) {
           event.details[key] = null;
         } else if (details[key] !== undefined && details[key] !== null) {
           const doc = await model.findOne({ _id: details[key] });
-          if (!doc) return ResponseService.badRequest(res, { message: `Invalid ${key} ID` });
+          if (!doc)
+            return ResponseService.badRequest(res, {
+              message: `Invalid ${key} ID`,
+            });
           event.details[key] = doc._id;
         } else if (!optional) {
-          return ResponseService.badRequest(res, { message: `${key} is required` });
+          return ResponseService.badRequest(res, {
+            message: `${key} is required`,
+          });
         }
       }
     }
@@ -282,7 +303,7 @@ async function updateEvent(req, res) {
             Référence: EVT${event.num_ref}<br>
             Titre: ${event.details.description}<br>
             Date: ${event.details.event_date}<br><br>
-            <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`
+            <a href="https://futuriskmanagement.com" target="_blank">Cliquer ici pour vous connecter</a>`,
         };
 
         transporter.sendMail(mailOptions, (error, info) => {
@@ -299,7 +320,6 @@ async function updateEvent(req, res) {
       message: "Event updated successfully",
       event,
     });
-
   } catch (error) {
     logger.error("Erreur lors de la mise à jour de l'événement:", error);
     return ResponseService.internalServerError(res, { error: error.message });
@@ -308,7 +328,6 @@ async function updateEvent(req, res) {
 
 async function deleteEvent(req, res) {
   try {
-    
     const eventId = req.params.id;
 
     const event = await Event.findOneAndDelete({ _id: eventId });
@@ -330,8 +349,6 @@ async function deleteEvent(req, res) {
 
 async function getAllEvents(req, res) {
   try {
-    
-
     // 🔐 Ne retourne que les événements du tenant courant
     const events = await Event.find()
       .populate({
@@ -368,7 +385,6 @@ async function getAllEvents(req, res) {
 }
 
 async function getDataRapportEvent(req, res) {
-  
   const { targetEntityId = [], startDate, endDate } = req.body;
 
   try {
@@ -385,11 +401,11 @@ async function getDataRapportEvent(req, res) {
     const entityCriteria =
       entityObjectIds.length > 0
         ? {
-          $or: [
-            { "details.entityOfDetection": { $in: entityObjectIds } },
-            { "details.entityOfOrigin": { $in: entityObjectIds } },
-          ],
-        }
+            $or: [
+              { "details.entityOfDetection": { $in: entityObjectIds } },
+              { "details.entityOfOrigin": { $in: entityObjectIds } },
+            ],
+          }
         : {};
 
     /* ---------- 2. Requête Mongo avec populate ---------- */
@@ -425,9 +441,9 @@ async function getDataRapportEvent(req, res) {
     const filteredEvents =
       start && end
         ? events.filter((e) => {
-          const created = new Date(e.createdAt);
-          return created >= start && created <= end;
-        })
+            const created = new Date(e.createdAt);
+            return created >= start && created <= end;
+          })
         : events;
 
     /* ---------- 4. Réponse ---------- */
@@ -449,35 +465,32 @@ async function getDataRapportEvent(req, res) {
 }
 
 async function getRapportIncident(req, res) {
-  
   const { targetEntityId = [] } = req.body;
 
   try {
-    /* ---------- 1. Préparation des critères ---------- */
     const entityObjectIds = targetEntityId.map(
       (id) => new mongoose.Types.ObjectId(id)
     );
 
     const now = new Date();
-    const year = now.getFullYear(); // ex: 2025
-    const month = now.getMonth() + 1; // ex: 7 (juillet) - on ajoute 1 car getMonth() retourne un index de 0 à 11
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
     const monthName = new Intl.DateTimeFormat("fr-FR", {
       month: "long",
     }).format(now);
 
-    // 1. Critère entité obligatoire si fourni
+    // 1. Récupérer tous les événements concernés
     const entityCriteria =
       entityObjectIds.length > 0
         ? {
-          $or: [
-            { "details.entityOfDetection": { $in: entityObjectIds } },
-            { "details.entityOfOrigin": { $in: entityObjectIds } },
-          ],
-        }
+            $or: [
+              { "details.entityOfDetection": { $in: entityObjectIds } },
+              { "details.entityOfOrigin": { $in: entityObjectIds } },
+            ],
+          }
         : {};
 
-    /* ---------- 2. Requête Mongo avec populate ---------- */
-    const events = await Event.find({ entityCriteria })
+    const allEvents = await Event.find(entityCriteria)
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -505,9 +518,79 @@ async function getRapportIncident(req, res) {
       })
       .lean();
 
-    /* ---------- 3. Filtrage par date (post-traitement) ---------- */
-    /* ---------- 3. Filtrage par date (mois en cours) ---------- */
-    // 1. Fonction utilitaire pour calculer la somme des pertes à partir d'une liste d'événements
+    // 2. Filtrer les événements du mois courant
+    const filteredEvents = allEvents.filter((e) => {
+      const createdAt = new Date(e.createdAt);
+      return (
+        createdAt.getFullYear() === year && createdAt.getMonth() + 1 === month
+      );
+    });
+
+    const allEvents2 = await Event.find();
+
+    // 3. Récupérer les entités
+    const entityDocs = await Entity.find({
+      _id: { $in: entityObjectIds },
+    }).lean();
+
+    // 4. Regrouper les événements du mois par entité
+    const eventsByEntityId = {};
+    for (const id of entityObjectIds) {
+      eventsByEntityId[id.toString()] = [];
+    }
+
+    for (const event of filteredEvents) {
+      const detId =
+        event.details?.entityOfDetection?._id?.toString() ||
+        event.details?.entityOfDetection?.toString();
+
+      const origId =
+        event.details?.entityOfOrigin?._id?.toString() ||
+        event.details?.entityOfOrigin?.toString();
+
+      const matchingIds = entityObjectIds.filter((id) =>
+        [detId, origId].includes(id.toString())
+      );
+
+      for (const matchId of matchingIds) {
+        const key = matchId.toString();
+        if (
+          !eventsByEntityId[key].some(
+            (e) => e._id.toString() === event._id.toString()
+          )
+        ) {
+          eventsByEntityId[key].push(event);
+        }
+      }
+    }
+
+    // 4.bis. Regrouper TOUS les événements de l’année par entité
+    const eventsYearByEntityId = {};
+    for (const id of entityObjectIds) {
+      eventsYearByEntityId[id.toString()] = [];
+    }
+
+    for (const event of allEvents) {
+      const detId = event.details?.entityOfDetection?._id?.toString();
+      const origId = event.details?.entityOfOrigin?._id?.toString();
+
+      const matchingIds = entityObjectIds.filter((id) =>
+        [detId, origId].includes(id.toString())
+      );
+
+      for (const matchId of matchingIds) {
+        const key = matchId.toString();
+        if (
+          !eventsYearByEntityId[key].some(
+            (e) => e._id.toString() === event._id.toString()
+          )
+        ) {
+          eventsYearByEntityId[key].push(event);
+        }
+      }
+    }
+
+    // 6. Calcul des pertes
     const calculateTotalActualLoss = (events) => {
       return events
         .flatMap((item) => item?.financials?.data || [])
@@ -516,44 +599,42 @@ async function getRapportIncident(req, res) {
         .reduce((acc, val) => acc + val, 0);
     };
 
-    // 2. Sélection des événements du mois courant
-    const filteredEvents = events.filter((e) => {
-      const createdAt = new Date(e.createdAt);
-      return (
-        createdAt.getFullYear() === year && createdAt.getMonth() + 1 === month
-      );
-    });
-
-    // 3. Récupération de toutes les entités concernées
-    const entities = await Entity.find({ _id: { $in: entityObjectIds } });
-    const allEvents = await Event.find();
-
-    // 4. Calcul des pertes
     const perteMonth = calculateTotalActualLoss(filteredEvents);
     const allPertes = calculateTotalActualLoss(await Event.find());
 
-    // 5. Regroupement
-    const inforPertes = {
-      perteMonth,
-      allPertes,
-    };
+    // 5. Construire la structure finale : [{ entity, event: [], eventYearEntity: [] }]
+    const result = entityDocs.map((entity) => {
+      const event = eventsByEntityId[entity._id.toString()] || [];
+      const eventYearEntity = eventsYearByEntityId[entity._id.toString()] || [];
 
+      return {
+        entity,
+        event,
+        eventYearEntity,
+        perteMonth: calculateTotalActualLoss(event),
+        allPertes: calculateTotalActualLoss(eventYearEntity),
+      };
+    });
+
+    // 7. Ajouter infoSupp à la fin
     const infoSupp = {
-      totalEvents: allEvents?.length,
+      totalEvents: allEvents2.length,
       totalEventsMonth: filteredEvents.length,
       year,
       month,
       monthName,
-      inforPertes,
-      entities,
+      inforPertes: {
+        perteMonth,
+        allPertes,
+      },
+      entities: entityDocs,
     };
 
-    /* ---------- 4. Réponse ---------- */
+    // 8. Réponse finale
     return res.json({
       success: true,
       message: `Les événements du mois de ${monthName} ${year} ont été récupérés avec succès.`,
-      data: filteredEvents,
-      infoSupp: infoSupp,
+      data: [...result, { infoSupp }],
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des événements :", error);
