@@ -35,7 +35,7 @@ async function getStatistics(req, res) {
 
     // 3. Risques couverts (en prenant entityId du requête)
     const entityRiskControls = await EntityRiskControl.find({
-      entity: req.params.entityId
+      entity: req.params.entityId,
     });
     const riskStats = {
       totalControls: entityRiskControls.length,
@@ -85,55 +85,60 @@ async function getStatistics(req, res) {
     };
 
     const allEvents = await Event.find();
-    const allFinancials = allEvents.map(item => item?.financials).filter(Boolean);
+    const totalApproved = allEvents.filter((el) => el.approved === true);
+    const totalNotApproved = allEvents.filter((el) => el.approved === false);
+    const allFinancials = allEvents
+      .map((item) => item?.financials)
+      .filter(Boolean);
 
     // Calcul des totaux pour chaque catégorie
     const getFinancialTotal = (events) => {
       return events
-        .map(event => event?.financials?.totalConverted || 0)
+        .map((event) => event?.financials?.totalConverted || 0)
         .reduce((acc, val) => acc + val, 0);
     };
 
     // Stats par statut d'approbation
-    const approvedEvents = allEvents.filter(event => event.approved === true);
-    const rejectedEvents = allEvents.filter(event => event.approved === false);
+    const approvedEvents = allEvents.filter((event) => event.approved === true);
+    const rejectedEvents = allEvents.filter(
+      (event) => event.approved === false
+    );
 
     const eventsByStatus = {
       approved: {
         count: approvedEvents.length,
-        totalAmount: getFinancialTotal(approvedEvents)
+        totalAmount: getFinancialTotal(approvedEvents),
       },
       rejected: {
         count: rejectedEvents.length,
-        totalAmount: getFinancialTotal(rejectedEvents)
+        totalAmount: getFinancialTotal(rejectedEvents),
       },
     };
 
     const allTotalConverted = allFinancials
-      .map(item => item.totalConverted || 0) // Utilise 0 si totalConverted est undefined/null
-      .filter(total => !isNaN(total)); // Filtre les valeurs non numériques (sécurité)
+      .map((item) => item.totalConverted || 0) // Utilise 0 si totalConverted est undefined/null
+      .filter((total) => !isNaN(total)); // Filtre les valeurs non numériques (sécurité)
 
-    const totalConverted = allTotalConverted.reduce(
-      (acc, val) => acc + val,
-      0
-    );
+    const totalConverted = allTotalConverted.reduce((acc, val) => acc + val, 0);
 
     return ResponseService.success(res, {
       events: {
         byStatus: [
           {
-            _id: 'approved',
+            _id: "approved",
             count: eventsByStatus.approved.count,
-            totalAmount: eventsByStatus.approved.totalAmount
+            totalAmount: eventsByStatus.approved.totalAmount,
           },
           {
-            _id: 'rejected',
+            _id: "rejected",
             count: eventsByStatus.rejected.count,
-            totalAmount: eventsByStatus.rejected.totalAmount
+            totalAmount: eventsByStatus.rejected.totalAmount,
           },
         ],
         totalPerteSave: totalConverted,
-        currency: "XAF"
+        totalApproved: totalApproved.length,
+        totalNotApproved: totalNotApproved.length,
+        currency: "XAF",
       },
       indicators: indicatorsStats,
       actions: actionsStats,
