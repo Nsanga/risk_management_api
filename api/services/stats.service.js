@@ -7,6 +7,10 @@ const ResponseService = require("./response.service");
 const actionModel = require("../models/action.model");
 const actionKRIModel = require("../models/actionKRI.model");
 const entityRiskControlSchema = require("../models/entityRiskControl.model");
+const keyIndicatorSchema = require("../models/keyIndicator.model");
+
+const historyModel = require("../models/history.model");
+const historyKRIModel = require("../models/historyKRI.model");
 
 async function getStatistics(req, res) {
   try {
@@ -77,16 +81,84 @@ async function getStatistics(req, res) {
     };
 
     const entityRiskControl = await entityRiskControlSchema.find();
+    const kriRiskControl = await keyIndicatorSchema.find();
+
+    const allHistory = await historyModel.find();
+    const allHistoryKRI = await historyKRIModel.find();
+
     const allControls = entityRiskControl.flatMap((item) => item.controls);
+    const allKeyIndicators = kriRiskControl.flatMap(
+      (item) => item.dataKeyIndicators
+    );
+
+    // console.log("====================================");
+    // console.log("allKeyIndicators", allKeyIndicators);
+    // console.log("====================================");
+
+    // Enrichir chaque control avec son historique associé
+    const allControlsWithHistory = allControls?.map((control) => {
+      const relatedHistory = allHistory?.filter(
+        (history) => history.idControl?.toString() === control._id.toString()
+      );
+
+      return {
+        ...(control.toObject?.() || control), // pour être sûr que c’est un objet JS pur
+        isTested: relatedHistory,
+      };
+    });
+
+    // Enrichir chaque keyIndicator avec son historique associé
+    const allkeyIndicatorsWithHistory = allKeyIndicators?.map(
+      (keyIndicator) => {
+        const relatedHistory = allHistoryKRI?.filter(
+          (history) =>
+            history.idKeyIndicator?.toString() === keyIndicator._id.toString()
+        );
+
+        return {
+          ...(keyIndicator.toObject?.() || keyIndicator), // pour être sûr que c’est un objet JS pur
+          isTested: relatedHistory,
+        };
+      }
+    );
+
+    const testedControls = allControlsWithHistory.filter(
+      (c) => c.isTested.length > 0
+    );
+
+    const testedKeyIndicators = allkeyIndicatorsWithHistory.filter(
+      (c) => c.isTested.length > 0
+    );
+
+    const testedPercentage =
+      testedControls.length > 0
+        ? (
+            (testedControls.length / allControlsWithHistory.length) *
+            100
+          ).toFixed(2)
+        : "0.00";
+
+    const testedPercentageKeyIndicator =
+      testedKeyIndicators.length > 0
+        ? (
+            (testedKeyIndicators.length / allkeyIndicatorsWithHistory.length) *
+            100
+          ).toFixed(2)
+        : "0.00";
 
     const statKriOrRcsa = {
       totalControlsRCSA: allControls?.length,
       totalKRI: allControls?.length,
+      nombreControlRcsaTested: testedControls.length,
+      pourcentageControlRcsaTested: testedPercentage,
+      nombreKeyIncatorTested: testedKeyIndicators.length,
+      pourcentageKeyIncatorTested: testedPercentageKeyIndicator,
+
+      // allControlsWithHistory: allControlsWithHistory,
+      // allkeyIndicatorsWithHistory: allkeyIndicatorsWithHistory,
     };
 
     const allEvents = await Event.find();
-    const totalApproved = allEvents.filter((el) => el.approved === true);
-    const totalNotApproved = allEvents.filter((el) => el.approved === false);
     const allFinancials = allEvents
       .map((item) => item?.financials)
       .filter(Boolean);
@@ -136,8 +208,6 @@ async function getStatistics(req, res) {
           },
         ],
         totalPerteSave: totalConverted,
-        totalApproved: totalApproved.length,
-        totalNotApproved: totalNotApproved.length,
         currency: "XAF",
       },
       indicators: indicatorsStats,
