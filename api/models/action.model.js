@@ -21,7 +21,7 @@ var actionSchema = new mongoose.Schema(
       required: false,
     },
     idHistory: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId, 
       ref: "history",
       required: false,
     },
