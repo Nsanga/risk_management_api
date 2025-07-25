@@ -48,11 +48,11 @@ exports.getTenantById = async (req, res) => {
         const { id } = req.params;
         const tenant = await Tenant.findById(id);
         if (!tenant) {
-            return res.status(404).json({ message: "Tenant non trouvé" });
+            return ResponseService.notFound(res, { message: "Tenant non trouvé" });
         }
-        return res.status(200).json({ tenant });
+        return ResponseService.success(res, { tenant });
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        return ResponseService.internalServerError(res, { error: err.message });
     }
 };
 
@@ -79,9 +79,9 @@ exports.updateTenant = async (req, res) => {
         if (logo) tenant.logo = logo;
 
         await tenant.save();
-        return res.status(200).json({ message: "Tenant mis à jour", tenant });
+        return ResponseService.success(res, { tenant });
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        return ResponseService.internalServerError(res, { error: err.message });
     }
 };
 
@@ -90,9 +90,9 @@ exports.deleteTenant = async (req, res) => {
         const { id } = req.params;
         const tenant = await Tenant.findByIdAndDelete(id);
         if (!tenant) {
-            return res.status(404).json({ message: "Tenant non trouvé" });
+            return ResponseService.notFound(res, { message: "Tenant non trouvé" });
         }
-        return res.status(200).json({ message: "Tenant supprimé" });
+        return ResponseService.success(res, { message: "Tenant supprimé" });
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
