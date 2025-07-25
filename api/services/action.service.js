@@ -72,7 +72,7 @@ async function generateReference(tenantId) {
 
 async function createAction(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const reference = await generateReference(tenantId);
     const newAction = new Action({ ...req.body, reference, tenantId });
     const savedAction = await newAction.save();
@@ -113,7 +113,7 @@ async function createAction(req, res) {
 
 async function getAllActionByEntity(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const actions = await Action.find({ idEntity: req.body.idEntity, tenantId });
     // res.status(200).json(actions);
     res.status(200).json({
@@ -130,7 +130,7 @@ async function getAllActionByEntity(req, res) {
 
 async function getAllActionByControl(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const actions = await Action.find({ idControl: req.body.idControl, tenantId });
     // res.status(200).json(actions);
     res.status(200).json({
@@ -147,7 +147,7 @@ async function getAllActionByControl(req, res) {
 
 async function getAllActionByReference(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const actions = await Action.find({
       reference: req.body.reference,
       tenantId
@@ -167,7 +167,7 @@ async function getAllActionByReference(req, res) {
 
 async function getAllAction(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const actions = await Action.find({tenantId});
     res.status(200).json({
       statut: 200,
@@ -182,7 +182,7 @@ async function getAllAction(req, res) {
 }
 
 async function getDataRapport(req, res) {
-  const tenantId = req.tenantId;
+  const tenantId = req.body.tenantId;
   const { sesion, targetEntityId, type } = req.body;
   try {
     // if (!sesion || !targetEntityId || !type) {
@@ -338,7 +338,7 @@ async function getDataRapport(req, res) {
 
 async function updateAction(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const { id } = req.params;
 
     const updated = await Action.findByIdAndUpdate(
@@ -369,7 +369,7 @@ async function updateAction(req, res) {
 
 async function getActionByHistory(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const actions = await Action.find({ idHistory: req.body.idHistory, tenantId });
     // res.status(200).json(actions);
     res.status(200).json({

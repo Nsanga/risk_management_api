@@ -5,7 +5,7 @@ const keyIndicatorSchema = require("../models/keyIndicator.model");
 async function createHistoryKRI(req, res) {
   try {
     let filteredControls = [];
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const { idEntity, idKeyIndicator } = req.body;
 
     const entityData = await keyIndicatorSchema.findOne({ entity: idEntity });
@@ -68,7 +68,7 @@ async function createHistoryKRI(req, res) {
 
 async function getAllHistoriqueKri(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const allHistorique = await Historique.find({tenantId});
     res.status(200).json({
       statut: 200,
@@ -102,7 +102,7 @@ async function getAllHistoriqueKri(req, res) {
 
 async function getAllHistoriqueByIdKeyIndicator(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const historique = await Historique.find({
       idKeyIndicator: req.body.idKeyIndicator,
       tenantId
@@ -139,7 +139,7 @@ async function getAllHistoriqueByIdKeyIndicator(req, res) {
 async function updateHistoryKRI(req, res) {
   try {
     let filteredControls = [];
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const { idEntity, idKeyIndicator } = req.body;
     const { id } = req.params;
 

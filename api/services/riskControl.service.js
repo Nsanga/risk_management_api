@@ -35,7 +35,7 @@ async function getRiskControlById(req, res) {
 
 async function updateRiskControl(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const riskControlId = req.params.id;
     const updatedData = req.body;
 
@@ -55,7 +55,7 @@ async function updateRiskControl(req, res) {
 
 async function deleteRiskControl(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const riskControlId = req.params.id;
 
     // Supprimer un RiskControl par son ID
@@ -74,7 +74,7 @@ async function deleteRiskControl(req, res) {
 async function getAllRiskControls(req, res) {
   try {
     // Récupérer tous les RiskControls
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const riskControls = await RiskControl.find({tenantId});
     return ResponseService.success(res, { riskControls });
   } catch (error) {

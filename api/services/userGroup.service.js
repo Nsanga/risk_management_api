@@ -3,7 +3,7 @@ const ResponseService = require('./response.service');
 
 async function createUserGroup(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const userGroupData = req.body;
 
     const newUserGroup = new UserGroup({ userGroupData, tenantId });
@@ -18,7 +18,7 @@ async function createUserGroup(req, res) {
 
 async function getUserGroupById(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const userGroupId = req.params.id;
     const userGroup = await UserGroup.findById({ userGroupId, tenantId });
     if (!userGroup) {
@@ -33,7 +33,7 @@ async function getUserGroupById(req, res) {
 
 async function updateUserGroup(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const userGroupId = req.params.id;
     const updatedData = req.body;
 
@@ -52,7 +52,7 @@ async function updateUserGroup(req, res) {
 
 async function deleteUserGroup(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const userGroupId = req.params.id;
     const userGroup = await UserGroup.findByIdAndDelete(userGroupId, tenantId);
     if (!userGroup) {
@@ -67,7 +67,7 @@ async function deleteUserGroup(req, res) {
 
 async function getAllUserGroups(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const userGroups = await UserGroup.find({ tenantId });
     return ResponseService.success(res, { userGroups });
   } catch (error) {

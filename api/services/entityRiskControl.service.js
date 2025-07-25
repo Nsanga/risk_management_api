@@ -17,7 +17,7 @@ function generateReferenceNumber(currentNumber) {
 
 async function createEntityRiskControl(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const entityRiskControlData = req.body;
     const { entity } = entityRiskControlData; // Extraire l'entité des données
 
@@ -50,7 +50,7 @@ async function createEntityRiskControl(req, res) {
 
 async function getEntityRiskControlById(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const entityRiskControlId = req.params.id;
 
     // Récupérer un RiskControl par son ID
@@ -68,7 +68,7 @@ async function getEntityRiskControlById(req, res) {
 
 async function updateEntityRiskControl(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const entityRiskControlId = req.params.id;
     let updatedData = req.body;
 
@@ -108,7 +108,7 @@ async function updateEntityRiskControl(req, res) {
 
 async function deleteEntityRiskControl(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     const entityRiskControlId = req.params.id;
 
     // Supprimer un RiskControl par son ID
@@ -126,7 +126,7 @@ async function deleteEntityRiskControl(req, res) {
 
 async function getAllEntityRiskControls(req, res) {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.body.tenantId;
     // Récupérer tous les EntityRiskControl
     const entityRiskControl = await EntityRiskControl
       .find({ entity: entityId, tenantId })
