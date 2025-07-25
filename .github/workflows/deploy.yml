@@ -83,6 +83,11 @@ jobs:
             NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTHTOKEN }}
             EMAIL_USER=${{ secrets.SMTP_USERNAME }}
             EMAIL_PASS=${{ secrets.SMTP_PASSWORD }}
+
+            CLOUDINARY_CLOUD_NAME=${{ vars.CLOUDINARY_CLOUD_NAME }}
+            CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+            CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+
             EOF
 
             echo "Fichier .env créé avec succès"
