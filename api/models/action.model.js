@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 var actionSchema = new mongoose.Schema(
   {
-    
+    tenantId: { type: String, required: true },
     reference: { type: String },
     descriptionAction: { type: String, required: false },
     delaisAction: { type: String, required: false },

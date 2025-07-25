@@ -51,8 +51,8 @@ const generateReference = async () => {
 };
 
 const createHistory = async (data) => {
-  
-  const allRiskControl = await EntityRiskControl.find();
+  const tenantId = req.tenantId;
+  const allRiskControl = await EntityRiskControl.find({tenantId});
 
   const entityWithControl = allRiskControl.find((entity) =>
     entity.controls.some((control) => control._id.toString() === data.idControl)
@@ -80,7 +80,8 @@ const createHistory = async (data) => {
   try {
     // Étape 1 : Récupérer les historiques liés à ce contrôle
     const existingHistories = await History.find({
-      idControl: data.idControl
+      idControl: data.idControl,
+      tenantId
     });
 
     // Étape 2 : Calculer le coutAnnually
@@ -105,8 +106,8 @@ const createHistory = async (data) => {
 
 const getAllHistory = async () => {
   try {
-    
-    return await History.find();
+    const tenantId = req.tenantId;
+    return await History.find({tenantId});
   } catch (error) {
     throw new Error(
       "Erreur lors de la récupération de l'historique: " + error.message
@@ -115,8 +116,8 @@ const getAllHistory = async () => {
 };
 
 const updateHistory = async (id, data) => {
-  
-  const allRiskControl = await EntityRiskControl.find();
+  const tenantId = req.tenantId;
+  const allRiskControl = await EntityRiskControl.find({tenantId});
 
   const entityWithControl = allRiskControl.find((entity) =>
     entity.controls.some((control) => control._id.toString() === data.idControl)
@@ -144,7 +145,7 @@ const updateHistory = async (id, data) => {
     // Met à jour l’historique existant
     const updatedHistory = await History.findByIdAndUpdate(
       id,
-      
+      tenantId,
       { $set: data },
       { new: true }
     );

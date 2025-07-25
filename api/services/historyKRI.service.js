@@ -5,7 +5,7 @@ const keyIndicatorSchema = require("../models/keyIndicator.model");
 async function createHistoryKRI(req, res) {
   try {
     let filteredControls = [];
-    
+    const tenantId = req.tenantId;
     const { idEntity, idKeyIndicator } = req.body;
 
     const entityData = await keyIndicatorSchema.findOne({ entity: idEntity });
@@ -13,7 +13,8 @@ async function createHistoryKRI(req, res) {
     const indicatorIds = entityData.dataKeyIndicators.map((item) => item._id);
 
     const histories = await historyKRIModel.find({
-      idKeyIndicator: { $in: indicatorIds }
+      idKeyIndicator: { $in: indicatorIds },
+      tenantId
     });
 
     const historyMap = histories.reduce((acc, hist) => {
@@ -67,8 +68,8 @@ async function createHistoryKRI(req, res) {
 
 async function getAllHistoriqueKri(req, res) {
   try {
-    
-    const allHistorique = await Historique.find();
+    const tenantId = req.tenantId;
+    const allHistorique = await Historique.find({tenantId});
     res.status(200).json({
       statut: 200,
       message: "Action reucpérée avec succès",
@@ -101,9 +102,10 @@ async function getAllHistoriqueKri(req, res) {
 
 async function getAllHistoriqueByIdKeyIndicator(req, res) {
   try {
-    
+    const tenantId = req.tenantId;
     const historique = await Historique.find({
-      idKeyIndicator: req.body.idKeyIndicator
+      idKeyIndicator: req.body.idKeyIndicator,
+      tenantId
     })
       .sort({ createdAt: -1 })
       .limit(5);
@@ -137,7 +139,7 @@ async function getAllHistoriqueByIdKeyIndicator(req, res) {
 async function updateHistoryKRI(req, res) {
   try {
     let filteredControls = [];
-    
+    const tenantId = req.tenantId;
     const { idEntity, idKeyIndicator } = req.body;
     const { id } = req.params;
 
@@ -149,7 +151,8 @@ async function updateHistoryKRI(req, res) {
     const indicatorIds = entityData.dataKeyIndicators.map((item) => item._id);
 
     const histories = await historyKRIModel.find({
-      idKeyIndicator: { $in: indicatorIds }
+      idKeyIndicator: { $in: indicatorIds },
+      tenantId
     });
 
     const historyMap = histories.reduce((acc, hist) => {
@@ -184,7 +187,8 @@ async function updateHistoryKRI(req, res) {
       id,
       {
         ...req.body,
-        coutAnnually
+        coutAnnually,
+        tenantId
       },
       { new: true }
     );

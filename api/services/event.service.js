@@ -164,12 +164,13 @@ async function getEventById(req, res) {
 async function getEventByEntity(req, res) {
   try {
     const entityId = req.params.id;
-
+    const tenantId = req.tenantId;
     const events = await Event.find({
       $or: [
         { "details.entityOfDetection": entityId },
         { "details.entityOfOrigin": entityId },
       ],
+      tenantId,
     });
 
     if (!events || events.length === 0) {
@@ -349,8 +350,9 @@ async function deleteEvent(req, res) {
 
 async function getAllEvents(req, res) {
   try {
+    const tenantId = req.tenantId;
     // 🔐 Ne retourne que les événements du tenant courant
-    const events = await Event.find()
+    const events = await Event.find({tenantId})
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -392,7 +394,7 @@ async function getDataRapportEvent(req, res) {
     const entityObjectIds = targetEntityId.map(
       (id) => new mongoose.Types.ObjectId(id)
     );
-
+    const tenantId = req.tenantId;
     const start = startDate ? new Date(startDate) : null;
     const end = endDate ? new Date(endDate) : null;
     if (end) end.setHours(23, 59, 59, 999);
@@ -409,7 +411,7 @@ async function getDataRapportEvent(req, res) {
         : {};
 
     /* ---------- 2. Requête Mongo avec populate ---------- */
-    const events = await Event.find({ entityCriteria })
+    const events = await Event.find({ entityCriteria, tenantId })
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -471,7 +473,7 @@ async function getRapportIncident(req, res) {
     const entityObjectIds = targetEntityId.map(
       (id) => new mongoose.Types.ObjectId(id)
     );
-
+    const tenantId = req.tenantId;
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
@@ -490,7 +492,7 @@ async function getRapportIncident(req, res) {
           }
         : {};
 
-    const allEvents = await Event.find(entityCriteria)
+    const allEvents = await Event.find({entityCriteria, tenantId})
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
@@ -526,11 +528,12 @@ async function getRapportIncident(req, res) {
       );
     });
 
-    const allEvents2 = await Event.find();
+    const allEvents2 = await Event.find({tenantId});
 
     // 3. Récupérer les entités
     const entityDocs = await Entity.find({
       _id: { $in: entityObjectIds },
+      tenantId
     }).lean();
 
     // 4. Regrouper les événements du mois par entité
@@ -600,7 +603,7 @@ async function getRapportIncident(req, res) {
     };
 
     const perteMonth = calculateTotalActualLoss(filteredEvents);
-    const allPertes = calculateTotalActualLoss(await Event.find());
+    const allPertes = calculateTotalActualLoss(await Event.find({tenantId}));
 
     // 5. Construire la structure finale : [{ entity, event: [], eventYearEntity: [] }]
     const result = entityDocs.map((entity) => {

@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const dataKeyIndicatorSchema = new mongoose.Schema({
-  
+  tenantId: { type: String, required: true },
   reference: { type: String },
   entityReference: { type: Schema.Types.ObjectId, ref: "Entity" },
   departmentFunction: { type: String },

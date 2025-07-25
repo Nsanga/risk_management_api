@@ -1,5 +1,6 @@
 const Tenant = require("../models/tenant.model");
 const { uploadToCloudinary } = require("./uploadFile.service");
+const ResponseService = require('./response.service');
 
 exports.createTenant = async (req, res) => {
     try {
@@ -35,9 +36,10 @@ exports.createTenant = async (req, res) => {
 exports.getAllTenants = async (req, res) => {
     try {
         const tenants = await Tenant.find();
-        return res.status(200).json({ tenants });
-    } catch (err) {
-        return res.status(500).json({ error: err.message });
+        return ResponseService.success(res, { tenants });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des tenants:', error);
+        return ResponseService.internalServerError(res, { error: error.message });
     }
 };
 

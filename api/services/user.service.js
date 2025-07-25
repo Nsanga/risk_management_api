@@ -6,8 +6,8 @@ const UserProfile = require("../models/userProfile.model");
 
 async function save(fullname, email, role) {
   try {
-    
-      const user = await User.findOne({ fullname:fullname, email: email, role: role });
+    const tenantId = req.tenantId;
+      const user = await User.findOne({ fullname:fullname, email: email, role: role, tenantId });
 
       if (!user) {
           // User not found, create the user
@@ -44,9 +44,9 @@ async function save(fullname, email, role) {
 
 async function login(userId, password) {
   try {
-    
+    const tenantId = req.tenantId;
     // Rechercher l'utilisateur dans UserProfile
-    const user = await UserProfile.findOne({ userId });
+    const user = await UserProfile.findOne({ userId, tenantId });
 
     // Vérifier si l'utilisateur existe
     if (!user) {
@@ -79,11 +79,12 @@ async function login(userId, password) {
 
 async function update(email, updatedData) { 
   try {
-    
+    const tenantId = req.tenantId;
     const updatedUser = await User.findOneAndUpdate(
       { email: email },
       { $set: updatedData },
       { new: true }, // Ceci renvoie le document mis à jour plutôt que l'ancien
+      tenantId
     );
     if (updatedUser) {
       return {
@@ -104,8 +105,8 @@ async function update(email, updatedData) {
 
 async function getOne(referralCode) {
   try {
-    
-    const user = await User.findOne({ referralCode })
+    const tenantId = req.tenantId;
+    const user = await User.findOne({ referralCode, tenantId })
     if (user) {
       return { success: true, user };
     } else {
@@ -118,7 +119,7 @@ async function getOne(referralCode) {
 
 async function list(role) {
   try {
-    
+    const tenantId = req.tenantId;
     const matchStage = role ? { role } : {};
 
     const users = await User.aggregate([
@@ -131,7 +132,8 @@ async function list(role) {
           createdAt: 1,
           updatedAt: 1,
         }
-      }
+      },
+      tenantId
     ]);
     if (users.length > 0) {
       return { success: true, total: users.length, users: users };

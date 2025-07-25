@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const userRoles = ['admin', 'user'];
 
 const userSchema = new mongoose.Schema({
-  
+  tenantId: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   fullname: { type: String },
