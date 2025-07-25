@@ -2,9 +2,12 @@ const cloudinary = require("cloudinary").v2;
 const fs = require("fs");
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: "dmfjhas5a",
+  // process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: "189519692969834",
+  // process.env.CLOUDINARY_API_KEY,
+  api_secret: "8xsehFp-kRT2Ut5KwXLF8R0gk24",
+  // process.env.CLOUDINARY_API_SECRET,
 });
 
 /**
