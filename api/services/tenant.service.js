@@ -68,7 +68,7 @@ exports.updateTenant = async (req, res) => {
 
         const tenant = await Tenant.findById(id);
         if (!tenant) {
-            return res.status(404).json({ message: "Tenant non trouvé" });
+            return ResponseService.notFound(res, { message: "Tenant non trouvé" });
         }
 
         tenant.name = name || tenant.name;
@@ -81,6 +81,7 @@ exports.updateTenant = async (req, res) => {
         await tenant.save();
         return ResponseService.success(res, { tenant });
     } catch (err) {
+        console.log("erreur de mise à jour:", err)
         return ResponseService.internalServerError(res, { error: err.message });
     }
 };
