@@ -47,7 +47,7 @@ app.use(bodyParser.json());
 //   res.header('Access-Control-Allow-Origin', '*');
 //   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 //   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-//   res.sendStatus(204); // Recommandé pour les preflight
+//   res.sendStatus(204); // Recommandé pour les preflight 
 // });
 
 // App Routes
