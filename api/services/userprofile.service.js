@@ -16,22 +16,30 @@ async function createProfile(req, res) {
   try {
     const tenantId = req.tenantId;
     const email = req.body.email;
+    const role = req.body.role;
 
-    // 🔐 Vérifie si le profil existe déjà pour ce tenant
-    const existingUser = await UserProfile.findOne({ email, tenantId });
+    const isSuperAdmin = role === "superAdmin";
+
+    // 🔐 Vérifie si le profil existe déjà
+    const query = isSuperAdmin ? { email } : { email, tenantId };
+    const existingUser = await UserProfile.findOne(query);
 
     if (existingUser) {
       return ResponseService.internalServerError(res, {
-        message: "Un profil avec cet email existe déjà pour ce tenant.",
+        message: "Un profil avec cet email existe déjà.",
       });
     }
 
     const profileData = req.body;
     profileData.password = process.env.DEFAULT_PASSWORD;
-    profileData.tenantId = tenantId; // ✅ Ajout du tenantId au profil
 
-    // 🔐 Vérifie que l'entité appartient bien à ce tenant
-    if (profileData.entity) {
+    // ✅ Ajout du tenantId seulement si ce n’est pas un superAdmin
+    if (!isSuperAdmin) {
+      profileData.tenantId = tenantId;
+    }
+
+    // 🔐 Vérifie que l'entité appartient bien à ce tenant (sauf pour superAdmin)
+    if (profileData.entity && !isSuperAdmin) {
       const entity = await Entity.findOne({
         _id: profileData.entity,
         tenantId,
@@ -50,7 +58,7 @@ async function createProfile(req, res) {
     const newUserProfile = new UserProfile(profileData);
     await newUserProfile.save();
 
-    // ✅ Notification par email si le compte est actif
+    // ✅ Envoi de l'email si le compte est actif
     if (profileData.activeUser) {
       const mailOptions = {
         from: process.env.EMAIL_USER,
@@ -98,27 +106,33 @@ async function updateProfile(req, res) {
     const tenantId = req.tenantId;
     const profileId = req.params.id;
     const updatedData = req.body;
+    const role = updatedData.role; // ou tu peux récupérer depuis currentProfile si non modifié
 
-    // Récupérer le profil avant mise à jour pour comparer le champ `activeUser`
-    const currentProfile = await UserProfile.findById({profileId, tenantId});
+    const isSuperAdmin = role === "superAdmin";
+
+    // 🔍 Récupération du profil en fonction du rôle
+    const currentProfile = isSuperAdmin
+      ? await UserProfile.findById(profileId)
+      : await UserProfile.findOne({ _id: profileId, tenantId });
 
     if (!currentProfile) {
-      return ResponseService.notFound(res, { message: "Profile not found" });
+      return ResponseService.notFound(res, { message: "Profil introuvable" });
     }
 
-    // Mettre à jour le profil
-    const profile = await UserProfile.findByIdAndUpdate(
-      profileId,
-      tenantId,
-      updatedData,
-      { new: true }
-    );
+    // 🔄 Mise à jour du profil (toujours filtré par tenantId sauf superAdmin)
+    const updateQuery = isSuperAdmin
+      ? { _id: profileId }
+      : { _id: profileId, tenantId };
+
+    const profile = await UserProfile.findOneAndUpdate(updateQuery, updatedData, {
+      new: true,
+    });
 
     if (!profile) {
-      return ResponseService.notFound(res, { message: "Profile not found" });
+      return ResponseService.notFound(res, { message: "Profil introuvable" });
     }
 
-    // Vérifier si `activeUser` passe de false à true
+    // 📩 Envoi de mail si l'utilisateur vient d'être activé
     if (!currentProfile.activeUser && updatedData.activeUser) {
       const emails = [updatedData.email];
 
@@ -126,24 +140,24 @@ async function updateProfile(req, res) {
         from: process.env.EMAIL_USER,
         to: emails.join(", "),
         subject: "Activation du compte",
-        text: `Votre compte à été activé avec succès.\n\nVos informations de connexion sont les suivante:\n-> User id: ${updatedData.userId}\n🔐: ${process.env.DEFAULT_PASSWORD}`,
+        text: `Votre compte a été activé avec succès.\n\nVos informations de connexion sont les suivantes:\n-> User ID: ${updatedData.userId}\n🔐 Mot de passe : ${process.env.DEFAULT_PASSWORD}`,
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          logger.error("Error sending email:", error);
+          logger.error("Erreur envoi email :", error);
         } else {
-          logger.info("Email sent:", info.response);
+          logger.info("Email envoyé :", info.response);
         }
       });
     }
 
     return ResponseService.success(res, {
-      message: "Profile updated successfully",
+      message: "Profil mis à jour avec succès",
       profile,
     });
   } catch (error) {
-    console.error("Error updating Profile:", error);
+    console.error("Erreur lors de la mise à jour du profil :", error);
     return ResponseService.internalServerError(res, { error: error.message });
   }
 }
@@ -168,7 +182,24 @@ async function deleteProfile(req, res) {
 async function getAllProfiles(req, res) {
   try {
     const tenantId = req.tenantId;
-    const profiles = await UserProfile.find({tenantId}).populate({
+    const role = req.role; // ou adapte selon où est stockée l'info
+
+    let query = {};
+    
+    if (role === "admin") {
+      query = {
+        tenantId,
+        role: { $ne: "superAdmin" }, // Exclut les superAdmin
+      };
+    } else if (role === "superAdmin") {
+      // Ne filtre pas sur le tenant, accès à tous les profils
+      query = {};
+    } else {
+      // Autres rôles : on pourrait restreindre ici si besoin
+      query = { tenantId };
+    }
+
+    const profiles = await UserProfile.find(query).populate({
       path: "entity",
       select: "referenceId description",
       strictPopulate: true,

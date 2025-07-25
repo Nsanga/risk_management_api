@@ -4,49 +4,47 @@ const jwt = require('jsonwebtoken');
 const User = require("../models/user.model");
 const UserProfile = require("../models/userProfile.model");
 
-async function save(fullname, email, role) {
+async function save(fullname, email, role, tenantId) {
   try {
-    const tenantId = req.tenantId;
-      const user = await User.findOne({ fullname:fullname, email: email, role: role, tenantId });
+    const user = await User.findOne({ fullname: fullname, email: email, role: role, tenantId });
 
-      if (!user) {
-          // User not found, create the user
-          const newUser = new User({
-              email: email,
-              role: role || 'user',
-              fullname: fullname,
-              password: process.env.DEFAULT_PASSWORD,
-          });
-          const savedUser = await newUser.save();
-          return { 
-              success: true,
-              exist: false,
-              data: savedUser,
-              message: "User created successfully.",
-          };
-      } else {
-          // User already exists
-          return {
-              success: false,
-              exist: true,
-              data: user,
-              message: "User already exists.",
-          };
-      }
-  } catch (error) {
+    if (!user) {
+      // User not found, create the user
+      const newUser = new User({
+        email: email,
+        role: role || 'user',
+        fullname: fullname,
+        password: process.env.DEFAULT_PASSWORD,
+      });
+      const savedUser = await newUser.save();
       return {
-          success: false,
-          error: error,
-          message: "We're sorry, but an internal server error has occurred. Our team has been alerted and is working to resolve the issue. Please try again later.",
+        success: true,
+        exist: false,
+        data: savedUser,
+        message: "User created successfully.",
       };
+    } else {
+      // User already exists
+      return {
+        success: false,
+        exist: true,
+        data: user,
+        message: "User already exists.",
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error,
+      message: "We're sorry, but an internal server error has occurred. Our team has been alerted and is working to resolve the issue. Please try again later.",
+    };
   }
 }
 
 async function login(userId, password) {
   try {
-    const tenantId = req.tenantId;
     // Rechercher l'utilisateur dans UserProfile
-    const user = await UserProfile.findOne({ userId, tenantId });
+    const user = await UserProfile.findOne({ userId });
 
     // Vérifier si l'utilisateur existe
     if (!user) {
@@ -64,12 +62,20 @@ async function login(userId, password) {
       return { success: false, error: 'Invalid credentials' };
     }
 
+    // Inclure tenantId dans le token uniquement si ce n’est pas un superAdmin
+    const payload = {
+      userId: user._id,
+      role: user.role,
+    };
+
+    if (user.role !== 'superAdmin') {
+      payload.tenantId = user.tenantId;
+    }
+
     // Générer un token JWT
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: '24h',
+    });
 
     return { success: true, token, user };
   } catch (error) {
@@ -77,9 +83,8 @@ async function login(userId, password) {
   }
 }
 
-async function update(email, updatedData) { 
+async function update(email, updatedData, tenantId) {
   try {
-    const tenantId = req.tenantId;
     const updatedUser = await User.findOneAndUpdate(
       { email: email },
       { $set: updatedData },
@@ -105,8 +110,7 @@ async function update(email, updatedData) {
 
 async function getOne(referralCode) {
   try {
-    const tenantId = req.tenantId;
-    const user = await User.findOne({ referralCode, tenantId })
+    const user = await User.findOne({ referralCode })
     if (user) {
       return { success: true, user };
     } else {
@@ -117,9 +121,8 @@ async function getOne(referralCode) {
   }
 }
 
-async function list(role) {
+async function list(role, tenantId) {
   try {
-    const tenantId = req.tenantId;
     const matchStage = role ? { role } : {};
 
     const users = await User.aggregate([
