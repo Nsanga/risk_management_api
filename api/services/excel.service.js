@@ -7,8 +7,9 @@ const KeyIndicator = require("../models/keyIndicator.model");
 const mongoose = require("mongoose");
 
 class ExcelService {
-  constructor(file) {
+  constructor(file, tenantId) {
     this.file = file; // Assurez-vous que le fichier est passé ici
+    this.tenantId = tenantId;
   }
 
   generateReference(prefix, count) {
@@ -27,13 +28,12 @@ class ExcelService {
 
   async readExcelFile() {
     try {
-      const tenantId = req.tenantId;
       const workbook = XLSX.read(this.file.buffer, { type: "buffer" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const data = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
 
-      await EntityRiskControl.deleteMany({});
+      await EntityRiskControl.deleteMany({ tenantId: this.tenantId });
       // console.log("Anciennes données supprimées avec succès.");
 
       const riskTableStartIndex =
@@ -55,7 +55,7 @@ class ExcelService {
       for (const row of riskData) {
         const businessFunction = row[2];
 
-        const entity = await Entity.findOne({ description: businessFunction, tenantId });
+        const entity = await Entity.findOne({ description: businessFunction, tenantId: this.tenantId, });
         if (!entity) {
           console.log(
             `Entité non trouvée pour la description : ${businessFunction}`
@@ -155,6 +155,7 @@ class ExcelService {
       const result = Object.values(groupedData).map(
         ({ entity, risks, controls }) => ({
           entity: new mongoose.Types.ObjectId(entity._id), // Convertissez en ObjectId ici
+          tenantId: this.tenantId,
           risks,
           controls,
         })
@@ -165,6 +166,7 @@ class ExcelService {
       const resultKeyIndicator = Object.values(groupedKeyIndicator).map(
         ({ entity, dataKeyIndicators }) => ({
           entity: new mongoose.Types.ObjectId(entity._id),
+          tenantId: this.tenantId,
           dataKeyIndicators,
         })
       );
@@ -272,8 +274,7 @@ class ExcelService {
 
   async getSpecificRiskOrControl({ idRisk, idControl }) {
     try {
-      const tenantId = req.tenantId;
-      const allEntities = await EntityRiskControl.find({tenantId})
+      const allEntities = await EntityRiskControl.find({ tenantId: this.tenantId })
         .populate("entity")
         .exec();
 
@@ -363,8 +364,7 @@ class ExcelService {
 
   async copyRiskOrControls(itemIds, targetEntityId, type = "risk") {
     try {
-      const tenantId = req.tenantId;
-      let items = await EntityRiskControl.find({tenantId});
+      let items = await EntityRiskControl.find({ tetenantId: this.tenantIdnantId });
       const totalRisks = items.reduce(
         (sum, item) => sum + item.risks.length,
         0
@@ -554,8 +554,7 @@ class ExcelService {
 
   async moveRiskOrControls(itemIds, targetEntityId, type = "risk") {
     try {
-      const tenantId = req.tenantId;
-      let items = await EntityRiskControl.find({tenantId});
+      let items = await EntityRiskControl.find({ tenantId: this.tenantId });
 
       const totalRisks = items.reduce(
         (sum, item) => sum + item.risks.length,
@@ -800,8 +799,7 @@ class ExcelService {
 
   async getAllKeyIndicators() {
     try {
-      const tenantId = req.tenantId;
-      const keyIndicators = await KeyIndicator.find({tenantId});
+      const keyIndicators = await KeyIndicator.find({ tenantId: this.tenantId });
 
       return keyIndicators;
     } catch (error) {
@@ -817,6 +815,7 @@ class ExcelService {
     try {
       const entity = await KeyIndicator.findOne({
         entity: entityId,
+        tenantId: this.tenantId
       });
 
       if (!entity) {

@@ -1,13 +1,11 @@
-const fs = require("fs");
 const ExcelService = require("../services/excel.service"); // Assurez-vous que ce chemin est correct
 const EntityRiskControl = require("../models/entityRiskControl.model");
 const keyIndicatorModel = require("../models/keyIndicator.model");
 
-const excelService = new ExcelService();
-
 // Contrôleur pour uploader et sauvegarder un fichier Excel
 exports.extractDataFromExcel = (req, res) => {
   const file = req.file; // Obtenir le fichier téléchargé
+  const tenantId = req.tenantId;
 
   if (!file) {
     return res.status(400).json({
@@ -16,7 +14,7 @@ exports.extractDataFromExcel = (req, res) => {
     });
   }
 
-  const excelService = new ExcelService(file); // Passer le fichier ici
+  const excelService = new ExcelService(file, tenantId); // Passer le fichier ici
   const data = excelService.readExcelFile();
 
   if (data) {
@@ -44,6 +42,8 @@ exports.getEntityRiskControlsByEntityName = async (req, res) => {
   }
 
   try {
+    const tenantId = req.tenantId;
+    const excelService = new ExcelService({tenantId});
     // Appel à la méthode pour récupérer les risques et contrôles de l'entité
     const entityRiskControls =
       await excelService.getEntityRiskControlsByEntityName(entityName);
@@ -83,6 +83,8 @@ exports.getSpecificRiskOrControl = async (req, res) => {
   }
 
   try {
+    const tenantId = req.tenantId;
+    const excelService = new ExcelService({tenantId});
     const result = await excelService.getSpecificRiskOrControl({ idRisk, idControl });
 
     if (!result) {
@@ -109,8 +111,9 @@ exports.getSpecificRiskOrControl = async (req, res) => {
 
 // Contrôleur pour récupérer les risques et contrôles d’une entité par ID
 exports.getEntityRiskControlById = async (req, res) => {
+  const tenantId = req.tenantId;
   const { entityRefId } = req.params;
-  const excelService = new ExcelService();
+  const excelService = new ExcelService({ tenantId });
 
   try {
     // Appelle le service pour récupérer les données
@@ -136,8 +139,9 @@ exports.getEntityRiskControlById = async (req, res) => {
 };
 
 exports.copyRiskOrControls = async (req, res) => {
+  const tenantId = req.tenantId;
   const { itemIds, targetEntityId, itemType } = req.body;
-  const excelService = new ExcelService();
+  const excelService = new ExcelService({ tenantId });
 
   try {
     if (!itemIds || !Array.isArray(itemIds) || !targetEntityId || !itemType) {
@@ -174,9 +178,8 @@ exports.copyRiskOrControls = async (req, res) => {
     // Retourne la réponse avec succès et les éléments copiés
     return res.status(200).json({
       success: true,
-      message: `${
-        itemType === "risk" ? "Risques" : "Contrôles"
-      } copiés avec succès.`,
+      message: `${itemType === "risk" ? "Risques" : "Contrôles"
+        } copiés avec succès.`,
       data: copiedItems.data,
     });
   } catch (error) {
@@ -190,8 +193,9 @@ exports.copyRiskOrControls = async (req, res) => {
 };
 
 exports.moveRiskOrControls = async (req, res) => {
+  const tenantId = req.tenantId;
   const { itemIds, targetEntityId, itemType } = req.body;
-  const excelService = new ExcelService();
+  const excelService = new ExcelService({ tenantId });
 
   try {
     // Validation des paramètres
@@ -230,9 +234,8 @@ exports.moveRiskOrControls = async (req, res) => {
     // Retourne la réponse avec succès et les éléments déplacés
     return res.status(200).json({
       success: true,
-      message: `${
-        itemType === "risk" ? "Risques" : "Contrôles"
-      } déplacés avec succès.`,
+      message: `${itemType === "risk" ? "Risques" : "Contrôles"
+        } déplacés avec succès.`,
       data: movedItems.data,
     });
   } catch (error) {
@@ -246,6 +249,7 @@ exports.moveRiskOrControls = async (req, res) => {
 };
 
 exports.updateRiskOrControl = async (req, res) => {
+  const tenantId = req.tenantId;
   const { itemIds, itemType, updates } = req.body;
   try {
     // Validation des paramètres d'entrée
@@ -270,6 +274,7 @@ exports.updateRiskOrControl = async (req, res) => {
     // Recherche de tous les éléments correspondants en une seule requête
     const items = await EntityRiskControl.find({
       [`${itemType}s._id`]: { $in: itemIds },
+      tenantId
     });
 
     if (!items || items.length === 0) {
@@ -310,7 +315,8 @@ exports.updateRiskOrControl = async (req, res) => {
 };
 
 exports.getAllKeyIndicators = async (req, res) => {
-  const excelService = new ExcelService();
+  const tenantId = req.tenantId;
+  const excelService = new ExcelService({ tenantId });
 
   try {
     // Appelle le service pour récupérer les données
@@ -334,6 +340,7 @@ exports.getAllKeyIndicators = async (req, res) => {
 };
 
 exports.getKeyIndicatorByEntity = async (req, res) => {
+  const tenantId = req.tenantId;
   const { entityId } = req.body; // Le nom de l'entité vient du corps de la requête
 
   if (!entityId) {
@@ -343,7 +350,7 @@ exports.getKeyIndicatorByEntity = async (req, res) => {
     });
   }
 
-  const excelService = new ExcelService();
+  const excelService = new ExcelService({ tenantId });
 
   try {
     // Appel à la méthode pour récupérer les risques et contrôles de l'entité
@@ -374,7 +381,9 @@ exports.getKeyIndicatorByEntity = async (req, res) => {
     });
   }
 };
+
 exports.updateKeyIndicator = async (req, res) => {
+  const tenantId = req.tenantId;
   const { itemIds, updates } = req.body;
   try {
     // Validation des paramètres d'entrée
@@ -393,6 +402,7 @@ exports.updateKeyIndicator = async (req, res) => {
     // Recherche du document contenant les dataKeyIndicators
     const document = await keyIndicatorModel.findOne({
       "dataKeyIndicators._id": { $in: itemIds },
+      tenantId
     });
 
     if (!document) {
