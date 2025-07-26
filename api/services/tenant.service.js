@@ -35,7 +35,7 @@ exports.createTenant = async (req, res) => {
 
 exports.getAllTenants = async (req, res) => {
     try {
-        const tenants = await Tenant.find();
+        const tenants = await Tenant.find({ isDeleted: false });
         return ResponseService.success(res, { tenants });
     } catch (error) {
         console.error('Erreur lors de la récupération des tenants:', error);
