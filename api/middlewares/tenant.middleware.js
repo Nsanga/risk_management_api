@@ -1,12 +1,21 @@
 module.exports = function (req, res, next) {
-    const host = req.hostname; // ecobank.app.com
-    const subdomain = host.split('.')[0]; // "ecobank"
-  
-    if (!subdomain) {
-      return res.status(400).json({ message: "Tenant not specified" });
+    let tenantId;
+
+    // 1. Essayer depuis header personnalisé
+    if (req.headers["x-tenant-id"]) {
+        tenantId = req.headers["x-tenant-id"];
     }
-  
-    req.tenantId = subdomain.toLowerCase();
+
+    // 2. Sinon, en mode dev, fallback
+    else if (process.env.NODE_ENV === "development") {
+        tenantId = "defaultTenant";
+    }
+
+    // 3. Si toujours rien : erreur
+    if (!tenantId) {
+        return res.status(400).json({ message: "Tenant ID manquant" });
+    }
+
+    req.tenantId = tenantId.toLowerCase();
     next();
-  };
-  
+};

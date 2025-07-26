@@ -43,6 +43,16 @@ exports.getAllTenants = async (req, res) => {
     }
 };
 
+exports.getAllDeletedTenants = async (req, res) => {
+    try {
+        const tenants = await Tenant.find({ isDeleted: true });
+        return ResponseService.success(res, { tenants });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des tenants:', error);
+        return ResponseService.internalServerError(res, { error: error.message });
+    }
+};
+
 exports.getTenantById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -107,4 +117,22 @@ exports.deleteTenant = async (req, res) => {
         console.error("Erreur suppression tenant:", err);
         return res.status(500).json({ error: err.message });
     }
-};  
+};
+
+exports.restoreTenant = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const tenant = await Tenant.findById(id);
+        if (!tenant || !tenant.isDeleted) {
+            return ResponseService.notFound(res, { message: "Tenant non supprimé ou introuvable" });
+        }
+
+        tenant.isDeleted = false;
+        await tenant.save();
+
+        return ResponseService.success(res, { message: "Tenant restauré avec succès" });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+};
