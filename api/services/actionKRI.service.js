@@ -29,7 +29,7 @@ async function generateReference(tenantId) {
 
 async function createActionKRI(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const reference = await generateReference(tenantId);
     const newAction = new ActionsKRI({ ...req.body, reference, tenantId });
     const savedAction = await newAction.save();
@@ -75,7 +75,7 @@ async function createActionKRI(req, res) {
 
 async function getAllActionByIdKeyIndicator(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const actions = await ActionsKRI.find({
       idKeyIndicator: req.body.idKeyIndicator,
       tenantId
@@ -95,7 +95,7 @@ async function getAllActionByIdKeyIndicator(req, res) {
 
 async function getAllActionKRI(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const actions = await ActionsKRI.find({tenantId});
     res.status(200).json({
       statut: 200,
@@ -111,7 +111,7 @@ async function getAllActionKRI(req, res) {
 
 async function updateActionKRI(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const { id } = req.params;
 
     const updated = await ActionsKRI.findByIdAndUpdate(
@@ -142,7 +142,7 @@ async function updateActionKRI(req, res) {
 
 async function getActionByHistory(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const actions = await ActionsKRI.find({
       idHistoryKRI: req.body.idHistoryKRI,
       tenantId

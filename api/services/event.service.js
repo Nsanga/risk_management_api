@@ -164,7 +164,7 @@ async function getEventById(req, res) {
 async function getEventByEntity(req, res) {
   try {
     const entityId = req.params.id;
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const events = await Event.find({
       $or: [
         { "details.entityOfDetection": entityId },
@@ -350,7 +350,7 @@ async function deleteEvent(req, res) {
 
 async function getAllEvents(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     // 🔐 Ne retourne que les événements du tenant courant
     const events = await Event.find({tenantId})
       .populate({
@@ -394,7 +394,7 @@ async function getDataRapportEvent(req, res) {
     const entityObjectIds = targetEntityId.map(
       (id) => new mongoose.Types.ObjectId(id)
     );
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const start = startDate ? new Date(startDate) : null;
     const end = endDate ? new Date(endDate) : null;
     if (end) end.setHours(23, 59, 59, 999);
@@ -473,7 +473,7 @@ async function getRapportIncident(req, res) {
     const entityObjectIds = targetEntityId.map(
       (id) => new mongoose.Types.ObjectId(id)
     );
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;

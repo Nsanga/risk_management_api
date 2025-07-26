@@ -27,7 +27,7 @@ class ExcelService {
 
   async readExcelFile() {
     try {
-      const tenantId = req.body.tenantId;
+      const tenantId = req.tenantId;
       const workbook = XLSX.read(this.file.buffer, { type: "buffer" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
@@ -218,7 +218,7 @@ class ExcelService {
     // }
 
     try {
-      const tenantId = req.body.tenantId;
+      const tenantId = req.tenantId;
       // Récupère l'entité par son nom
       const entity = await Entity.findOne({ description: entityName, tenantId });
 
@@ -272,7 +272,7 @@ class ExcelService {
 
   async getSpecificRiskOrControl({ idRisk, idControl }) {
     try {
-      const tenantId = req.body.tenantId;
+      const tenantId = req.tenantId;
       const allEntities = await EntityRiskControl.find({tenantId})
         .populate("entity")
         .exec();
@@ -363,7 +363,7 @@ class ExcelService {
 
   async copyRiskOrControls(itemIds, targetEntityId, type = "risk") {
     try {
-      const tenantId = req.body.tenantId;
+      const tenantId = req.tenantId;
       let items = await EntityRiskControl.find({tenantId});
       const totalRisks = items.reduce(
         (sum, item) => sum + item.risks.length,
@@ -554,7 +554,7 @@ class ExcelService {
 
   async moveRiskOrControls(itemIds, targetEntityId, type = "risk") {
     try {
-      const tenantId = req.body.tenantId;
+      const tenantId = req.tenantId;
       let items = await EntityRiskControl.find({tenantId});
 
       const totalRisks = items.reduce(
@@ -800,7 +800,7 @@ class ExcelService {
 
   async getAllKeyIndicators() {
     try {
-      const tenantId = req.body.tenantId;
+      const tenantId = req.tenantId;
       const keyIndicators = await KeyIndicator.find({tenantId});
 
       return keyIndicators;

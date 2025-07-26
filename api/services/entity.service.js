@@ -3,7 +3,7 @@ const ResponseService = require('./response.service');
 
 async function createEntity(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     // Obtenir le dernier entity enregistré pour calculer le prochain referenceId
     const lastEntity = await Entity.findOne({tenantId}).sort({ referenceId: -1 }).exec();
 
@@ -36,7 +36,7 @@ async function createEntity(req, res) {
 
 async function getEntityById(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const entityId = req.params.id;
     const entity = await Entity.findById(entityId, tenantId);
     if (!entity) {
@@ -51,7 +51,7 @@ async function getEntityById(req, res) {
 
 async function updateEntity(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const entityId = req.params.id;
     const updatedData = req.body;
 
@@ -70,7 +70,7 @@ async function updateEntity(req, res) {
 
 async function deleteEntity(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const entityId = req.params.id;
     const entity = await Entity.findByIdAndDelete({entityId, tenantId});
     if (!entity) {
@@ -85,7 +85,7 @@ async function deleteEntity(req, res) {
 
 async function getAllEntities(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     // Recherche des entités et peuplement du champ 'owner' avec les données de UserProfile
     const entities = await Entity.find({tenantId})
       .populate({

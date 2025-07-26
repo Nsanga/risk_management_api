@@ -14,7 +14,7 @@ const historyKRIModel = require("../models/historyKRI.model");
 
 async function getStatistics(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     // 1. Stats sur les indicateurs clés
     const indicators = await KeyIndicator.find({tenantId});
     const indicatorsStats = {

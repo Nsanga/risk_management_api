@@ -6,7 +6,7 @@ module.exports = function (req, res, next) {
       return res.status(400).json({ message: "Tenant not specified" });
     }
   
-    req.body.tenantId = subdomain.toLowerCase();
+    req.tenantId = subdomain.toLowerCase();
     next();
   };
   

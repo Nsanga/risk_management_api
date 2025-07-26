@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 
 async function createProfile(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const email = req.body.email;
     const role = req.body.role;
 
@@ -88,7 +88,7 @@ async function createProfile(req, res) {
 
 async function getProfileById(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const profileId = req.params.id;
     const profile = await UserProfile.findById({profileId, tenantId});
     if (!profile) {
@@ -103,7 +103,7 @@ async function getProfileById(req, res) {
 
 async function updateProfile(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const profileId = req.params.id;
     const updatedData = req.body;
     const role = updatedData.role; // ou tu peux récupérer depuis currentProfile si non modifié
@@ -164,9 +164,9 @@ async function updateProfile(req, res) {
 
 async function deleteProfile(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const profileId = req.params.id;
-    const profile = await UserProfile.findByIdAndDelete({profileId, tenantId});
+    const profile = await UserProfile.findByIdAndDelete({ _id: profileId, tenantId });
     if (!profile) {
       return ResponseService.notFound(res, { message: "Profil non trouvé" });
     }
@@ -181,7 +181,7 @@ async function deleteProfile(req, res) {
 
 async function getAllProfiles(req, res) {
   try {
-    const tenantId = req.body.tenantId;
+    const tenantId = req.tenantId;
     const role = req.role; // ou adapte selon où est stockée l'info
 
     let query = {};

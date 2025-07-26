@@ -89,12 +89,22 @@ exports.updateTenant = async (req, res) => {
 exports.deleteTenant = async (req, res) => {
     try {
         const { id } = req.params;
-        const tenant = await Tenant.findByIdAndDelete(id);
+
+        const tenant = await Tenant.findById(id);
         if (!tenant) {
             return ResponseService.notFound(res, { message: "Tenant non trouvé" });
         }
-        return ResponseService.success(res, { message: "Tenant supprimé" });
+
+        if (tenant.isDeleted) {
+            return ResponseService.badRequest(res, { message: "Tenant déjà supprimé" });
+        }
+
+        tenant.isDeleted = true; // ✅ Soft delete
+        await tenant.save();
+
+        return ResponseService.success(res, { message: "Tenant marqué comme supprimé" });
     } catch (err) {
+        console.error("Erreur suppression tenant:", err);
         return res.status(500).json({ error: err.message });
     }
-};
+};  
