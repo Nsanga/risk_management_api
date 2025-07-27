@@ -3,3 +3,6 @@
 2025-07-02 15:12:55 error: Error updating event: Cannot access 'event' before initialization
 2025-07-20 12:31:28 error: Erreur lors de la mise à jour de l'événement: Event validation failed: financials.data: Cast to Object failed for value "undefined" (type undefined) at path "financials.data"
 2025-07-25 18:10:16 info: Email envoyé :
+2025-07-27 13:03:54 info: Email envoyé :
+2025-07-27 14:22:06 error: Erreur lors de la création de l'événement : Event validation failed: tenantId: Path `tenantId` is required.
+2025-07-27 14:25:14 error: Erreur lors de la création de l'événement : Event validation failed: tenantId: Path `tenantId` is required.

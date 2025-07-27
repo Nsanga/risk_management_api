@@ -32,7 +32,8 @@ exports.extractDataFromExcel = (req, res) => {
 };
 
 exports.getEntityRiskControlsByEntityName = async (req, res) => {
-  const { entityName } = req.body; // Le nom de l'entité vient du corps de la requête
+  const tenantId = req.tenantId;
+  const { entityName } = req.body;
 
   if (!entityName) {
     return res.status(400).json({
@@ -42,11 +43,8 @@ exports.getEntityRiskControlsByEntityName = async (req, res) => {
   }
 
   try {
-    const tenantId = req.tenantId;
-    const excelService = new ExcelService({tenantId});
-    // Appel à la méthode pour récupérer les risques et contrôles de l'entité
-    const entityRiskControls =
-      await excelService.getEntityRiskControlsByEntityName(entityName);
+    const excelService = new ExcelService({ tenantId: tenantId });
+    const entityRiskControls = await excelService.getEntityRiskControlsByEntityName(entityName, tenantId);
 
     if (!entityRiskControls || entityRiskControls.length === 0) {
       return res.status(404).json({
@@ -84,8 +82,8 @@ exports.getSpecificRiskOrControl = async (req, res) => {
 
   try {
     const tenantId = req.tenantId;
-    const excelService = new ExcelService({tenantId});
-    const result = await excelService.getSpecificRiskOrControl({ idRisk, idControl });
+    const excelService = new ExcelService();
+    const result = await excelService.getSpecificRiskOrControl({ idRisk, idControl, tenantId });
 
     if (!result) {
       return res.status(404).json({
@@ -113,12 +111,13 @@ exports.getSpecificRiskOrControl = async (req, res) => {
 exports.getEntityRiskControlById = async (req, res) => {
   const tenantId = req.tenantId;
   const { entityRefId } = req.params;
-  const excelService = new ExcelService({ tenantId });
+  const excelService = new ExcelService();
 
   try {
     // Appelle le service pour récupérer les données
     const entityRiskControl = await excelService.getEntityRiskControlById(
-      entityRefId
+      entityRefId,
+      tenantId
     );
 
     if (!entityRiskControl) {
@@ -141,7 +140,7 @@ exports.getEntityRiskControlById = async (req, res) => {
 exports.copyRiskOrControls = async (req, res) => {
   const tenantId = req.tenantId;
   const { itemIds, targetEntityId, itemType } = req.body;
-  const excelService = new ExcelService({ tenantId });
+  const excelService = new ExcelService();
 
   try {
     if (!itemIds || !Array.isArray(itemIds) || !targetEntityId || !itemType) {
@@ -164,7 +163,8 @@ exports.copyRiskOrControls = async (req, res) => {
     const copiedItems = await excelService.copyRiskOrControls(
       itemIds,
       targetEntityId,
-      itemType
+      itemType,
+      tenantId
     );
 
     if (!copiedItems.success) {
@@ -195,7 +195,7 @@ exports.copyRiskOrControls = async (req, res) => {
 exports.moveRiskOrControls = async (req, res) => {
   const tenantId = req.tenantId;
   const { itemIds, targetEntityId, itemType } = req.body;
-  const excelService = new ExcelService({ tenantId });
+  const excelService = new ExcelService();
 
   try {
     // Validation des paramètres
@@ -219,7 +219,8 @@ exports.moveRiskOrControls = async (req, res) => {
     const movedItems = await excelService.moveRiskOrControls(
       itemIds,
       targetEntityId,
-      itemType
+      itemType,
+      tenantId
     );
 
     // Si l'opération échoue (aucun élément déplacé)
@@ -316,11 +317,11 @@ exports.updateRiskOrControl = async (req, res) => {
 
 exports.getAllKeyIndicators = async (req, res) => {
   const tenantId = req.tenantId;
-  const excelService = new ExcelService({ tenantId });
+  const excelService = new ExcelService();
 
   try {
     // Appelle le service pour récupérer les données
-    const entityRiskControl = await excelService.getAllKeyIndicators();
+    const entityRiskControl = await excelService.getAllKeyIndicators({tenantId});
 
     if (!entityRiskControl) {
       return res.status(404).json({
@@ -341,7 +342,7 @@ exports.getAllKeyIndicators = async (req, res) => {
 
 exports.getKeyIndicatorByEntity = async (req, res) => {
   const tenantId = req.tenantId;
-  const { entityId } = req.body; // Le nom de l'entité vient du corps de la requête
+  const { entityId } = req.body;
 
   if (!entityId) {
     return res.status(400).json({
@@ -350,15 +351,15 @@ exports.getKeyIndicatorByEntity = async (req, res) => {
     });
   }
 
-  const excelService = new ExcelService({ tenantId });
+  const excelService = new ExcelService();
 
   try {
-    // Appel à la méthode pour récupérer les risques et contrôles de l'entité
-    const entityRiskControls = await excelService.getKeyIndicatorByEntity(
-      entityId
-    );
+    const entityRiskControls = await excelService.getKeyIndicatorByEntity({
+      entityId,
+      tenantId
+    });
 
-    if (!entityRiskControls || entityRiskControls.length === 0) {
+    if (!entityRiskControls) {
       return res.status(404).json({
         success: false,
         message: `Aucune donnée trouvée pour l'entité : ${entityId}`,

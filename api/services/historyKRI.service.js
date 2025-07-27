@@ -4,13 +4,26 @@ const keyIndicatorSchema = require("../models/keyIndicator.model");
 
 async function createHistoryKRI(req, res) {
   try {
-    let filteredControls = [];
     const tenantId = req.tenantId;
-    const { idEntity, idKeyIndicator } = req.body;
+    const { idEntity, idKeyIndicator, ...rest } = req.body;
 
-    const entityData = await keyIndicatorSchema.findOne({ entity: idEntity });
+    if (!tenantId || !idEntity || !idKeyIndicator) {
+      return res.status(400).json({
+        statut: 400,
+        message: "Le tenantId, idEntity et idKeyIndicator sont requis.",
+      });
+    }
 
-    const indicatorIds = entityData.dataKeyIndicators.map((item) => item._id);
+    const entityData = await keyIndicatorSchema.findOne({ entity: idEntity, tenantId });
+
+    if (!entityData) {
+      return res.status(404).json({
+        statut: 404,
+        message: "Aucune donnée d'indicateur clé trouvée pour cette entité.",
+      });
+    }
+
+    const indicatorIds = entityData.dataKeyIndicators.map(item => item._id);
 
     const histories = await historyKRIModel.find({
       idKeyIndicator: { $in: indicatorIds },
@@ -24,34 +37,24 @@ async function createHistoryKRI(req, res) {
       return acc;
     }, {});
 
-    const enrichedIndicators = entityData.dataKeyIndicators.map(
-      (indicator) => ({
-        ...(indicator.toObject?.() ?? indicator),
-        history: historyMap[indicator._id.toString()] || [],
-      })
+    const enrichedIndicators = entityData.dataKeyIndicators.map(indicator => ({
+      ...(indicator.toObject?.() ?? indicator),
+      history: historyMap[indicator._id.toString()] || [],
+    }));
+
+    const targetIndicator = enrichedIndicators.find(
+      item => item._id.toString() === idKeyIndicator.toString()
     );
 
-    filteredControls.push(...enrichedIndicators);
-
-    const tailleHistory = filteredControls?.find(
-      (item) => item._id.toString() === idKeyIndicator.toString()
-    );
-
-    // Trouver la longueur maximale de tous les tableaux "history"
-    let maxHistoryLength = 0;
-    for (const control of filteredControls) {
-      const length = control.history.length;
-      if (length > maxHistoryLength) {
-        maxHistoryLength = length;
-      }
-    }
-
-    const dataLength = tailleHistory?.history?.length;
+    const dataLength = targetIndicator?.history?.length || 0;
 
     const historique = new Historique({
-      ...req.body,
+      ...rest,
+      tenantId,
+      idKeyIndicator, // ✅ Ajout ici
       coutAnnually: `Q${dataLength === 4 ? dataLength : dataLength + 1},`,
     });
+
     await historique.save();
 
     res.status(201).json({
@@ -59,20 +62,27 @@ async function createHistoryKRI(req, res) {
       message: "Historique KRI créé avec succès",
       data: historique,
     });
+
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Erreur lors de la création du test: " + error.message });
+    console.error("Erreur lors de la création de l'historique KRI :", error.message);
+    res.status(500).json({
+      error: "Erreur lors de la création du test: " + error.message,
+    });
   }
 }
 
 async function getAllHistoriqueKri(req, res) {
   try {
     const tenantId = req.tenantId;
-    const allHistorique = await Historique.find({tenantId});
+    if (!tenantId) {
+      return res.status(400).json({ message: "Le tenantId est requis." });
+    }
+
+    const allHistorique = await Historique.find({ tenantId });
+
     res.status(200).json({
       statut: 200,
-      message: "Action reucpérée avec succès",
+      message: "Actions récupérées avec succès",
       data: allHistorique,
     });
   } catch (error) {
@@ -103,9 +113,17 @@ async function getAllHistoriqueKri(req, res) {
 async function getAllHistoriqueByIdKeyIndicator(req, res) {
   try {
     const tenantId = req.tenantId;
+    const { idKeyIndicator } = req.body;
+
+    if (!tenantId || !idKeyIndicator) {
+      return res.status(400).json({
+        message: "Le tenantId et idKeyIndicator sont requis.",
+      });
+    }
+
     const historique = await Historique.find({
-      idKeyIndicator: req.body.idKeyIndicator,
-      tenantId
+      idKeyIndicator,
+      tenantId,
     })
       .sort({ createdAt: -1 })
       .limit(5);
@@ -122,10 +140,9 @@ async function getAllHistoriqueByIdKeyIndicator(req, res) {
 
     res.status(200).json({
       statut: 200,
-      message: "Historique liée au KRI (5 derniers éléments)",
-
+      message: "Historique lié au KRI (5 derniers éléments)",
       data: {
-        average: average,
+        average,
         histories: historique,
       },
     });
@@ -138,12 +155,17 @@ async function getAllHistoriqueByIdKeyIndicator(req, res) {
 
 async function updateHistoryKRI(req, res) {
   try {
-    let filteredControls = [];
     const tenantId = req.tenantId;
     const { idEntity, idKeyIndicator } = req.body;
     const { id } = req.params;
 
-    const entityData = await keyIndicatorSchema.findOne({ entity: idEntity });
+    if (!tenantId || !idEntity || !idKeyIndicator || !id) {
+      return res.status(400).json({
+        message: "Le tenantId, idEntity, idKeyIndicator et l'id de l'historique sont requis.",
+      });
+    }
+
+    const entityData = await keyIndicatorSchema.findOne({ entity: idEntity, tenantId });
     if (!entityData) {
       return res.status(404).json({ message: "Entité introuvable." });
     }
@@ -152,7 +174,7 @@ async function updateHistoryKRI(req, res) {
 
     const histories = await historyKRIModel.find({
       idKeyIndicator: { $in: indicatorIds },
-      tenantId
+      tenantId,
     });
 
     const historyMap = histories.reduce((acc, hist) => {
@@ -162,16 +184,12 @@ async function updateHistoryKRI(req, res) {
       return acc;
     }, {});
 
-    const enrichedIndicators = entityData.dataKeyIndicators.map(
-      (indicator) => ({
-        ...(indicator.toObject?.() ?? indicator),
-        history: historyMap[indicator._id.toString()] || [],
-      })
-    );
+    const enrichedIndicators = entityData.dataKeyIndicators.map((indicator) => ({
+      ...(indicator.toObject?.() ?? indicator),
+      history: historyMap[indicator._id.toString()] || [],
+    }));
 
-    filteredControls.push(...enrichedIndicators);
-
-    const selectedKRI = filteredControls.find(
+    const selectedKRI = enrichedIndicators.find(
       (item) => item._id.toString() === idKeyIndicator.toString()
     );
 
@@ -180,7 +198,6 @@ async function updateHistoryKRI(req, res) {
     }
 
     const dataLength = selectedKRI.history.length;
-
     const coutAnnually = `Q${dataLength === 4 ? dataLength : dataLength + 1},`;
 
     const updated = await historyKRIModel.findByIdAndUpdate(
@@ -188,7 +205,7 @@ async function updateHistoryKRI(req, res) {
       {
         ...req.body,
         coutAnnually,
-        tenantId
+        tenantId,
       },
       { new: true }
     );

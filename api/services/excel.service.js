@@ -184,43 +184,8 @@ class ExcelService {
     }
   }
 
-  async getEntityRiskControlsByEntityName(entityName) {
-    // try {
-    //   // Récupère l'entité par son nom
-    //   const entity = await Entity.findOne({ description: entityName });
-
-    //   if (!entity) {
-    //     throw new Error(`Entité '${entityName}' introuvable`);
-    //   }
-
-    //   // Récupère les risques et contrôles associés à cette entité
-    //   const data = await EntityRiskControl.find({ entity: entity._id })
-    //     .populate("entity") // Peupler les détails de l'entité
-    //     .exec();
-
-    //   const formattedData = data.map((doc) => ({
-    //     entity: {
-    //       referenceId: doc.entity.referenceId,
-    //       description: doc.entity.description,
-    //       ram: doc.entity.ram,
-    //       location: doc.entity.location,
-    //       businessLine: doc.entity.businessLine,
-    //     },
-    //     risks: doc.risks,
-    //     controls: doc.controls,
-    //   }));
-
-    //   return formattedData;
-    // } catch (error) {
-    //   console.error(
-    //     "Erreur lors de la récupération des données :",
-    //     error.message
-    //   );
-    //   throw new Error("Impossible de récupérer les données pour l'entité.");
-    // }
-
+  async getEntityRiskControlsByEntityName(entityName, tenantId) {
     try {
-      const tenantId = req.tenantId;
       // Récupère l'entité par son nom
       const entity = await Entity.findOne({ description: entityName, tenantId });
 
@@ -233,7 +198,7 @@ class ExcelService {
         .populate("entity") // Peupler les détails de l'entité
         .exec();
 
-      // Pour chaque document, on enrichit les contrôles avec les historiques
+      // Pour chaque document, enrichir les contrôles avec les historiques
       const formattedData = await Promise.all(
         data.map(async (doc) => {
           const enrichedControls = await Promise.all(
@@ -242,8 +207,8 @@ class ExcelService {
                 idControl: control._id,
               });
               return {
-                ...control.toObject(), // Convertir en objet pour éviter les problèmes avec Mongoose
-                historyControl, // Ajouter les historiques trouvés
+                ...control.toObject(),
+                historyControl,
               };
             })
           );
@@ -257,29 +222,25 @@ class ExcelService {
               businessLine: doc.entity.businessLine,
             },
             risks: doc.risks,
-            controls: enrichedControls, // Insérer les contrôles enrichis avec leurs historiques
+            controls: enrichedControls,
           };
         })
       );
 
       return formattedData;
     } catch (error) {
-      console.error(
-        "Erreur lors de la récupération des données :",
-        error.message
-      );
+      console.error("Erreur lors de la récupération des données :", error.message);
       throw new Error("Impossible de récupérer les données pour l'entité.");
     }
   }
 
-  async getSpecificRiskOrControl({ idRisk, idControl }) {
+  async getSpecificRiskOrControl({ idRisk, idControl, tenantId }) {
     try {
-      const allEntities = await EntityRiskControl.find({ tenantId: this.tenantId })
+      const allEntities = await EntityRiskControl.find({ tenantId })
         .populate("entity")
         .exec();
 
       for (const entityDoc of allEntities) {
-        // Recherche du risque si idRisk est fourni
         if (idRisk) {
           const foundRisk = entityDoc.risks.find(
             (risk) => risk._id.toString() === idRisk
@@ -300,7 +261,6 @@ class ExcelService {
           }
         }
 
-        // Recherche du contrôle si idControl est fourni
         if (idControl) {
           const foundControl = entityDoc.controls.find(
             (control) => control._id.toString() === idControl
@@ -329,7 +289,6 @@ class ExcelService {
         }
       }
 
-      // Si aucun risque ou contrôle trouvé
       return null;
     } catch (error) {
       console.error("Erreur dans getSpecificRiskOrControl:", error.message);
@@ -362,9 +321,9 @@ class ExcelService {
     return nextNumber;
   }
 
-  async copyRiskOrControls(itemIds, targetEntityId, type = "risk") {
+  async copyRiskOrControls(itemIds, targetEntityId, type = "risk", tenantId) {
     try {
-      let items = await EntityRiskControl.find({ tetenantId: this.tenantIdnantId });
+      let items = await EntityRiskControl.find({ tenantId });
       const totalRisks = items.reduce(
         (sum, item) => sum + item.risks.length,
         0
@@ -377,16 +336,18 @@ class ExcelService {
       let riskCounter = totalRisks;
       let controlCounter = totalControls;
 
-      const targetEntity = await Entity.findById(targetEntityId);
+      const targetEntity = await Entity.findById(targetEntityId, tenantId);
       if (!targetEntity) {
         throw new Error("Entité cible introuvable.");
       }
 
       let targetEntityRiskControl = await EntityRiskControl.findOne({
         entity: targetEntityId,
+        tenantId
       });
       if (!targetEntityRiskControl) {
         targetEntityRiskControl = new EntityRiskControl({
+          tenantId,
           entity: targetEntityId,
           risks: [],
           controls: [],
@@ -404,6 +365,7 @@ class ExcelService {
         iterationCount++;
         const item = await EntityRiskControl.findOne({
           [`${type}s._id`]: itemId,
+          tenantId
         });
         if (!item) continue;
 
@@ -552,9 +514,9 @@ class ExcelService {
     }
   }
 
-  async moveRiskOrControls(itemIds, targetEntityId, type = "risk") {
+  async moveRiskOrControls(itemIds, targetEntityId, type = "risk", tenantId) {
     try {
-      let items = await EntityRiskControl.find({ tenantId: this.tenantId });
+      let items = await EntityRiskControl.find({ tenantId });
 
       const totalRisks = items.reduce(
         (sum, item) => sum + item.risks.length,
@@ -567,16 +529,18 @@ class ExcelService {
 
       let riskCounter = totalRisks;
       let controlCounter = totalControls;
-      const targetEntity = await Entity.findById(targetEntityId);
+      const targetEntity = await Entity.findById(targetEntityId, tenantId);
       if (!targetEntity) {
         throw new Error("Entité cible introuvable.");
       }
 
       let targetEntityRiskControl = await EntityRiskControl.findOne({
         entity: targetEntityId,
+        tenantId
       });
       if (!targetEntityRiskControl) {
         targetEntityRiskControl = new EntityRiskControl({
+          tenantId,
           entity: targetEntityId,
           risks: [],
           controls: [],
@@ -599,6 +563,7 @@ class ExcelService {
         try {
           const item = await EntityRiskControl.findOne({
             [`${type}s._id`]: itemId,
+            tenantId
           });
 
           if (!item) {
@@ -797,40 +762,33 @@ class ExcelService {
     }
   }
 
-  async getAllKeyIndicators() {
+  async getAllKeyIndicators({ tenantId }) {
     try {
-      const keyIndicators = await KeyIndicator.find({ tenantId: this.tenantId });
-
+      const keyIndicators = await KeyIndicator.find({ tenantId });
       return keyIndicators;
     } catch (error) {
-      console.error(
-        "Erreur lors de la récupération des indicateurs clés :",
-        error
-      );
+      console.error("Erreur lors de la récupération des indicateurs clés :", error);
       throw new Error("Impossible de récupérer les indicateurs clés.");
     }
   }
 
-  async getKeyIndicatorByEntity(entityId) {
+  async getKeyIndicatorByEntity({ entityId, tenantId }) {
     try {
       const entity = await KeyIndicator.findOne({
         entity: entityId,
-        tenantId: this.tenantId
+        tenantId
       });
-
+  
       if (!entity) {
         throw new Error(`Entité '${entityId}' introuvable`);
       }
-
+  
       return entity;
     } catch (error) {
-      console.error(
-        "Erreur lors de la récupération des données :",
-        error.message
-      );
+      console.error("Erreur lors de la récupération des données :", error.message);
       throw new Error("Impossible de récupérer les données pour l'entité.");
     }
-  }
+  }  
 }
 
 module.exports = ExcelService;

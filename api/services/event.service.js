@@ -14,11 +14,10 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-let currentNumber = 1; // Point de départ à 00001
 
-async function generateReferenceNumber() {
+async function generateReferenceNumber(tenantId) {
   try {
-    const lastAction = await Event.findOne().sort({ createdAt: -1 });
+    const lastAction = await Event.findOne({tenantId}).sort({ createdAt: -1 });
 
     let newReference = "00001";
     if (lastAction && lastAction.num_ref) {
@@ -37,28 +36,34 @@ async function generateReferenceNumber() {
 async function createEvent(req, res) {
   try {
     // ✅ récupération du tenant courant
+    const tenantId = req.tenantId;
     const eventData = req.body;
-    const num_ref = await generateReferenceNumber();
+    const num_ref = await generateReferenceNumber(tenantId);
 
     // Recherche sécurisée des utilisateurs et entités par tenant
     const ownerProfile = await UserProfile.findOne({
       _id: eventData.details.owner,
+      tenantId
     });
 
     const nomineeProfile = await UserProfile.findOne({
       _id: eventData.details.nominee,
+      tenantId
     });
 
     const reviewerProfile = await UserProfile.findOne({
       _id: eventData.details.reviewer,
+      tenantId
     });
 
     const entityOfDetection = await Entity.findOne({
       _id: eventData.details.entityOfDetection,
+      tenantId
     });
 
     const entityOfOrigin = await Entity.findOne({
       _id: eventData.details.entityOfOrigin,
+      tenantId
     });
 
     // Vérifie si les entités et profils existent
@@ -77,6 +82,7 @@ async function createEvent(req, res) {
 
     const newEvent = new Event({
       ...eventData,
+      tenantId,
       num_ref,
     });
 
@@ -119,9 +125,10 @@ async function createEvent(req, res) {
 async function getEventById(req, res) {
   try {
     // 👈 Récupération du tenant courant
+    const tenantId = req.tenantId;
     const eventId = req.params.id;
 
-    const event = await Event.findOne({ _id: eventId })
+    const event = await Event.findOne({ _id: eventId, tenantId })
       .populate({
         path: "details.entityOfDetection",
         select: "referenceId description",
