@@ -195,11 +195,12 @@ async function getEventByEntity(req, res) {
 
 async function updateEvent(req, res) {
   try {
+    const tenantId = req.tenantId;
     const eventId = req.params.id;
     const updatedData = req.body;
 
     // 🔐 Récupérer l'événement en filtrant aussi par tenant
-    const event = await Event.findOne({ _id: eventId });
+    const event = await Event.findOne({ _id: eventId, tenantId });
     if (!event) {
       return ResponseService.notFound(res, { message: "Event not found" });
     }
@@ -296,8 +297,8 @@ async function updateEvent(req, res) {
     // ✅ Envoi de notification si demandé
     if (updatedData.details?.notify && updatedData.approved) {
       const [owner, nominee] = await Promise.all([
-        UserProfile.findOne({ _id: event.details.owner }),
-        UserProfile.findOne({ _id: event.details.nominee }),
+        UserProfile.findOne({ _id: event.details.owner, tenantId }),
+        UserProfile.findOne({ _id: event.details.nominee, tenantId }),
       ]);
 
       if (owner && nominee) {
