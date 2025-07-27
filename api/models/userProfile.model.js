@@ -10,7 +10,6 @@ const userProfileSchema = new Schema(
     userId: {
       type: String,
       required: true,
-      unique: true,
     },
     name: {
       type: String,
@@ -102,6 +101,8 @@ const userProfileSchema = new Schema(
   },
   { timestamps: true }
 );
+
+userProfileSchema.index({ tenantId: 1, userId: 1 }, { unique: true });
 
 // Pré-enregistrement pour hacher le mot de passe et générer un code de référence
 userProfileSchema.pre("save", async function (next) {
