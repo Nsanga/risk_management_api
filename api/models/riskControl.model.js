@@ -38,6 +38,8 @@ const riskControlSchema = new Schema({
   controls: [controlSchema]
 });
 
+riskSchema.index({ tenantId: 1, serialNumber: 1 }, { unique: true });
+
 // Modèle Mongoose pour les risques et contrôles
 const RiskControl = mongoose.model('RiskControl', riskControlSchema);
 

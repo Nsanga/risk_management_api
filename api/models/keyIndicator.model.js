@@ -39,4 +39,27 @@ const keyIndicatorSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+dataKeyIndicatorSchema.index({ tenantId: 1, entity: 1, reference: 1 }, { unique: true });
+
+keyIndicatorSchema.pre("save", async function (next) {
+  const tenantId = this.tenantId;
+  const entityId = this.entity;
+
+  for (const ind of this.dataKeyIndicators) {
+    const exists = await mongoose.models.KeyIndicator.findOne({
+      tenantId,
+      entity: entityId,
+      "dataKeyIndicators.reference": ind.reference,
+    });
+
+    if (exists) {
+      return next(
+        new Error(`L'indicateur avec la référence '${ind.reference}' existe déjà pour cette entité.`)
+      );
+    }
+  }
+
+  next();
+});
+
 module.exports = mongoose.model("KeyIndicator", keyIndicatorSchema);
