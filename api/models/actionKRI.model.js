@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const actionKRISchema = new mongoose.Schema(
   {
     tenantId: { type: String, required: true },
-    reference: { type: String },
+    reference: { type: String, required: true },
     originatingRiskRef: { type: String, required: false },
     actionState: { type: String, required: false },
     source: { type: String, required: false },
@@ -43,5 +43,7 @@ const actionKRISchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+actionKRISchema.index({ tenantId: 1, reference: 1 }, { unique: true });
 
 module.exports = mongoose.model("kRI_Action", actionKRISchema);

@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 var historySchema = new mongoose.Schema(
   {
     tenantId: { type: String, required: true },
-    reference: { type: String, unique: true },
+    reference: { type: String, required: true },
     performance: { type: String, required: false },
     design: { type: String, required: false },
     assessedBy: { type: String, required: false },
@@ -25,5 +25,7 @@ var historySchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+historySchema.index({ tenantId: 1, reference: 1 }, { unique: true });
 
 module.exports = mongoose.model("history", historySchema);

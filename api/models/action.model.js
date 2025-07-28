@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 var actionSchema = new mongoose.Schema(
   {
     tenantId: { type: String, required: true },
-    reference: { type: String },
+    reference: { type: String, required: true },
     descriptionAction: { type: String, required: false },
     delaisAction: { type: String, required: false },
     proprioAction: { type: String, required: false },
@@ -28,5 +28,7 @@ var actionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+actionSchema.index({ tenantId: 1, reference: 1 }, { unique: true });
 
 module.exports = mongoose.model("actions", actionSchema);

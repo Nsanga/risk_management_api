@@ -6,7 +6,7 @@ const entitySchema = new Schema({
   tenantId: { type: String, required: true },
   referenceId: {
     type: String,
-    unique: true,
+    required: true,
   },
   description: {
     type: String,
@@ -54,6 +54,8 @@ const entitySchema = new Schema({
     required: false 
   }, 
 }, { timestamps: true });
+
+entitySchema.index({ tenantId: 1, referenceId: 1 }, { unique: true });
 
 const Entity = mongoose.model('Entity', entitySchema);
 

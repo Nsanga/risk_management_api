@@ -6,3 +6,4 @@
 2025-07-27 13:03:54 info: Email envoyé :
 2025-07-27 14:22:06 error: Erreur lors de la création de l'événement : Event validation failed: tenantId: Path `tenantId` is required.
 2025-07-27 14:25:14 error: Erreur lors de la création de l'événement : Event validation failed: tenantId: Path `tenantId` is required.
+2025-07-28 09:13:59 info: Email envoyé :

@@ -20,9 +20,9 @@ const additionnalInfoSchema = new Schema(
 
 const eventSchema = new Schema({
   tenantId: { type: String, required: true },
-  
+
   // Référence et identification
-  num_ref: { type: String },
+  num_ref: { type: String, required: true },
 
   // Détails de l'événement
   details: {
@@ -127,6 +127,8 @@ const eventSchema = new Schema({
 },
   { timestamps: true }
 );
+
+eventSchema.index({ tenantId: 1, num_ref: 1 }, { unique: true });
 
 const Event = mongoose.model("Event", eventSchema);
 
