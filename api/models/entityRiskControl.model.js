@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const riskSchema = new Schema({
+  tenantId: { type: String, required: true, index: true },
   reference: { type: String, unique: true, sparse: true },
   serialNumber: { type: String, required: true },
   departmentFunction: { type: String, required: false },
@@ -33,6 +34,7 @@ const riskSchema = new Schema({
 });
 
 const controlSchema = new Schema({
+  tenantId: { type: String, required: true, index: true },
   reference: { type: String, unique: true, sparse: true },
   controlSummary: { type: String, required: true },
   controlDescription: { type: String, required: true },
@@ -78,6 +80,9 @@ const entityRiskControlSchema = new Schema(
   },
   { timestamps: true }
 );
+
+riskSchema.index({ tenantId: 1, reference: 1 }, { unique: true });
+controlSchema.index({ tenantId: 1, reference: 1 }, { unique: true });
 
 const EntityRiskControl = mongoose.model(
   "EntityRiskControl",

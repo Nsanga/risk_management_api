@@ -36,15 +36,7 @@ class ExcelService {
       await EntityRiskControl.deleteMany({ tenantId: this.tenantId });
       // console.log("Anciennes données supprimées avec succès.");
 
-      const riskTableStartIndex =
-        data.findIndex((row) => row[0] === "TOP Risks") + 2;
-      const riskTableEndIndex = data.findIndex(
-        (row, index) => index > riskTableStartIndex && row.length === 0
-      );
-      const riskData = data.slice(
-        riskTableStartIndex,
-        riskTableEndIndex > 0 ? riskTableEndIndex : undefined
-      );
+      const rows = data.slice(2);
 
       const groupedData = {};
       const groupedKeyIndicator = {};
@@ -52,7 +44,7 @@ class ExcelService {
       let controlCount = 1;
       let riskCountKeyIndicator = 1;
 
-      for (const row of riskData) {
+      for (const row of rows) {
         const businessFunction = row[2];
 
         const entity = await Entity.findOne({ description: businessFunction, tenantId: this.tenantId, });
@@ -72,6 +64,7 @@ class ExcelService {
         );
 
         const risk = {
+          tenantId: this.tenantId,
           reference: riskReference,
           serialNumber: row[0],
           entityReference: entityId,
@@ -101,6 +94,7 @@ class ExcelService {
         };
 
         const control = {
+          tenantId: this.tenantId,
           reference: controlReference,
           controlSummary: row[14],
           controlDescription: row[15],
@@ -111,17 +105,13 @@ class ExcelService {
           monitoringCycle: row[20],
           documentSources: row[21],
           frequence: row[25],
-          // monitoringCycle: row[21],
-          // documentSources: row[22],
-          // status: row[29],
-
-          // library: row[28],
           ownerControl: "Database administrator",
           nomineeControl: "Database administrator",
           reviewerControl: "Database administrator",
         };
 
         const dataKeyIndicator = {
+          tenantId: this.tenantId,
           reference: riskReferenceKeyIndicator,
           entityReference: entityId,
           departmentFunction: row[2],
