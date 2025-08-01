@@ -66,6 +66,22 @@ exports.getTenantById = async (req, res) => {
     }
 };
 
+exports.getTenantByTenantId = async (req, res) => {
+    try {
+        const { tenantId } = req.params;
+
+        const tenant = await Tenant.findOne({ tenantId, isDeleted: false });
+        if (!tenant) {
+            return ResponseService.notFound(res, { message: "Tenant non trouvé" });
+        }
+
+        return ResponseService.success(res, { tenant });
+    } catch (err) {
+        console.error("Erreur lors de la récupération du tenant par tenantId:", err);
+        return ResponseService.internalServerError(res, { error: err.message });
+    }
+};
+
 exports.updateTenant = async (req, res) => {
     try {
         const { id } = req.params;

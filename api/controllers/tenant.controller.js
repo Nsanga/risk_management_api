@@ -12,6 +12,10 @@ async function getTenantById(req, res) {
     return await TenatService.getTenantById(req, res);
 }
 
+async function getTenantByTenantId(req, res) {
+    return await TenatService.getTenantByTenantId(req, res);
+}
+
 async function updateTenant(req, res) {
     return await TenatService.updateTenant(req, res);
 }
@@ -24,6 +28,7 @@ module.exports = {
     createTenant,
     getAllTenants,
     getTenantById,
+    getTenantByTenantId,
     updateTenant,
     deleteTenant
 };

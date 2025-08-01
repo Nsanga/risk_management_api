@@ -16,6 +16,9 @@ const tenantRoute = app => {
   
   // 🔹 Obtenir un tenant par ID
   router.get("/:id", tenantController.getTenantById);
+
+  // 🔹 Obtenir un tenant par tenantId
+  router.get('/tenant-by-tenant-id/:tenantId', tenantController.getTenantByTenantId);
   
   // 🔹 Mettre à jour un tenant
   router.put("/:id", upload.single("logo"), tenantController.updateTenant);
