@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 var historySchema = new mongoose.Schema(
   {
     tenantId: { type: String, required: true },
-    reference: { type: String, required: true },
+    reference: { type: String, unique: true },
     performance: { type: String, required: false },
     design: { type: String, required: false },
     assessedBy: { type: String, required: false },

@@ -95,6 +95,7 @@ const createHistory = async (data, tenantId) => {
       ...data,
       reference,
       coutAnnually,
+      tenantId,
     });
 
     return await newHistory.save();
