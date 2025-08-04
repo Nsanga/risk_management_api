@@ -24,6 +24,4 @@ var historyKRI = new mongoose.Schema(
   { timestamps: true }
 );
 
-historyKRI.index({ tenantId: 1, reference: 1 }, { unique: true });
-
 module.exports = mongoose.model("kRI_History", historyKRI);

@@ -14,7 +14,7 @@ const createHistory = async (req, res) => {
       statut: 500,
       message: error.message,
     });
-  }
+  } 
 };
 
 const getAllHistory = async (req, res) => {
