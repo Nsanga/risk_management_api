@@ -2,7 +2,8 @@ const historyService = require("../services/history.service");
 
 const createHistory = async (req, res) => {
   try {
-    const savedHistory = await historyService.createHistory(req.body);
+    const tenantId = req.tenantId;
+    const savedHistory = await historyService.createHistory(req.body, tenantId);
     res.status(200).json({
       statut: 200,
       message: "Test créé avec succès",
@@ -18,7 +19,8 @@ const createHistory = async (req, res) => {
 
 const getAllHistory = async (req, res) => {
   try {
-    const history = await historyService.getAllHistory();
+    const tenantId = req.tenantId;
+    const history = await historyService.getAllHistory(tenantId);
     res.status(200).json({
       status: 200,
       message: "Success",
@@ -34,8 +36,9 @@ const getAllHistory = async (req, res) => {
 
 const updateHistory = async (req, res) => {
   try {
+    const tenantId = req.tenantId;
     const { id } = req.params;
-    const updated = await historyService.updateHistory(id, req.body);
+    const updated = await historyService.updateHistory(id, req.body, tenantId);
 
     res.status(200).json({
       statut: 200,

@@ -50,8 +50,7 @@ const generateReference = async () => {
   }
 };
 
-const createHistory = async (data) => {
-  const tenantId = req.tenantId;
+const createHistory = async (data, tenantId) => {
   const allRiskControl = await EntityRiskControl.find({tenantId});
 
   const entityWithControl = allRiskControl.find((entity) =>
@@ -104,9 +103,8 @@ const createHistory = async (data) => {
   }
 };
 
-const getAllHistory = async () => {
+const getAllHistory = async (tenantId) => {
   try {
-    const tenantId = req.tenantId;
     return await History.find({tenantId});
   } catch (error) {
     throw new Error(
@@ -115,8 +113,7 @@ const getAllHistory = async () => {
   }
 };
 
-const updateHistory = async (id, data) => {
-  const tenantId = req.tenantId;
+const updateHistory = async (id, data, tenantId) => {
   const allRiskControl = await EntityRiskControl.find({tenantId});
 
   const entityWithControl = allRiskControl.find((entity) =>
