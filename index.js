@@ -34,7 +34,7 @@ tenantRoute(app); // Charge les routes : /api/v1/tenant/***
 
 // 2️⃣ Charger les autres routes AVEC middleware tenant
 const appRoutes = require("./api/routes/index"); // Cela inclut toutes les autres routes
-app.use('/api/v1', tenantMiddleware, appRoutes());
+app.use('/api/v1', tenantMiddleware, appRoutes()); 
 
 // 404 handler
 app.use((req, res, next) => {

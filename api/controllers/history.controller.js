@@ -3,7 +3,7 @@ const historyService = require("../services/history.service");
 const createHistory = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    console.log("Request body:", req.body);
+    // console.log("Request body:", req.body);
     const savedHistory = await historyService.createHistory(req.body, tenantId);
     res.status(200).json({
       statut: 200,
