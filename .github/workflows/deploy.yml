@@ -101,19 +101,23 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
           script: |
-            echo "=== Démarrage du déploiement ==="
+            set -e
             cd /var/www/backend/risk_management_api
-
+            
             echo "=== Installation des dépendances ==="
-            npm ci --production
-
-            echo "=== Redémarrage PM2 ==="
-            pm2 reload risk_management_api --update-env || \
-            pm2 start index.js --name risk_management_api --watch --update-env
-
-            echo "=== Réapplication du watch PM2 ==="
-            pm2 restart risk_management_api --watch --update-env
+            if [ -f package-lock.json ]; then
+              npm ci --omit=dev
+            else
+              npm install --omit=dev
+            fi
+            
+            echo "=== PM2 start/reload ==="
+            pm2 reload risk_management_api --update-env || pm2 start index.js --name risk_management_api --update-env
             pm2 save
+            
+            sudo ss -lntp | grep :4500 || true
+            pm2 ls
+
 
   notification:
     needs: deploy-api
